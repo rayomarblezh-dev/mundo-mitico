@@ -1,0 +1,17 @@
+Referidos:
+Cada 10 invitaciones normales: el usuario obtiene 1 hada.
+Por cada referido activo (primer depósito): recibe 1 elfo.
+
+Explorar:
+Botón de caja sorpresa (0.05 TON):
+50% nada, 30% hada, 10% elfo, 5% gnomo, 1% orco.
+Botón de pelea (requiere 3 licántropos, cooldown 48h):
+30% nada, 70% ganar 0.1 TON.
+
+Botón Expedición (requiere 1 elfo, 1 genio, 1 orco, cooldown 48h):
+50% nada, 40% hada, 10% 0.05 TON.
+Botón capturar criatura mística⚔️ (requiere 1 licántropo y 2 orcos):
+70% nada, 25% hada, 5% elfo.
+
+Backend:
+Usar MongoDB + motor en database.py para inventario, referidos y cooldowns.
