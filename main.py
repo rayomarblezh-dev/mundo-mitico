@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from modules.commands import register_commands
+from utils.database import init_db
 
 # Cargar variables de entorno
 load_dotenv()
@@ -27,6 +28,7 @@ register_commands(dp)
 
 async def on_startup(dispatcher):
     """Evento de inicio del bot"""
+    await init_db()
     logger.info("Bot iniciado correctamente")
 
 async def on_shutdown(dispatcher):
@@ -36,4 +38,4 @@ async def on_shutdown(dispatcher):
 if __name__ == "__main__":
     # Ejecutar bot usando polling
     import asyncio
-    asyncio.run(dp.start_polling(bot))
+    asyncio.run(dp.start_polling(bot, on_startup=on_startup))
