@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # Cambia esta URI por la de tu base de datos MongoDB
-MONGO_URI = "mongodb://mongo:rUOUlKEaDohaQalGvefFjErbJatAvKVC@yamanote.proxy.rlwy.net:27653"
+MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
 DB_NAME = "mundo_mitico"
 
 client = AsyncIOMotorClient(MONGO_URI)
