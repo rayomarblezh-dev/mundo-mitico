@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 
-# Cambia esta URI por la de tu base de datos MongoDB
+# URI de Railway MongoDB
 MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
 DB_NAME = "mundo_mitico"
 

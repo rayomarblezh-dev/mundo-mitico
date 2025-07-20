@@ -27,8 +27,7 @@ async def referidos_handler(message: types.Message):
         f"<b>Progreso:</b>\n"
         f"• Referidos totales: <b>{total}</b>\n"
         f"• Referidos activos: <b>{activos}</b>\n"
-        f"• Hadas obtenidas: <b>{hadas}</b>\n"
-        f"• Elfos obtenidos: <b>{elfos}</b>\n\n"
+        f"• Hadas obtenidas: <b>{hadas}</b>\n\n"
         f"<b>¡Más invitados, más recompensas!</b></i>"
     )
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
