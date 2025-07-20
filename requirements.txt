@@ -1,0 +1,7 @@
+aiogram
+dotenv
+fastapi
+pymongo
+motor
+httpx
+uvicorn
