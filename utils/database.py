@@ -1,4 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
+from aiogram import Bot
 
 # URI de Railway MongoDB
 MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
@@ -10,6 +11,18 @@ db = client[DB_NAME]
 # Colección de usuarios y referidos
 usuarios_col = db["usuarios"]
 referidos_col = db["referidos"]
+
+# Función de inicialización para sincronizar la base de datos
+async def init_db():
+    # Índice único para evitar referidos duplicados (referidor_id + referido_id)
+    await referidos_col.create_index(
+        [
+            ("referidor_id", 1),
+            ("referido_id", 1)
+        ],
+        unique=True,
+        name="unique_referido"
+    )
 
 # Funciones base referidos
 async def agregar_referido(referidor_id: int, referido_id: int):
@@ -39,3 +52,12 @@ async def marcar_recompensa_entregada(referido_id: int):
 async def recompensa_entregada(referido_id: int):
     doc = await referidos_col.find_one({"referido_id": referido_id})
     return doc and doc.get("recompensa_entregada", False)
+
+async def notificar_recompensa(bot: Bot, user_id: int, tipo: str):
+    if tipo == "hada":
+        mensaje = "<b>🤩 ¡Has ganado 1 Hada por invitar a 10 amigos!</b>"
+    elif tipo == "elfo":
+        mensaje = "<b>🤩 ¡Has ganado 1 Elfo porque uno de tus referidos realizó su primer depósito!</b>"
+    else:
+        mensaje = f"<b>🤩 ¡Has ganado una recompensa de referidos!</b>"
+    await bot.send_message(user_id, mensaje, parse_mode="HTML")

@@ -1,0 +1,26 @@
+# Entornos virtuales
+venv/
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales y de base de datos
+*.sqlite3
+*.db
+*.log
+
+# Docker
+*.pid
+
+# Railway
+railway.local.json
+
+# Otros
+.DS_Store
+.idea/
+.vscode/ 

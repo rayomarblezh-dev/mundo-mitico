@@ -14,9 +14,6 @@ async def referidos_handler(message: types.Message):
     # Obtener progreso de referidos
     total = await contar_referidos(user_id)
     activos = await contar_referidos_activos(user_id)
-    hadas = total // 10
-    elfos = activos  # 1 elfo por cada referido activo (primer depósito)
-
     mensaje = (
         f"<i><b>👥 Referidos</b>\n\n"
         f"— Invita a tus amigos y gana recompensas exclusivas.\n\n"
@@ -25,9 +22,8 @@ async def referidos_handler(message: types.Message):
         f"— Cada 10 invitaciones: 1 Hada\n"
         f"— Cada referido que invierta: 1 Elfo\n\n"
         f"<b>Progreso:</b>\n"
-        f"• Referidos totales: <b>{total}</b>\n"
-        f"• Referidos activos: <b>{activos}</b>\n"
-        f"• Hadas obtenidas: <b>{hadas}</b>\n\n"
+        f"— Referidos totales: <b>{total}</b>\n"
+        f"— Referidos activos: <b>{activos}</b>\n"
         f"<b>¡Más invitados, más recompensas!</b></i>"
     )
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
