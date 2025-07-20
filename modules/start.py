@@ -4,8 +4,12 @@ from utils.database import agregar_referido
 
 async def start_handler(message: types.Message):
     # Manejo de referidos
-    if message.get_args():
-        args = message.get_args()
+    args = None
+    if message.text:
+        parts = message.text.split(maxsplit=1)
+        if len(parts) > 1:
+            args = parts[1]
+    if args:
         if args.startswith("ref_"):
             try:
                 referidor_id = int(args.replace("ref_", ""))
