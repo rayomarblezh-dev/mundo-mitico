@@ -10,14 +10,10 @@ from modules.tutoriales import tutorials_callback_handler
 from modules.referidos import referidos_handler
 from modules.tienda import (
     tienda_handler,
-    tienda_heroes_handler,
     tienda_criaturas_handler,
     tienda_volver_handler
 )
-from modules.heroes import (
-    heroe_kael_umbros_handler,
-    heroe_malrith_handler
-)
+
 from modules.criaturas import (
     criatura_hada_handler,
     criatura_elfo_handler,
@@ -32,15 +28,22 @@ from modules.criaturas import (
 from modules.wallet import (
     wallet_handler,
     wallet_depositar_handler,
-    wallet_retirar_handler
+    wallet_retirar_handler,
+    handle_deposit_network,
+    procesar_hash_pago,
+    procesar_wallet_ton
 )
 from modules.explorar import explorar_handler
 from modules.nfts import (
     nfts_handler,
-    comprar_nft_hielo_handler,
-    comprar_nft_oro_handler,
-    comprar_nft_oscuro_handler
+    nft_moguri_handler,
+    nft_gargola_handler,
+    nft_ghost_handler,
+    comprar_nft_moguri_handler,
+    comprar_nft_gargola_handler,
+    comprar_nft_ghost_handler
 )
+
 
 # =========================
 # Registro de comandos
@@ -64,16 +67,9 @@ def register_commands(dp: Dispatcher):
     # =========================
     # Callbacks de tienda
     # =========================
-    dp.callback_query.register(tienda_heroes_handler, lambda c: c.data == "tienda_heroes")
     dp.callback_query.register(tienda_criaturas_handler, lambda c: c.data == "tienda_criaturas")
     dp.callback_query.register(tienda_volver_handler, lambda c: c.data == "tienda_volver")
-
-    # =========================
-    # Callbacks de héroes
-    # =========================
-    dp.callback_query.register(heroe_kael_umbros_handler, lambda c: c.data == "heroe_kael_umbros")
-    dp.callback_query.register(heroe_malrith_handler, lambda c: c.data == "heroe_malrith")
-
+    dp.callback_query.register(nfts_handler, lambda c: c.data == "tienda_nfts")
     # =========================
     # Callbacks de criaturas
     # =========================
@@ -88,18 +84,29 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(criatura_licantropo_handler, lambda c: c.data == "criatura_licantropo")
 
     # =========================
+    # Callbacks de NFTs
+    # =========================
+    dp.callback_query.register(nfts_handler, lambda c: c.data == "tienda_nfts")
+    dp.callback_query.register(nft_moguri_handler, lambda c: c.data == "nft_moguri")
+    dp.callback_query.register(nft_gargola_handler, lambda c: c.data == "nft_gargola")
+    dp.callback_query.register(nft_ghost_handler, lambda c: c.data == "nft_ghost")
+    dp.callback_query.register(comprar_nft_moguri_handler, lambda c: c.data == "comprar_nft_moguri")
+    dp.callback_query.register(comprar_nft_gargola_handler, lambda c: c.data == "comprar_nft_gargola")
+    dp.callback_query.register(comprar_nft_ghost_handler, lambda c: c.data == "comprar_nft_ghost")
+
+    # =========================
     # Callbacks de wallet
     # =========================
     dp.callback_query.register(wallet_depositar_handler, lambda c: c.data == "wallet_depositar")
     dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
+    # Handlers para redes de depósito
+    dp.callback_query.register(handle_deposit_network, lambda c: c.data.startswith("depositar_"))
+    # Handler para procesar hash de pago
+    dp.message.register(procesar_hash_pago, lambda m: m.text and m.text.startswith("/hash"))
+    # Handler para procesar wallet TON
+    dp.message.register(procesar_wallet_ton, lambda m: m.text and len(m.text) > 10 and not m.text.startswith("/"))
+    
 
-    # =========================
-    # Callbacks de NFTs
-    # =========================
-    dp.callback_query.register(nfts_handler, lambda c: c.data == "tienda_nfts")
-    dp.callback_query.register(comprar_nft_hielo_handler, lambda c: c.data == "comprar_nft_hielo")
-    dp.callback_query.register(comprar_nft_oro_handler, lambda c: c.data == "comprar_nft_oro")
-    dp.callback_query.register(comprar_nft_oscuro_handler, lambda c: c.data == "comprar_nft_oscuro")
     
     # =========================
     # Botones de menú

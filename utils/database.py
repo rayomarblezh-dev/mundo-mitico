@@ -1,5 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from aiogram import Bot
+import datetime
 
 # URI de Railway MongoDB
 MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
@@ -11,6 +12,7 @@ db = client[DB_NAME]
 # Colección de usuarios y referidos
 usuarios_col = db["usuarios"]
 referidos_col = db["referidos"]
+nfts_col = db["nfts"]
 
 # Función de inicialización para sincronizar la base de datos
 async def init_db():
@@ -61,3 +63,24 @@ async def notificar_recompensa(bot: Bot, user_id: int, tipo: str):
     else:
         mensaje = f"<b>🤩 ¡Has ganado una recompensa de referidos!</b>"
     await bot.send_message(user_id, mensaje, parse_mode="HTML")
+
+# Funciones para NFTs
+async def usuario_tiene_nft(user_id: int):
+    """Verificar si el usuario ya tiene algún NFT"""
+    nft = await nfts_col.find_one({"user_id": user_id})
+    return nft is not None
+
+async def comprar_nft(user_id: int, nft_tipo: str, precio: float):
+    """Registrar la compra de un NFT"""
+    nft_data = {
+        "user_id": user_id,
+        "nft_tipo": nft_tipo,
+        "precio": precio,
+        "fecha_compra": datetime.datetime.now(),
+        "activo": True
+    }
+    await nfts_col.insert_one(nft_data)
+
+async def obtener_nft_usuario(user_id: int):
+    """Obtener el NFT del usuario"""
+    return await nfts_col.find_one({"user_id": user_id})
