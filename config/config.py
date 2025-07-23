@@ -1,8 +1,4 @@
 import os
-from dotenv import load_dotenv
-
-# Cargar variables de entorno
-load_dotenv()
 
 # --- Seguridad y administración ---
 ADMIN_IDS = [
