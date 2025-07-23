@@ -70,7 +70,7 @@ from modules.admin import (
     cancelar_credito_handler,
     admin_estadisticas_handler,
     admin_depositos_handler,
-    admin_config_handler,
+    admin_importante_handler,
     AdminStates,
     info_handler,
     admin_tareas_handler,
@@ -199,7 +199,7 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(admin_estadisticas_handler, lambda c: c.data == "admin_estadisticas")
     dp.callback_query.register(admin_depositos_handler, lambda c: c.data == "admin_depositos")
     dp.callback_query.register(aceptar_deposito_handler, lambda c: c.data.startswith("aceptar_deposito_"))
-    dp.callback_query.register(admin_config_handler, lambda c: c.data == "admin_config")
+    dp.callback_query.register(admin_importante_handler, lambda c: c.data == "admin_importante")
     dp.callback_query.register(admin_retiros_handler, lambda c: c.data == "admin_retiros")
     dp.callback_query.register(aceptar_retiro_handler, lambda c: c.data.startswith("aceptar_retiro_"))
     dp.callback_query.register(admin_resumen_fondos_handler, lambda c: c.data == "admin_resumen_fondos")

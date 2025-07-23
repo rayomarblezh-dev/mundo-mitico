@@ -1,6 +1,6 @@
 import os
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile, inline_keyboard_button, reply_markup_union
 from utils.database import agregar_referido
 import datetime
 
@@ -50,10 +50,9 @@ async def start_handler(message: types.Message):
         "— <b>Invertir TON</b>  - Gestiona tu economía en el mundo mítico\n"
         "— <b>Generar Ganancias</b>  - Atrapa criaturas y compra héroes que producen diariamente</blockquote></i>\n"
         "<b>¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
+        "<b>Accesos rápidos:</b>"
     )
-    
-    # Crear botones de menú
-    menu_keyboard = ReplyKeyboardMarkup(
+    reply_kb = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="🌍\nExplorar")],
             [KeyboardButton(text="🛍\nTienda"), KeyboardButton(text="🧳\nInventario")],
@@ -62,9 +61,7 @@ async def start_handler(message: types.Message):
         resize_keyboard=True,
         one_time_keyboard=False
     )
-    
-    # Crear botones inline
-    inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    inline_kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
             InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
@@ -73,9 +70,8 @@ async def start_handler(message: types.Message):
             InlineKeyboardButton(text="📕 Guia", callback_data="guia")
         ]
     ])
+    # Enviar un solo mensaje con ambos teclados (reply y inline)
+    await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
+    await message.reply("👋", reply_markup=reply_kb)
     
-    # Enviar mensaje con botones inline
-    await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_keyboard)
     
-    # Enviar botones de menú por separado
-    await message.answer("🏠 <b>Menú Principal</b>", reply_markup=menu_keyboard, parse_mode="HTML")
