@@ -3,7 +3,7 @@ from aiogram import Bot
 import datetime
 
 # URI de Railway MongoDB
-MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
+MONGO_URI = "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556"
 DB_NAME = "mundo_mitico_db"
 
 client = AsyncIOMotorClient(MONGO_URI)

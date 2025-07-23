@@ -4,6 +4,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 import re
+import platform
+import psutil
 
 # Estados para FSM de administración
 class AdminStates(StatesGroup):
@@ -286,10 +288,10 @@ async def admin_estadisticas_handler(callback: types.CallbackQuery):
     # total_retiros = await contar_retiros()
     
     # Placeholder para estadísticas
-    total_usuarios = 150
-    total_depositos = 25
-    total_retiros = 10
-    balance_total = 1250.50
+    total_usuarios = 0
+    total_depositos = 0
+    total_retiros = 0
+    balance_total = 0
     
     mensaje = (
         f"<b>📊 Estadísticas del Bot</b>\n\n"
@@ -350,3 +352,21 @@ async def admin_config_handler(callback: types.CallbackQuery):
     
     await callback.message.edit_text(mensaje, parse_mode="HTML")
     await callback.answer() 
+
+async def info_handler(message: types.Message):
+    """Muestra información del sistema en tiempo real"""
+    uname = platform.uname()
+    svmem = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+    cpu_percent = psutil.cpu_percent(interval=1)
+    net = psutil.net_io_counters()
+    msg = (
+        f"<b>ℹ️ Información del Sistema</b>\n\n"
+        f"<b>🖥 Sistema:</b> {uname.system} {uname.release} ({uname.machine})\n"
+        f"<b>💾 RAM:</b> {svmem.used // (1024**2)}MB / {svmem.total // (1024**2)}MB ({svmem.percent}%)\n"
+        f"<b>💽 Disco:</b> {disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB ({disk.percent}%)\n"
+        f"<b>⚡ CPU:</b> {cpu_percent}%\n"
+        f"<b>🌐 Red:</b> Enviado: {net.bytes_sent // (1024**2)}MB, Recibido: {net.bytes_recv // (1024**2)}MB\n"
+    )
+    await message.answer(msg, parse_mode="HTML") 
+    

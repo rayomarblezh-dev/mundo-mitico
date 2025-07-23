@@ -59,7 +59,8 @@ from modules.admin import (
     admin_estadisticas_handler,
     admin_depositos_handler,
     admin_config_handler,
-    AdminStates
+    AdminStates,
+    info_handler
 )
 
 
@@ -116,6 +117,11 @@ def register_commands(dp: Dispatcher):
     # Comando /admin
     # =========================
     dp.message.register(admin_handler, Command("admin"))
+    
+    # =========================
+    # Comando /info
+    # =========================
+    dp.message.register(info_handler, Command("info"))
     
     # =========================
     # Callbacks de guia

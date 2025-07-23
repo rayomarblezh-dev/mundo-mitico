@@ -1,7 +1,7 @@
+import os
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 from utils.database import agregar_referido
-# Quitar la importación global de mostrar_promo_paquete_bienvenida
 import datetime
 
 async def start_handler(message: types.Message):
@@ -24,26 +24,6 @@ async def start_handler(message: types.Message):
             "captcha": {"verificado": False, "codigo": None, "progreso": ""}
         })
         usuario = await usuarios_col.find_one({"user_id": user_id})
-    # Si el usuario no ha pasado el captcha, mostrarlo y salir
-    captcha = usuario.get("captcha", {"verificado": False, "codigo": None, "progreso": ""})
-    if not captcha.get("verificado"):
-        from modules.captcha import generar_captcha_qr, generar_teclado_captcha
-        import os
-        # Generar QR si no existe
-        if not captcha.get("codigo"):
-            path_qr, numeros = generar_captcha_qr()
-            await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
-            with open(path_qr, 'rb') as photo:
-                await message.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
-            return
-        # Si ya hay código, mostrar QR existente
-        codigo = captcha.get('codigo')
-        path_qr = os.path.join('images', f'captcha_{codigo}.png')
-        if os.path.exists(path_qr):
-            from modules.captcha import generar_teclado_captcha
-            with open(path_qr, 'rb') as photo:
-                await message.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
-            return
 
     # Manejo de referidos
     args = None
@@ -55,15 +35,13 @@ async def start_handler(message: types.Message):
         if args.startswith("ref_"):
             try:
                 referidor_id = int(args.replace("ref_", ""))
-                user_id = message.from_user.id
                 if referidor_id != user_id:
                     # Intentar registrar el referido (ignorar si ya existe)
-                    try:
-                        await agregar_referido(referidor_id, user_id)
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+                    await agregar_referido(referidor_id, user_id)
+            except ValueError:
+                pass  # El argumento no es un número válido
+            except Exception as e:
+                print(f"Error al agregar referido: {e}")
 
     welcome_text = (
         "👋 ¡Bienvenido a Mundo Mítico!\n\n"

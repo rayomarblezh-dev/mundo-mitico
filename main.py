@@ -1,40 +1,33 @@
 import os
 import logging
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
 from modules.commands import register_commands
 from utils.database import init_db, usuarios_col
 from modules.bot import bot, dp
-from modules.captcha import generar_captcha_qr, generar_teclado_captcha
-from aiogram import types
-from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from modules.captcha import generar_captcha_imagen
 import datetime
-
-# Cargar variables de entorno
-load_dotenv()
+from aiogram.types import FSInputFile
+import collections
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configurar bot
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "AQUÍ_TU_TOKEN"  # Reemplaza por tu token real
 if not BOT_TOKEN:
-    logger.error("BOT_TOKEN no encontrado en variables de entorno")
+    logger.error("BOT_TOKEN no encontrado. Configura tu token en el código.")
     exit(1)
 
 # Registrar comandos
 register_commands(dp)
 
 # Middleware para captcha
-
-# Diccionario temporal para almacenar el progreso del captcha (por usuario)
 captcha_progreso = {}
 
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
 class CaptchaMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
-        # Log de depuración para ver el tipo de evento y si tiene from_user
         logging.info(f"[Captcha][DEBUG] Evento recibido: {type(event)} - from_user: {getattr(event, 'from_user', None)}")
         user_id = event.from_user.id if hasattr(event, 'from_user') and event.from_user else None
         if not user_id:
@@ -62,65 +55,61 @@ class CaptchaMiddleware(BaseMiddleware):
             codigo = captcha.get("codigo")
             if not codigo:
                 logging.warning(f"[Captcha] Usuario {user_id} sin código asignado. Regenerando...")
-                path_qr, numeros = generar_captcha_qr()
+                path_img, numeros = generar_captcha_imagen()
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
-                with open(path_qr, 'rb') as photo:
-                    await event.message.answer_photo(photo, caption="Error interno. Se ha regenerado el captcha. Intenta de nuevo.", reply_markup=generar_teclado_captcha())
+                photo = FSInputFile(path_img)
+                if hasattr(event, 'message'):
+                    await event.message.answer_photo(photo, caption="Error interno. Se ha regenerado el captcha. Intenta de nuevo.")
                 return
             if len(progreso) < 6:
-                await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
                 await event.answer(f"Has ingresado: {progreso}")
                 return
-            if progreso == codigo:
+            # Validar coincidencia de dígitos en cualquier orden
+            if collections.Counter(progreso) == collections.Counter(codigo):
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.verificado": True, "captcha.progreso": "", "captcha.codigo": None}})
-                await event.message.edit_caption("✅ Captcha verificado correctamente. ¡Bienvenido!", reply_markup=None)
+                if hasattr(event, 'message'):
+                    await event.message.edit_caption("✅ Captcha verificado correctamente. ¡Bienvenido!", reply_markup=None)
                 await event.answer("¡Correcto!")
                 logging.info(f"[Captcha] Usuario {user_id} pasó el captcha.")
                 return await handler(event, data)
             else:
                 # Reiniciar captcha
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.progreso": ""}})
-                await event.message.edit_caption("❌ Código incorrecto. Intenta de nuevo.")
-                await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
+                if hasattr(event, 'message'):
+                    await event.message.edit_caption("❌ Código incorrecto. Intenta de nuevo.")
                 await event.answer("Código incorrecto. Intenta de nuevo.")
                 logging.info(f"[Captcha] Usuario {user_id} falló el captcha. Se reinicia el progreso.")
                 return
         # Si no hay captcha generado, generarlo y enviar QR
         if not captcha.get("codigo"):
-            path_qr, numeros = generar_captcha_qr()
+            path_img, numeros = generar_captcha_imagen()
             await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
-            with open(path_qr, 'rb') as photo:
-                await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
+            photo = FSInputFile(path_img)
+            if hasattr(event, 'answer_photo'):
+                await event.answer_photo(photo, caption="Por favor, ingresa el código que ves en la imagen:")
             logging.info(f"[Captcha] Usuario {user_id} recibe nuevo captcha: {numeros}")
             return
         # Si hay captcha pendiente, mostrar QR y teclado
         if not captcha.get("verificado"):
             codigo = captcha.get('codigo')
-            path_qr = os.path.join('images', f'captcha_{codigo}.png')
-            if os.path.exists(path_qr):
-                with open(path_qr, 'rb') as photo:
-                    await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
+            path_img = os.path.join('images', f'captcha_{codigo}.png')
+            if os.path.exists(path_img):
+                photo = FSInputFile(path_img)
+                if hasattr(event, 'answer_photo'):
+                    await event.answer_photo(photo, caption="Por favor, ingresa el código que ves en la imagen:")
                 logging.info(f"[Captcha] Usuario {user_id} reintenta captcha actual: {codigo}")
             else:
                 # Si no existe el QR, regenerar
-                path_qr, numeros = generar_captcha_qr()
+                path_img, numeros = generar_captcha_imagen()
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
-                with open(path_qr, 'rb') as photo:
-                    await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
-                logging.info(f"[Captcha] Usuario {user_id} QR perdido, se regenera: {numeros}")
+                photo = FSInputFile(path_img)
+                if hasattr(event, 'answer_photo'):
+                    await event.answer_photo(photo, caption="Por favor, ingresa el código que ves en la imagen:")
+                logging.info(f"[Captcha] Usuario {user_id} captcha perdido, se regenera: {numeros}")
             return
         return await handler(event, data)
 
 dp.update.outer_middleware(CaptchaMiddleware())
-
-async def on_startup(dispatcher):
-    """Evento de inicio del bot"""
-    await init_db()
-    logger.info("Bot iniciado correctamente")
-
-async def on_shutdown(dispatcher):
-    """Evento de cierre del bot"""
-    logger.info("Bot cerrado correctamente")
 
 # Nueva función main para aiogram v3
 async def main():

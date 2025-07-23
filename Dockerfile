@@ -13,7 +13,7 @@ RUN wget -qO - https://pgp.mongodb.com/server-6.0.asc | apt-key add - \
     && apt-get install -y mongodb-mongosh
 
 # Prueba la conexión a MongoDB
-RUN mongosh "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295" --eval "db.runCommand({ connectionStatus: 1 })"
+RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.runCommand({ connectionStatus: 1 })"
 
 COPY . .
 EXPOSE 8080
