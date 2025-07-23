@@ -27,7 +27,7 @@ async def admin_handler(message: types.Message):
     user_id = message.from_user.id
     if not is_admin(user_id):
         logger.warning(f"Intento de acceso denegado al panel admin por user_id={user_id}")
-        await message.answer(
+        await message.edit_text(
             "<b>❌ Acceso Denegado</b>\n\n"
             "<i>No tienes permisos de administrador.</i>",
             parse_mode="HTML"
@@ -38,23 +38,20 @@ async def admin_handler(message: types.Message):
         "<b>🔧 Panel de Administración</b>\n\n"
         "<i>Bienvenido al panel de control de <b>Mundo Mítico</b>.\n\n"
         "<b>📊 Funciones disponibles:</b>\n"
-        "— Agregar crédito a usuarios\n"
+        "— Buscar usuario y ver historial\n"
         "— Ver estadísticas del bot\n"
         "— Gestionar depósitos pendientes\n"
         "— Configurar parámetros del sistema\n"
         "— Revisar tareas de usuarios</i>"
     )
     admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="💰 Agregar Crédito", callback_data="admin_agregar_credito"),
-            InlineKeyboardButton(text="📝 Tareas", callback_data="admin_tareas")
-        ],
+        [InlineKeyboardButton(text="🔍 Buscar", callback_data="admin_buscar")],
         [InlineKeyboardButton(text="📊 Estadísticas", callback_data="admin_estadisticas")],
         [
             InlineKeyboardButton(text="💵 Depósitos", callback_data="admin_depositos"),
             InlineKeyboardButton(text="💸 Retiros", callback_data="admin_retiros")
         ],
-        [InlineKeyboardButton(text="⚙️ Configuración", callback_data="admin_config")]
+        [InlineKeyboardButton(text="❗ Importante", callback_data="admin_importante")]
     ])
     try:
         await message.edit_text(mensaje, parse_mode="HTML", reply_markup=admin_keyboard)
@@ -446,13 +443,13 @@ async def aceptar_retiro_handler(callback: types.CallbackQuery):
     )
     await callback.answer()
 
-async def admin_config_handler(callback: types.CallbackQuery):
+async def admin_importante_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     if not is_admin(user_id):
         logger.warning(f"Intento de acceso denegado a configuración por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    logger.info(f"Admin user_id={user_id} consultó configuración del sistema")
+    logger.info(f"Admin user_id={user_id} consultó Importante")
     mensaje = (
         f"<b>❗ Importante</b>\n\n"
         f"<i>Esta sección informa al admin sobre los parámetros críticos del sistema.</i>\n\n"
@@ -551,5 +548,154 @@ async def info_handler(message: types.Message):
     try:
         await message.edit_text(msg, parse_mode="HTML")
     except Exception:
-        await message.answer(msg, parse_mode="HTML") 
+        await message.answer(msg, parse_mode="HTML")
+
+# Nuevo flujo: Buscar usuario y mostrar historial
+class BuscarStates(StatesGroup):
+    waiting_for_user = State()
+    mostrando_usuario = State()
+
+async def admin_buscar_handler(callback: types.CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    if not is_admin(user_id):
+        await callback.answer("❌ Acceso denegado", show_alert=True)
+        return
+    mensaje = (
+        "<b>🔍 Buscar Usuario</b>\n\n"
+        "Envía el <b>ID</b> o <b>@username</b> del usuario que deseas consultar."
+    )
+    await state.set_state(BuscarStates.waiting_for_user)
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        return
+    user_input = message.text.strip()
+    from utils.database import usuarios_col, depositos_col, creditos_col
+    usuario = None
+    if user_input.startswith('@'):
+        username = user_input[1:]
+        usuario = await usuarios_col.find_one({"username": username})
+    else:
+        try:
+            uid = int(user_input)
+            usuario = await usuarios_col.find_one({"user_id": uid})
+        except Exception:
+            pass
+    if not usuario:
+        await message.edit_text(
+            f"<b>❌ Usuario no encontrado</b>\n\n<i>No se encontró ningún usuario con ese ID o username.</i>",
+            parse_mode="HTML"
+        )
+        return
+    # Buscar todos los depósitos y retiros
+    depositos = await depositos_col.find({"user_id": usuario["user_id"]}).sort("fecha", -1).to_list(length=100)
+    retiros = await creditos_col.find({"user_id": usuario["user_id"], "tipo": "retiro"}).sort("fecha", -1).to_list(length=100)
+    await state.update_data(
+        usuario_id=usuario["user_id"],
+        username=usuario.get("username","-"),
+        first_name=usuario.get("first_name","-"),
+        balance=usuario.get("balance",0),
+        fecha_registro=usuario.get("fecha_registro"),
+        activo=usuario.get("activo", True),
+        depositos=depositos,
+        retiros=retiros,
+        pagina_dep=0,
+        pagina_ret=0
+    )
+    await mostrar_historial_usuario(message, state)
+    await state.set_state(BuscarStates.mostrando_usuario)
+
+async def mostrar_historial_usuario(event, state: FSMContext):
+    data = await state.get_data()
+    usuario_id = data["usuario_id"]
+    username = data["username"]
+    first_name = data["first_name"]
+    balance = data["balance"]
+    fecha_registro = data["fecha_registro"]
+    activo = data["activo"]
+    depositos = data["depositos"]
+    retiros = data["retiros"]
+    pagina_dep = data.get("pagina_dep",0)
+    pagina_ret = data.get("pagina_ret",0)
+    per_page = 5
+    mensaje = (
+        f"<b>👤 Usuario:</b> <code>{usuario_id}</code> | @{username}\n"
+        f"<b>Nombre:</b> {first_name}\n"
+        f"<b>Balance:</b> <code>{balance}</code> TON\n"
+        f"<b>Fecha registro:</b> {fecha_registro.strftime('%Y-%m-%d') if fecha_registro else '-'}\n"
+        f"<b>Estado:</b> {'Activo' if activo else 'Inactivo'}\n"
+        f"<hr>"
+        f"<b>💵 Depósitos (página {pagina_dep+1}/{max(1,((len(depositos)-1)//per_page)+1)}):</b>\n"
+    )
+    start_dep = pagina_dep*per_page
+    end_dep = start_dep+per_page
+    if depositos[start_dep:end_dep]:
+        for i, dep in enumerate(depositos[start_dep:end_dep], start=start_dep+1):
+            mensaje += (
+                f"<b>{i}.</b> <code>{dep.get('fecha').strftime('%Y-%m-%d')}</code> | "
+                f"<b>{dep.get('cantidad','?')}</b> {dep.get('network_name','TON').split()[-1]} | Estado: <b>{dep.get('estado','?')}</b>\n"
+            )
+            if dep.get('hash'):
+                mensaje += f"└ <b>Hash:</b> <code>{dep.get('hash')}</code>\n"
+            if dep.get('equivalente_ton') and dep.get('network_name','ton').lower() != 'ton':
+                mensaje += f"└ <b>≈</b> <code>{dep.get('equivalente_ton'):.4f}</code> TON\n"
+    else:
+        mensaje += "Sin depósitos.\n"
+    mensaje += f"<hr>\n<b>💸 Retiros (página {pagina_ret+1}/{max(1,((len(retiros)-1)//per_page)+1)}):</b>\n"
+    start_ret = pagina_ret*per_page
+    end_ret = start_ret+per_page
+    if retiros[start_ret:end_ret]:
+        for i, ret in enumerate(retiros[start_ret:end_ret], start=start_ret+1):
+            mensaje += (
+                f"<b>{i}.</b> <code>{ret.get('fecha').strftime('%Y-%m-%d')}</code> | "
+                f"<b>{ret.get('cantidad','?')}</b> TON | Estado: <b>{ret.get('estado','?')}</b>\n"
+            )
+            if ret.get('wallet'):
+                mensaje += f"└ <b>Wallet:</b> <code>{ret.get('wallet')}</code>\n"
+    else:
+        mensaje += "Sin retiros.\n"
+    # Botones de paginación
+    botones = []
+    # Depósitos
+    max_dep = ((len(depositos)-1)//per_page)
+    if pagina_dep > 0:
+        botones.append(InlineKeyboardButton(text="⬅️ Depósitos", callback_data="dep_prev"))
+    if pagina_dep < max_dep:
+        botones.append(InlineKeyboardButton(text="Depósitos ➡️", callback_data="dep_next"))
+    # Retiros
+    max_ret = ((len(retiros)-1)//per_page)
+    if pagina_ret > 0:
+        botones.append(InlineKeyboardButton(text="⬅️ Retiros", callback_data="ret_prev"))
+    if pagina_ret < max_ret:
+        botones.append(InlineKeyboardButton(text="Retiros ➡️", callback_data="ret_next"))
+    # Volver
+    botones.append(InlineKeyboardButton(text="🔙 Volver", callback_data="admin"))
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[botones[i:i+2] for i in range(0, len(botones), 2)])
+    # Mostrar
+    if hasattr(event, 'edit_text'):
+        await event.edit_text(mensaje, parse_mode="HTML", reply_markup=keyboard)
+    else:
+        await event.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
+
+async def paginacion_busqueda_handler(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    pagina_dep = data.get("pagina_dep",0)
+    pagina_ret = data.get("pagina_ret",0)
+    if callback.data == "dep_prev":
+        pagina_dep = max(0, pagina_dep-1)
+    elif callback.data == "dep_next":
+        pagina_dep = pagina_dep+1
+    elif callback.data == "ret_prev":
+        pagina_ret = max(0, pagina_ret-1)
+    elif callback.data == "ret_next":
+        pagina_ret = pagina_ret+1
+    await state.update_data(pagina_dep=pagina_dep, pagina_ret=pagina_ret)
+    await mostrar_historial_usuario(callback.message, state)
+    await callback.answer() 
     

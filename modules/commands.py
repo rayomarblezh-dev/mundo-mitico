@@ -63,7 +63,6 @@ from modules.nfts import (
 )
 from modules.admin import (
     admin_handler,
-    admin_agregar_credito_handler,
     procesar_user_id,
     procesar_cantidad_admin,
     procesar_razon_admin,
@@ -79,6 +78,10 @@ from modules.admin import (
     admin_retiros_handler,
     aceptar_retiro_handler,
     admin_resumen_fondos_handler,
+    admin_buscar_handler,
+    BuscarStates,
+    procesar_busqueda_usuario,
+    paginacion_busqueda_handler,
 )
 from modules.inventario import mostrar_inventario_usuario
 
@@ -188,7 +191,8 @@ def register_commands(dp: Dispatcher):
     # =========================
     # Callbacks de administración
     # =========================
-    dp.callback_query.register(admin_agregar_credito_handler, lambda c: c.data == "admin_agregar_credito")
+    dp.callback_query.register(admin_buscar_handler, lambda c: c.data == "admin_buscar")
+    dp.message.register(procesar_busqueda_usuario, BuscarStates.waiting_for_user)
     dp.callback_query.register(admin_tareas_handler, lambda c: c.data == "admin_tareas")
     dp.callback_query.register(confirmar_credito_handler, lambda c: c.data == "admin_confirmar_credito")
     dp.callback_query.register(cancelar_credito_handler, lambda c: c.data == "admin_cancelar_credito")
@@ -199,6 +203,7 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(admin_retiros_handler, lambda c: c.data == "admin_retiros")
     dp.callback_query.register(aceptar_retiro_handler, lambda c: c.data.startswith("aceptar_retiro_"))
     dp.callback_query.register(admin_resumen_fondos_handler, lambda c: c.data == "admin_resumen_fondos")
+    dp.callback_query.register(paginacion_busqueda_handler, lambda c: c.data in ["dep_prev", "dep_next", "ret_prev", "ret_next"])
     
     # =========================
     # Handlers de administración con FSM
