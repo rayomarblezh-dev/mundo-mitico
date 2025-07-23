@@ -42,7 +42,7 @@ async def start_handler(message: types.Message):
                 print(f"Error al agregar referido: {e}")
 
     welcome_text = (
-        "👋 ¡Bienvenido a Mundo Mítico!\n\n"
+        "🌍 ¡Bienvenido a Mundo Mítico!\n\n"
         "<i>Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
         "<blockquote expandable>— <b>Cazar Criaturas</b> - Encuentra y captura bestias míticas\n"
         "— <b>Expediciones</b>  - Explora territorios desconocidos\n"
@@ -71,7 +71,7 @@ async def start_handler(message: types.Message):
         ]
     ])
     # Enviar un solo mensaje con ambos teclados (reply y inline)
-    await message.reply("", reply_markup=reply_kb)
+    await message.reply("👋", reply_markup=reply_kb)
     await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
     
     
