@@ -1,6 +1,7 @@
 import random
 import qrcode
 import os
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Genera 6 números aleatorios, crea un QR con esos números, guarda la imagen y retorna el path y los números
 
@@ -28,3 +29,18 @@ def generar_captcha_qr(directorio_salida='images'):
     img.save(path_archivo)
 
     return path_archivo, numeros
+
+# Nueva función para generar el teclado inline de captcha
+
+def generar_teclado_captcha():
+    botones = []
+    digitos = [str(i) for i in range(10)]
+    idx = 0
+    for _ in range(3):
+        fila = []
+        for _ in range(2):
+            if idx < len(digitos):
+                fila.append(InlineKeyboardButton(text=digitos[idx], callback_data=f"captcha_{digitos[idx]}"))
+                idx += 1
+        botones.append(fila)
+    return InlineKeyboardMarkup(inline_keyboard=botones)

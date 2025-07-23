@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from modules.commands import register_commands
-from utils.database import init_db
+from utils.database import init_db, usuarios_col
 from modules.bot import bot, dp
-from modules.captcha import generar_captcha_qr
+from modules.captcha import generar_captcha_qr, generar_teclado_captcha
 from aiogram import types
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 
@@ -27,21 +27,76 @@ if not BOT_TOKEN:
 register_commands(dp)
 
 # Middleware para captcha
+from aiogram.dispatcher.handler import CancelHandler
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from aiogram.types import CallbackQuery
+
+# Diccionario temporal para almacenar el progreso del captcha (por usuario)
+captcha_progreso = {}
+
 class CaptchaMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         user_id = event.from_user.id if hasattr(event, 'from_user') else None
-        # Aquí deberías verificar si el usuario es nuevo (ejemplo simple)
-        if user_id and not await usuario_ya_verificado(user_id):
+        if not user_id:
+            return await handler(event, data)
+        usuario = await usuarios_col.find_one({"user_id": user_id})
+        if not usuario:
+            # Crear usuario si no existe
+            await usuarios_col.insert_one({"user_id": user_id, "captcha": {"verificado": False, "codigo": None, "progreso": ""}})
+            usuario = await usuarios_col.find_one({"user_id": user_id})
+        captcha = usuario.get("captcha", {"verificado": False, "codigo": None, "progreso": ""})
+        if captcha.get("verificado"):
+            return await handler(event, data)
+        # Si el usuario no ha pasado el captcha
+        # Si es un callback de botón de captcha
+        if isinstance(event, CallbackQuery) and event.data and event.data.startswith("captcha_"):
+            digito = event.data.replace("captcha_", "")
+            progreso = captcha.get("progreso", "") + digito
+            # Actualizar progreso en la base de datos
+            await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.progreso": progreso}})
+            # Obtener el código correcto
+            codigo = captcha.get("codigo")
+            if not codigo:
+                await event.answer("Error interno. Vuelve a intentarlo.", show_alert=True)
+                raise CancelHandler()
+            if len(progreso) < 6:
+                await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
+                await event.answer(f"Has ingresado: {progreso}")
+                raise CancelHandler()
+            if progreso == codigo:
+                await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.verificado": True, "captcha.progreso": ""}})
+                await event.message.edit_caption("✅ Captcha verificado correctamente. ¡Bienvenido!", reply_markup=None)
+                await event.answer("¡Correcto!")
+                return await handler(event, data)
+            else:
+                # Reiniciar captcha
+                await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.progreso": ""}})
+                await event.message.edit_caption("❌ Código incorrecto. Intenta de nuevo.")
+                await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
+                await event.answer("Código incorrecto. Intenta de nuevo.")
+                raise CancelHandler()
+        # Si no hay captcha generado, generarlo y enviar QR
+        if not captcha.get("codigo"):
             path_qr, numeros = generar_captcha_qr()
-            await event.answer_photo(open(path_qr, 'rb'), caption="Por favor, introduce los 6 números que ves en el QR para continuar.")
-            # Aquí deberías esperar la respuesta y validarla antes de continuar
-            # ... lógica de validación ...
-            return  # No continúa hasta que pase el captcha
+            await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
+            with open(path_qr, 'rb') as photo:
+                await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
+            raise CancelHandler()
+        # Si hay captcha pendiente, mostrar QR y teclado
+        if not captcha.get("verificado"):
+            path_qr = os.path.join('images', f'captcha_{captcha.get('codigo')}.png')
+            if os.path.exists(path_qr):
+                with open(path_qr, 'rb') as photo:
+                    await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
+            else:
+                # Si no existe el QR, regenerar
+                path_qr, numeros = generar_captcha_qr()
+                await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
+                with open(path_qr, 'rb') as photo:
+                    await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
+            raise CancelHandler()
         return await handler(event, data)
-
-def usuario_ya_verificado(user_id):
-    # Aquí deberías consultar tu base de datos para saber si el usuario ya pasó el captcha
-    return False  # Por ahora, todos pasan por el captcha
 
 dp.update.outer_middleware(CaptchaMiddleware())
 

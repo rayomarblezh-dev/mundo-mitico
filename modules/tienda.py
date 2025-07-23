@@ -1,8 +1,9 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from modules.commands import mostrar_promo_paquete_bienvenida
+# Quitar la importación global de mostrar_promo_paquete_bienvenida
 
 async def tienda_handler(message: types.Message):
+    from modules.commands import mostrar_promo_paquete_bienvenida
     mensaje = (
         "<b>🛍 Tienda</b>\n\n"
         "<i>Bienvenido a la tienda de <b>Mundo Mítico.</b>\n\n"
@@ -17,6 +18,7 @@ async def tienda_handler(message: types.Message):
     await mostrar_promo_paquete_bienvenida(message, message.from_user.id)
 
 async def tienda_criaturas_handler(callback: types.CallbackQuery):
+    from modules.commands import mostrar_promo_paquete_bienvenida
     mensaje = (
         "<b>🐾 Criaturas</b>\n\n"
         "<i>Las criaturas míticas son seres poderosos que puedes capturar y entrenar.\n\n"
@@ -40,6 +42,7 @@ async def tienda_criaturas_handler(callback: types.CallbackQuery):
     await mostrar_promo_paquete_bienvenida(callback.message, callback.from_user.id)
 
 async def tienda_volver_handler(callback: types.CallbackQuery):
+    from modules.commands import mostrar_promo_paquete_bienvenida
     # Eliminar el mensaje anterior si existe
     try:
         await callback.message.delete()

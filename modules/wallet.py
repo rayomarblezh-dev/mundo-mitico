@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 import httpx
-from modules.commands import mostrar_promo_paquete_bienvenida
+# Quitar la importación global de mostrar_promo_paquete_bienvenida
 
 # Estados para FSM
 class WalletStates(StatesGroup):
@@ -40,9 +40,11 @@ class WalletAddresses:
 wallet_addresses = WalletAddresses()
 
 async def wallet_handler(message: types.Message):
+    # Importación local para evitar import circular
+    from modules.commands import mostrar_promo_paquete_bienvenida
     balance_ton = 0.0  # Reemplazar con balance real de la base de datos
     mensaje = (
-        f"<b>👛 Wallet</b>\n\n"
+        f"<b>💻 Wallet</b>\n\n"
         f"<i>Gestiona tus fondos en <b>Mundo Mítico.</b>\n\n"
         f"<b>💰 Balance:</b> {balance_ton} TON\n\n"
         f"<blockquote expandable>Deposita para invertir en héroes y criaturas\n— Retira tus ganancias cuando lo desees</blockquote>\n\n"

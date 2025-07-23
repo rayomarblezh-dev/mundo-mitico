@@ -1,9 +1,11 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from utils.database import agregar_referido
-from modules.commands import mostrar_promo_paquete_bienvenida
+# Quitar la importación global de mostrar_promo_paquete_bienvenida
 
 async def start_handler(message: types.Message):
+    # Importación local para evitar import circular
+    from modules.commands import mostrar_promo_paquete_bienvenida
     # Manejo de referidos
     args = None
     if message.text:
