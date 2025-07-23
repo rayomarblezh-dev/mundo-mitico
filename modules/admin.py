@@ -359,12 +359,18 @@ async def info_handler(message: types.Message):
     cpu_percent = psutil.cpu_percent(interval=1)
     net = psutil.net_io_counters()
     msg = (
-        f"<b>ℹ️ Información del Sistema</b>\n\n"
-        f"<b>🖥 Sistema:</b> {uname.system} {uname.release} ({uname.machine})\n"
-        f"<b>💾 RAM:</b> {svmem.used // (1024**2)}MB / {svmem.total // (1024**2)}MB ({svmem.percent}%)\n"
-        f"<b>💽 Disco:</b> {disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB ({disk.percent}%)\n"
-        f"<b>⚡ CPU:</b> {cpu_percent}%\n"
-        f"<b>🌐 Red:</b> Enviado: {net.bytes_sent // (1024**2)}MB, Recibido: {net.bytes_recv // (1024**2)}MB\n"
+        "<b>ℹ️ <u>Información del Sistema</u></b>\n\n"
+        "<b>🖥️ <u>Sistema:</u></b> <code>{} {}</code> <i>({})</i>\n\n"
+        "<b>💾 <u>RAM:</u></b> <code>{}MB</code> / <code>{}MB</code> <i>({}%)</i>\n\n"
+        "<b>💽 <u>Disco:</u></b> <code>{}GB</code> / <code>{}GB</code> <i>({}%)</i>\n\n"
+        "<b>⚡ <u>CPU:</u></b> <code>{}%</code>\n\n"
+        "<b>🌐 <u>Red:</u></b> <code>⬆️ {}</code> / <code>⬇️ {}</code> <i>MB</i>\n"
+    ).format(
+        uname.system, uname.release, uname.machine,
+        svmem.used // (1024**2), svmem.total // (1024**2), svmem.percent,
+        disk.used // (1024**3), disk.total // (1024**3), disk.percent,
+        cpu_percent,
+        net.bytes_sent // (1024**2), net.bytes_recv // (1024**2)
     )
     await message.answer(msg, parse_mode="HTML") 
     

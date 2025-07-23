@@ -1,5 +1,6 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from utils.database import procesar_compra_item
 
 
 async def criatura_hada_handler(callback: types.CallbackQuery):
@@ -189,4 +190,103 @@ async def criatura_licantropo_handler(callback: types.CallbackQuery):
     ])
     
     await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
+    await callback.answer()
+
+async def comprar_hada_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "hada", "precio": 0.10}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado una Hada!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_elfo_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "elfo", "precio": 0.11}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Elfo!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_dragon_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "dragon", "precio": 0.20}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Dragón!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_orco_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "orco", "precio": 0.22}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Orco!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_gremnli_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "gremnli", "precio": 0.25}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Gremnli!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_unicornio_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "unicornio", "precio": 0.30}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Unicornio!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_genio_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "genio", "precio": 0.40}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Genio!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_kraken_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "kraken", "precio": 1.20}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Kraken!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
+
+async def comprar_licantropo_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    item = {"tipo": "criatura", "nombre": "licantropo", "precio": 1.00}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
+        mensaje = "<b>✅ ¡Has comprado un Licántropo!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
     await callback.answer()

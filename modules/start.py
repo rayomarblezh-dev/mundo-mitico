@@ -20,8 +20,7 @@ async def start_handler(message: types.Message):
             "first_name": first_name,
             "balance": 0.0,
             "fecha_registro": datetime.datetime.now(),
-            "activo": True,
-            "captcha": {"verificado": False, "codigo": None, "progreso": ""}
+            "activo": True
         })
         usuario = await usuarios_col.find_one({"user_id": user_id})
 

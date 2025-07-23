@@ -119,13 +119,12 @@ async def obtener_balance_usuario(user_id: int) -> float:
     usuario = await usuarios_col.find_one({"user_id": user_id})
     return usuario.get("balance", 0.0) if usuario else 0.0
 
-async def agregar_credito_usuario(user_id: int, cantidad: float, razon: str, admin_id: int):
+async def agregar_credito_usuario(user_id: int, cantidad: float, admin_id: int):
     """Agregar crédito a un usuario"""
     # Crear registro de crédito
     credito_data = {
         "user_id": user_id,
         "cantidad": cantidad,
-        "razon": razon,
         "admin_id": admin_id,
         "fecha": datetime.datetime.now(),
         "tipo": "admin"
@@ -253,3 +252,41 @@ async def get_last_promo_time(user_id: int):
 
 async def set_last_promo_time(user_id: int, dt: datetime.datetime):
     await usuarios_col.update_one({"user_id": user_id}, {"$set": {"last_promo_time": dt}})
+
+async def procesar_compra_item(user_id: int, item: dict) -> dict:
+    '''
+    Procesa la compra de un ítem (NFT, criatura, promo).
+    item debe tener: tipo ('nft', 'criatura', 'promo'), nombre, precio, restricciones (opcional)
+    Retorna: {'ok': True/False, 'msg': str}
+    '''
+    usuario = await usuarios_col.find_one({"user_id": user_id})
+    if not usuario:
+        return {"ok": False, "msg": "Usuario no encontrado."}
+    balance = usuario.get("balance", 0.0)
+    if balance < item["precio"]:
+        return {"ok": False, "msg": "❌ No tienes suficiente TON para comprar este producto."}
+    # Restricciones por tipo
+    if item["tipo"] == "nft":
+        if item["nombre"] in ["Moguri-NFT", "Gargola-NFT"]:
+            from utils.database import usuario_tiene_nft_comun
+            if await usuario_tiene_nft_comun(user_id):
+                return {"ok": False, "msg": "❌ Solo puedes tener 1 NFT común (Moguri o Gárgola) a la vez."}
+        if item["nombre"] == "Ghost-NFT":
+            from utils.database import usuario_tiene_nft_ghost
+            if await usuario_tiene_nft_ghost(user_id):
+                return {"ok": False, "msg": "❌ Solo puedes tener 1 NFT Ghost a la vez."}
+        # Registrar compra NFT
+        await comprar_nft(user_id, item["nombre"], item["precio"])
+    elif item["tipo"] == "criatura":
+        inventario = usuario.get("inventario", {})
+        inventario[item["nombre"]] = inventario.get(item["nombre"], 0) + 1
+        await usuarios_col.update_one({"user_id": user_id}, {"$set": {"inventario": inventario}})
+    elif item["tipo"] == "promo":
+        # Ejemplo: paquete de bienvenida
+        from utils.database import registrar_compra_paquete_bienvenida
+        ok = await registrar_compra_paquete_bienvenida(user_id)
+        if not ok:
+            return {"ok": False, "msg": "❌ No se pudo procesar la promoción."}
+    # Descontar TON
+    await usuarios_col.update_one({"user_id": user_id}, {"$inc": {"balance": -item["precio"]}})
+    return {"ok": True, "msg": "✅ ¡Compra exitosa!"}

@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 import os
-from utils.database import usuario_tiene_nft_comun, usuario_tiene_nft_ghost, comprar_nft, obtener_nft_usuario
+from utils.database import usuario_tiene_nft_comun, usuario_tiene_nft_ghost, comprar_nft, obtener_nft_usuario, procesar_compra_item
 import logging
 
 logger = logging.getLogger(__name__)
@@ -116,26 +116,9 @@ async def nft_ghost_handler(callback: types.CallbackQuery):
 # Handlers para compra de NFTs
 async def comprar_nft_moguri_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
-    try:
-        if await usuario_tiene_nft_comun(user_id):
-            nft_actual = await obtener_nft_usuario(user_id)
-            mensaje = (
-                f"<b>❌ Ya tienes un NFT común</b>\n\n"
-                f"Ya posees el NFT: <b>{nft_actual['nft_tipo']}</b>\n"
-                f"Solo puedes tener 1 NFT común (Moguri o Gárgola) a la vez.\n\n"
-                f"<i>Si deseas cambiar tu NFT, contacta al soporte.</i>"
-            )
-            await callback.message.edit_text(mensaje, parse_mode="HTML")
-            await callback.answer()
-            return
-        precio = 0.5
-        if precio <= 0:
-            logger.warning(f"Intento de compra de NFT con precio inválido: {precio}")
-            await callback.message.edit_text("<b>❌ Error en la compra</b>\n\nPrecio inválido.", parse_mode="HTML")
-            await callback.answer()
-            return
-        await comprar_nft(user_id, "Moguri-NFT", precio)
-        logger.info(f"Usuario {user_id} compró Moguri-NFT por {precio} TON")
+    item = {"tipo": "nft", "nombre": "Moguri-NFT", "precio": 0.5}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
         mensaje = (
             "<b>✅ ¡Compra exitosa!</b>\n\n"
             "Has adquirido el <b>💀 Moguri-NFT</b>\n\n"
@@ -147,71 +130,38 @@ async def comprar_nft_moguri_handler(callback: types.CallbackQuery):
             "• ROI: 240%\n\n"
             "<i>Tu NFT comenzará a generar ganancias automáticamente.</i>"
         )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-    except Exception as e:
-        logger.error(f"Error en la compra de Moguri-NFT para user_id={user_id}: {e}")
-        mensaje = "<b>❌ Error en la compra</b>\n\nHubo un problema al procesar tu compra. Intenta nuevamente."
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
 
 async def comprar_nft_gargola_handler(callback: types.CallbackQuery):
-    """Handler para comprar NFT Gargola"""
     user_id = callback.from_user.id
-    
-    # Verificar si ya tiene un NFT común
-    if await usuario_tiene_nft_comun(user_id):
-        nft_actual = await obtener_nft_usuario(user_id)
-        mensaje = (
-            f"<b>❌ Ya tienes un NFT común</b>\n\n"
-            f"Ya posees el NFT: <b>{nft_actual['nft_tipo']}</b>\n"
-            f"Solo puedes tener 1 NFT común (Moguri o Gárgola) a la vez.\n\n"
-            f"<i>Si deseas cambiar tu NFT, contacta al soporte.</i>"
-        )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-        return
-    
-    # Procesar compra
-    try:
-        await comprar_nft(user_id, "Gargola-NFT", 1.0)
+    item = {"tipo": "nft", "nombre": "Gargola-NFT", "precio": 1.0}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
         mensaje = (
             "<b>✅ ¡Compra exitosa!</b>\n\n"
-            "<i>Has adquirido el <b>🦇 Gargola-NFT</b>\n\n"
+            "Has adquirido el <b>🦇 Gargola-NFT</b>\n\n"
             "<b>💰 Información:</b>\n"
             "• Precio pagado: 1.0 TON\n"
             "• Ganancia diaria: 0.025 TON\n"
             "• Duración: 365 días\n\n"
             "Tu NFT comenzará a generar ganancias automáticamente.</i>"
         )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-    except Exception as e:
-        mensaje = "<b>❌ Error en la compra</b>\n\nHubo un problema al procesar tu compra. Intenta nuevamente."
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer()
 
 async def comprar_nft_ghost_handler(callback: types.CallbackQuery):
-    """Handler para comprar NFT Ghost"""
     user_id = callback.from_user.id
-    
-    # Verificar si ya tiene el NFT Ghost
-    if await usuario_tiene_nft_ghost(user_id):
-        mensaje = (
-            f"<b>❌ Ya tienes el NFT Ghost</b>\n\n"
-            f"Solo puedes tener 1 NFT Ghost a la vez.\n\n"
-            f"<i>Si deseas cambiar tu NFT, contacta al soporte.</i>"
-        )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-        return
-    
-    # Procesar compra
-    try:
-        await comprar_nft(user_id, "Ghost-NFT", 3.5)
+    item = {"tipo": "nft", "nombre": "Ghost-NFT", "precio": 3.5}
+    resultado = await procesar_compra_item(user_id, item)
+    if resultado["ok"]:
         mensaje = (
             "<b>✅ ¡Compra exitosa!</b>\n\n"
-            "<i>Has adquirido el <b>👻 Ghost-NFT</b>\n\n"
+            "Has adquirido el <b>👻 Ghost-NFT</b>\n\n"
             "<b>💰 Información:</b>\n"
             "• Precio pagado: 3.5 TON\n"
             "• Ganancia diaria: 0.2 TON\n"
@@ -220,9 +170,7 @@ async def comprar_nft_ghost_handler(callback: types.CallbackQuery):
             "• ROI: 171%\n\n"
             "Tu NFT comenzará a generar ganancias automáticamente.</i>"
         )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-    except Exception as e:
-        mensaje = "<b>❌ Error en la compra</b>\n\nHubo un problema al procesar tu compra. Intenta nuevamente."
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer() 
+    else:
+        mensaje = resultado["msg"]
+    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    await callback.answer() 

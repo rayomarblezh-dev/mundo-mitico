@@ -28,7 +28,16 @@ from modules.criaturas import (
     criatura_unicornio_handler,
     criatura_genio_handler,
     criatura_kraken_handler,
-    criatura_licantropo_handler
+    criatura_licantropo_handler,
+    comprar_hada_handler,
+    comprar_elfo_handler,
+    comprar_dragon_handler,
+    comprar_orco_handler,
+    comprar_gremnli_handler,
+    comprar_unicornio_handler,
+    comprar_genio_handler,
+    comprar_kraken_handler,
+    comprar_licantropo_handler
 )
 from modules.wallet import (
     wallet_handler,
@@ -71,63 +80,7 @@ from modules.admin import (
 # =========================
 # Registro de comandos
 # =========================
-async def mostrar_promo_paquete_bienvenida(message, user_id):
-    if not await es_elegible_paquete_bienvenida(user_id):
-        logger.info(f"[PROMO] Usuario {user_id} no es elegible para la promo.")
-        return
-    now = datetime.datetime.now()
-    last_time = await get_last_promo_time(user_id)
-    logger.info(f"[PROMO] Usuario {user_id} last_promo_time: {last_time} (ahora: {now})")
-    # Convertir last_time a datetime si es string o tipo especial de Mongo
-    if last_time:
-        if not isinstance(last_time, datetime.datetime):
-            try:
-                # Si es string ISO
-                last_time = datetime.datetime.fromisoformat(str(last_time))
-            except Exception as e:
-                logger.warning(f"[PROMO] Error convirtiendo last_promo_time: {e}")
-                last_time = None
-    if last_time:
-        diff = (now - last_time).total_seconds()
-        logger.info(f"[PROMO] Usuario {user_id} segundos desde última promo: {diff}")
-        if diff < 900:
-            logger.info(f"[PROMO] Usuario {user_id} NO se muestra promo (cooldown activo)")
-            return  # Menos de 15 minutos
-    await set_last_promo_time(user_id, now)
-    logger.info(f"[PROMO] Usuario {user_id} SE MUESTRA promo y se actualiza timestamp.")
-    promo_text = (
-        '💎 <b>¡Paquete de bienvenida!</b>\n'
-        '7 🧚 Hadas, 3 🧙 Magos, 1 🐺 Licántropo por solo <b>1.5 TON</b>.'
-        '\n<i>Solo por 15 días desde este registro.</i>'
-    )
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Comprar Ahora!", callback_data="comprar_paquete_bienvenida")]
-        ]
-    )
-    await message.answer(promo_text, parse_mode="HTML", reply_markup=keyboard)
-
-# Handler para el botón Comprar del paquete de bienvenida
-from aiogram import types
-from utils.database import obtener_balance_usuario, agregar_credito_usuario
-
-async def comprar_paquete_bienvenida_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    balance = await obtener_balance_usuario(user_id)
-    if not await es_elegible_paquete_bienvenida(user_id):
-        await callback.answer("La promoción ya no está disponible.", show_alert=True)
-        return
-    if balance < PAQUETE_PRECIO:
-        await callback.answer("No tienes suficiente TON para comprar el paquete.", show_alert=True)
-        return
-    # Descontar TON
-    await agregar_credito_usuario(user_id, -PAQUETE_PRECIO, "Paquete de bienvenida", admin_id=0)
-    await registrar_compra_paquete_bienvenida(user_id)
-    await callback.message.answer(
-        "🎉 <b>¡Has comprado el paquete de bienvenida!</b>\nLas criaturas han sido añadidas a tu inventario.",
-        parse_mode="HTML"
-    )
-    await callback.answer()
+# Eliminar función mostrar_promo_paquete_bienvenida y el handler comprar_paquete_bienvenida_handler
 
 def register_commands(dp: Dispatcher):
     """
@@ -173,6 +126,16 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(criatura_genio_handler, lambda c: c.data == "criatura_genio")
     dp.callback_query.register(criatura_kraken_handler, lambda c: c.data == "criatura_kraken")
     dp.callback_query.register(criatura_licantropo_handler, lambda c: c.data == "criatura_licantropo")
+    # Handlers de compra de criaturas
+    dp.callback_query.register(comprar_hada_handler, lambda c: c.data == "comprar_hada")
+    dp.callback_query.register(comprar_elfo_handler, lambda c: c.data == "comprar_elfo")
+    dp.callback_query.register(comprar_dragon_handler, lambda c: c.data == "comprar_dragon")
+    dp.callback_query.register(comprar_orco_handler, lambda c: c.data == "comprar_orco")
+    dp.callback_query.register(comprar_gremnli_handler, lambda c: c.data == "comprar_gremnli")
+    dp.callback_query.register(comprar_unicornio_handler, lambda c: c.data == "comprar_unicornio")
+    dp.callback_query.register(comprar_genio_handler, lambda c: c.data == "comprar_genio")
+    dp.callback_query.register(comprar_kraken_handler, lambda c: c.data == "comprar_kraken")
+    dp.callback_query.register(comprar_licantropo_handler, lambda c: c.data == "comprar_licantropo")
 
     # =========================
     # Callbacks de NFTs
@@ -209,7 +172,6 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(admin_estadisticas_handler, lambda c: c.data == "admin_estadisticas")
     dp.callback_query.register(admin_depositos_handler, lambda c: c.data == "admin_depositos")
     dp.callback_query.register(admin_config_handler, lambda c: c.data == "admin_config")
-    dp.callback_query.register(comprar_paquete_bienvenida_handler, lambda c: c.data == "comprar_paquete_bienvenida")
     
     # =========================
     # Handlers de administración con FSM
