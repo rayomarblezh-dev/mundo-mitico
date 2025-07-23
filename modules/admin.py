@@ -294,13 +294,20 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
         await callback.answer()
         return
     for dep in depositos_pendientes:
+        equivalente_ton = dep.get('equivalente_ton')
+        red = dep.get('network_name', 'N/A')
+        cantidad = dep.get('cantidad', 'No especificada')
         mensaje = (
             f"<b>💵 Depósito Pendiente</b>\n\n"
             f"<b>Usuario:</b> <code>{dep.get('user_id')}</code>\n"
-            f"<b>Red:</b> {dep.get('network_name', 'N/A')}\n"
+            f"<b>Red:</b> {red}\n"
             f"<b>Dirección:</b> <code>{dep.get('address', 'N/A')}</code>\n"
             f"<b>Hash:</b> <code>{dep.get('hash')}</code>\n"
-            f"<b>Cantidad:</b> <code>{dep.get('cantidad', 'No especificada')}</code>\n"
+            f"<b>Cantidad enviada:</b> <code>{cantidad}</code> {red.split()[-1]}\n"
+        )
+        if equivalente_ton and red.lower() != 'ton':
+            mensaje += f"<b>Equivalente estimado:</b> <code>{equivalente_ton:.4f}</code> TON\n"
+        mensaje += (
             f"<b>Fecha:</b> {dep.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if dep.get('fecha') else 'N/A'}\n"
             f"<b>Estado:</b> {dep.get('estado', 'N/A')}\n\n"
             f"<i>Puedes aceptar el depósito para acreditar la cantidad al usuario o cancelar si es inválido.</i>"
