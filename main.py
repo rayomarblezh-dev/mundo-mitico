@@ -85,7 +85,8 @@ class CaptchaMiddleware(BaseMiddleware):
             raise CancelHandler()
         # Si hay captcha pendiente, mostrar QR y teclado
         if not captcha.get("verificado"):
-            path_qr = os.path.join('images', f'captcha_{captcha.get('codigo')}.png')
+            codigo = captcha.get('codigo')
+            path_qr = os.path.join('images', f'captcha_{codigo}.png')
             if os.path.exists(path_qr):
                 with open(path_qr, 'rb') as photo:
                     await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
