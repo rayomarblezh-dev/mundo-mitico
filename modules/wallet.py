@@ -9,10 +9,11 @@ import httpx
 class WalletStates(StatesGroup):
     waiting_for_wallet = State()  # Esperando dirección de wallet
     waiting_for_amount = State()  # Esperando cantidad a retirar
-    waiting_for_hash = State()    # Esperando hash de transacción
+    waiting_for_deposit_hash = State()  # Nuevo estado: esperando hash de depósito
+    # Eliminar el estado waiting_for_hash y el diccionario usuarios_hash_activo
+    # waiting_for_hash = State()    # Eliminado
+    # usuarios_hash_activo = {}     # Eliminado
 
-# Diccionario para controlar usuarios que pueden usar /hash
-usuarios_hash_activo = {}  # {user_id: network_key}
 # Diccionario para controlar usuarios que están agregando wallet
 usuarios_agregando_wallet = {}  # {user_id: True}
 
@@ -124,16 +125,16 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
             f"<b>⚠️ Importante:</b>\n"
             f"— Solo envía {network_name} a esta dirección\n"
             f"— Mínimo: {minimo}\n"
-            f"— Los fondos se acreditarán automaticamente\n\n"
+            f"— Los fondos se acreditarán automáticamente\n\n"
             f"<b>📝 Para confirmar tu pago:</b>\n"
-            f"1️⃣ Comentario, pon tu ID: <code>{callback.from_user.id}</code>(Recomendado)\n"
-            f"2️⃣ Después de enviar, usa el comando: <code>/hash [tu_hash_aqui]</code></i>"
+            f"1️⃣ En el comentario de la transacción, pon tu ID: <code>{callback.from_user.id}</code> (Recomendado)\n"
+            f"2️⃣ Después de enviar, responde a este mensaje con el hash de tu transacción.</i>"
         )
         
         # Guardar datos en el estado FSM
         await state.update_data(network_name=network_name, network_key=network_key, address=address)
         # Cambiar al estado de espera de hash
-        await state.set_state(WalletStates.waiting_for_hash)
+        await state.set_state(WalletStates.waiting_for_deposit_hash)
         
         copy_keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet_depositar")]
@@ -193,64 +194,6 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     await callback.answer()
 
 
-
-async def procesar_hash_pago(message: types.Message, state: FSMContext):
-    """Procesar el hash de pago enviado por el usuario"""
-    user_id = message.from_user.id
-    
-    # Verificar que el usuario esté en el estado correcto
-    current_state = await state.get_state()
-    if current_state != WalletStates.waiting_for_hash.state:
-        await message.answer(
-            "<b>❌ Comando no disponible</b>\n\n"
-            "<i>El comando /hash solo está disponible cuando confirmas un pago.\n"
-            "Ve a Wallet → Depositar → Selecciona red</i>",
-            parse_mode="HTML"
-        )
-        return
-    
-    # Extraer el hash del comando /hash [hash]
-    command_parts = message.text.split(maxsplit=1)
-    if len(command_parts) < 2:
-        await message.answer(
-            "<b>❌ Error</b>\n\n"
-            "<i>Formato incorrecto. Usa:\n"
-            "<code>/hash [tu_hash_aqui]</code></i>",
-            parse_mode="HTML"
-        )
-        return
-    
-    hash_text = command_parts[1].strip()
-    
-    # Obtener datos del estado FSM
-    data = await state.get_data()
-    network_name = data.get('network_name', 'desconocida')
-    network_key = data.get('network_key', 'desconocida')
-    address = data.get('address', '')
-    
-    # Aquí puedes agregar validación del hash según la red
-    # Por ejemplo, verificar formato, longitud, etc.
-    
-    mensaje_confirmacion = (
-        f"<b>📋 Hash Recibido</b>\n\n"
-        f"<i><b>🔗 Red:</b> {network_name}\n"
-        f"<b>📍 Dirección:</b> <code>{address}</code>\n"
-        f"<b>🔍 Hash:</b> <code>{hash_text}</code>\n\n"
-        f"<b>✅ Estado:</b> Pendiente de revisión\n"
-        f"<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
-        f"Te notificaremos cuando el admin revise tu depósito.</i>"
-    )
-    
-    # Aquí podrías guardar el hash en la base de datos
-    # await guardar_hash_pago(user_id, hash_text, network_key, network_name, address)
-    
-    await message.answer(mensaje_confirmacion, parse_mode="HTML")
-    
-    # Limpiar el estado FSM
-    await state.clear()
-    
-    # Opcional: Notificar al admin sobre el nuevo depósito
-    # await notificar_admin_deposito(user_id, hash_text, network_key, network_name)
 
 async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
     """Procesar la cantidad de retiro enviada por el usuario"""
@@ -397,3 +340,29 @@ async def cancelar_retiro_handler(callback: types.CallbackQuery):
         parse_mode="HTML"
     )
     await callback.answer() 
+
+# Nuevo handler para procesar el hash de depósito como mensaje normal
+async def procesar_hash_deposito(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != WalletStates.waiting_for_deposit_hash.state:
+        return  # Ignorar si no está esperando hash
+    user_id = message.from_user.id
+    hash_text = message.text.strip()
+    data = await state.get_data()
+    network_name = data.get('network_name', 'desconocida')
+    network_key = data.get('network_key', 'desconocida')
+    address = data.get('address', '')
+    # Guardar el hash en la base de datos
+    from utils.database import guardar_hash_pago
+    await guardar_hash_pago(user_id, hash_text, network_key, network_name, address)
+    mensaje_confirmacion = (
+        f"<b>📋 Hash Recibido</b>\n\n"
+        f"<i><b>🔗 Red:</b> {network_name}\n"
+        f"<b>📍 Dirección:</b> <code>{address}</code>\n"
+        f"<b>🔍 Hash:</b> <code>{hash_text}</code>\n\n"
+        f"<b>✅ Estado:</b> Pendiente de revisión\n"
+        f"<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
+        f"Te notificaremos cuando el admin revise tu depósito.</i>"
+    )
+    await message.answer(mensaje_confirmacion, parse_mode="HTML")
+    await state.clear() 

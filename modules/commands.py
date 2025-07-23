@@ -31,12 +31,12 @@ from modules.wallet import (
     wallet_depositar_handler,
     wallet_retirar_handler,
     handle_deposit_network,
-    procesar_hash_pago,
     procesar_wallet_ton,
     procesar_cantidad_retiro,
     confirmar_retiro_handler,
     cancelar_retiro_handler,
-    WalletStates
+    WalletStates,
+    procesar_hash_deposito,  # Importar el nuevo handler
 )
 from modules.explorar import explorar_handler
 from modules.nfts import (
@@ -160,8 +160,6 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
     # Handlers para redes de depósito
     dp.callback_query.register(handle_deposit_network, lambda c: c.data.startswith("depositar_"))
-    # Handler para procesar hash de pago
-    dp.message.register(procesar_hash_pago, Command("hash"))
     # Handler para procesar wallet TON (con FSM)
     dp.message.register(procesar_wallet_ton, WalletStates.waiting_for_wallet)
     # Handler para procesar cantidad de retiro (con FSM)
@@ -195,3 +193,4 @@ def register_commands(dp: Dispatcher):
     dp.message.register(tienda_handler, lambda m: m.text and "Tienda" in m.text)
     dp.message.register(wallet_handler, lambda m: m.text and "Wallet" in m.text)
     dp.message.register(explorar_handler, lambda m: m.text and "Explorar" in m.text)
+    dp.message.register(procesar_hash_deposito, WalletStates.waiting_for_deposit_hash)

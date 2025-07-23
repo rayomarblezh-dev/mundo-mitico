@@ -34,7 +34,9 @@ captcha_progreso = {}
 
 class CaptchaMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
-        user_id = event.from_user.id if hasattr(event, 'from_user') else None
+        # Log de depuración para ver el tipo de evento y si tiene from_user
+        logging.info(f"[Captcha][DEBUG] Evento recibido: {type(event)} - from_user: {getattr(event, 'from_user', None)}")
+        user_id = event.from_user.id if hasattr(event, 'from_user') and event.from_user else None
         if not user_id:
             logging.info("[Captcha] Evento sin user_id, pasando...")
             return await handler(event, data)
