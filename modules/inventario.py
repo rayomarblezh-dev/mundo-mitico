@@ -63,11 +63,6 @@ async def mostrar_inventario_usuario(event, user_id: int):
         texto = "<b>🧳 Inventario</b>\n\n<i>Tu inventario está vacío. ¡Captura criaturas o compra NFTs para llenarlo!</i>"
     else:
         texto = "<b>🧳 Inventario</b>\n\n"
-        if paquete_comprado:
-            texto += "<b>🎁 Paquete de bienvenida: ✅ COMPRADO</b>\n"
-        else:
-            texto += "<b>🎁 Paquete de bienvenida: ❌ NO COMPRADO</b>\n"
-        texto += "\n"
         for item, cantidad in inventario.items():
             if cantidad > 0:
                 emoji = obtener_emoji(item)
