@@ -1,8 +1,8 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from utils.database import (
-    agregar_referido,
-    obtener_referidos,
+    #agregar_referido,
+    #obtener_referidos,
     contar_referidos,
     contar_referidos_activos
 )
@@ -15,8 +15,8 @@ async def referidos_handler(message: types.Message):
     total = await contar_referidos(user_id)
     activos = await contar_referidos_activos(user_id)
     mensaje = (
-        f"<i><b>👥 Referidos</b>\n"
-        f"— Invita a tus amigos y gana recompensas exclusivas.\n\n"
+        f"<b>👥 Referidos</b>\n"
+        f"<i>— Invita a tus amigos y gana recompensas exclusivas.\n\n"
         f"— Comparte tu enlace único y ambos recibirán beneficios especiales.\n\n"
         f"<b>🎁 Recompensas:</b>\n"
         f"— Cada 10 invitaciones: 1 Hada\n"

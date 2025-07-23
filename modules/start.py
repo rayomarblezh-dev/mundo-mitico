@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from utils.database import agregar_referido
+from modules.commands import mostrar_promo_paquete_bienvenida
 
 async def start_handler(message: types.Message):
     # Manejo de referidos
@@ -24,14 +25,14 @@ async def start_handler(message: types.Message):
                 pass
 
     welcome_text = (
-        "<i><b>👋 ¡Bienvenido a Mundo Mítico!\n\n"
-        "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:</b>\n"
+        "👋 ¡Bienvenido a Mundo Mítico!\n\n"
+        "<i>Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
         "<blockquote expandable>— <b>Cazar Criaturas</b> - Encuentra y captura bestias míticas\n"
         "— <b>Expediciones</b>  - Explora territorios desconocidos\n"
         "— <b>Combates Épicos</b>  - Enfréntate a desafíos legendarios\n"
         "— <b>Invertir TON</b>  - Gestiona tu economía en el mundo mítico\n"
-        "— <b>Generar Ganancias</b>  - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n"
-        "<b>¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b></i>\n\n"
+        "— <b>Generar Ganancias</b>  - Atrapa criaturas y compra héroes que producen diariamente</blockquote></i>\n"
+        "<b>🤩 ¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
     )
     
     # Crear botones de menú
@@ -49,10 +50,10 @@ async def start_handler(message: types.Message):
     inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
-            InlineKeyboardButton(text="📮 Soporte", callback_data="support")   
+            InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
         ],
         [
-            InlineKeyboardButton(text="📕 Tutoriales", callback_data="tutorials")
+            InlineKeyboardButton(text="📕 Guia", callback_data="guia")
         ]
     ])
     
@@ -60,5 +61,8 @@ async def start_handler(message: types.Message):
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=inline_keyboard)
     
     # Enviar botones de menú por separado
-    await message.answer("<i><b>Menú Principal</b></i>", reply_markup=menu_keyboard, parse_mode="HTML")
+    await message.answer("🏠 <b>Menú Principal</b>", reply_markup=menu_keyboard, parse_mode="HTML")
+
+    # Al final del handler, mostrar la promo si aplica
+    await mostrar_promo_paquete_bienvenida(message, message.from_user.id)
 

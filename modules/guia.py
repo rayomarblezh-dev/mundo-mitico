@@ -1,6 +1,6 @@
 from aiogram import types
 
-async def tutorials_callback_handler(callback: types.CallbackQuery):
+async def guia_callback_handler(callback: types.CallbackQuery):
     cartel = (
         "⚠️ Próximamente\n\n"
     )
