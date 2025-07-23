@@ -4,7 +4,7 @@ import datetime
 
 # URI de Railway MongoDB
 MONGO_URI = "mongodb://mongo:PzIAIxpsrfvHQmmXESbaCkAyPPTwdWcf@tramway.proxy.rlwy.net:26295"
-DB_NAME = "mundo_mitico"
+DB_NAME = "mundo_mitico_db"
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]

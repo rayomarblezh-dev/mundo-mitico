@@ -27,10 +27,6 @@ if not BOT_TOKEN:
 register_commands(dp)
 
 # Middleware para captcha
-from aiogram.dispatcher.handler import CancelHandler
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
-from aiogram.types import CallbackQuery
 
 # Diccionario temporal para almacenar el progreso del captcha (por usuario)
 captcha_progreso = {}
@@ -50,6 +46,7 @@ class CaptchaMiddleware(BaseMiddleware):
             return await handler(event, data)
         # Si el usuario no ha pasado el captcha
         # Si es un callback de botón de captcha
+        from aiogram.types import CallbackQuery
         if isinstance(event, CallbackQuery) and event.data and event.data.startswith("captcha_"):
             digito = event.data.replace("captcha_", "")
             progreso = captcha.get("progreso", "") + digito
@@ -59,11 +56,11 @@ class CaptchaMiddleware(BaseMiddleware):
             codigo = captcha.get("codigo")
             if not codigo:
                 await event.answer("Error interno. Vuelve a intentarlo.", show_alert=True)
-                raise CancelHandler()
+                return
             if len(progreso) < 6:
                 await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
                 await event.answer(f"Has ingresado: {progreso}")
-                raise CancelHandler()
+                return
             if progreso == codigo:
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.verificado": True, "captcha.progreso": ""}})
                 await event.message.edit_caption("✅ Captcha verificado correctamente. ¡Bienvenido!", reply_markup=None)
@@ -75,14 +72,14 @@ class CaptchaMiddleware(BaseMiddleware):
                 await event.message.edit_caption("❌ Código incorrecto. Intenta de nuevo.")
                 await event.message.edit_reply_markup(reply_markup=generar_teclado_captcha())
                 await event.answer("Código incorrecto. Intenta de nuevo.")
-                raise CancelHandler()
+                return
         # Si no hay captcha generado, generarlo y enviar QR
         if not captcha.get("codigo"):
             path_qr, numeros = generar_captcha_qr()
             await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
             with open(path_qr, 'rb') as photo:
                 await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
-            raise CancelHandler()
+                return
         # Si hay captcha pendiente, mostrar QR y teclado
         if not captcha.get("verificado"):
             codigo = captcha.get('codigo')
@@ -96,7 +93,7 @@ class CaptchaMiddleware(BaseMiddleware):
                 await usuarios_col.update_one({"user_id": user_id}, {"$set": {"captcha.codigo": numeros, "captcha.progreso": ""}})
                 with open(path_qr, 'rb') as photo:
                     await event.answer_photo(photo, caption="Por favor, ingresa el código del QR usando los botones:", reply_markup=generar_teclado_captcha())
-            raise CancelHandler()
+            return
         return await handler(event, data)
 
 dp.update.outer_middleware(CaptchaMiddleware())
