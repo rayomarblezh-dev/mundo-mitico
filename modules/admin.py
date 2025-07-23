@@ -47,11 +47,11 @@ async def admin_handler(message: types.Message):
     admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔍 Buscar", callback_data="admin_buscar")],
         [InlineKeyboardButton(text="📊 Estadísticas", callback_data="admin_estadisticas")],
+        [InlineKeyboardButton(text="❗ Importante", callback_data="admin_importante")],
         [
-            InlineKeyboardButton(text="💵 Depósitos", callback_data="admin_depositos"),
-            InlineKeyboardButton(text="💸 Retiros", callback_data="admin_retiros")
-        ],
-        [InlineKeyboardButton(text="❗ Importante", callback_data="admin_importante")]
+            InlineKeyboardButton(text="📥 Depósitos", callback_data="admin_depositos"),
+            InlineKeyboardButton(text="📤 Retiros", callback_data="admin_retiros")
+        ]
     ])
     try:
         await message.edit_text(mensaje, parse_mode="HTML", reply_markup=admin_keyboard)

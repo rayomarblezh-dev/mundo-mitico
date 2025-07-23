@@ -1,4 +1,5 @@
 from utils.database import usuarios_col
+from utils.database import usuario_compro_paquete_bienvenida
 import logging
 
 # Diccionario de criaturas y NFTs realmente disponibles en el bot
@@ -46,17 +47,39 @@ async def obtener_inventario_usuario(user_id: int) -> dict:
         return {}
     return usuario.get("inventario", {})
 
+# Tabla de ganancias diarias por NFT y criaturas (solo NFTs por ahora)
+GANANCIAS_DIARIAS = {
+    "moguri-nft": 0.075,
+    "gargola-nft": 0.025,
+    "ghost-nft": 0.2,
+    # Si quieres agregar criaturas, pon aquí: "hada": 0.01, etc.
+}
+
 async def mostrar_inventario_usuario(event, user_id: int):
     inventario = await obtener_inventario_usuario(user_id)
+    paquete_comprado = await usuario_compro_paquete_bienvenida(user_id)
+    total_ganancia = 0.0
     if not inventario or all(cantidad == 0 for cantidad in inventario.values()):
         texto = "<b>🧳 Inventario</b>\n\n<i>Tu inventario está vacío. ¡Captura criaturas o compra NFTs para llenarlo!</i>"
     else:
         texto = "<b>🧳 Inventario</b>\n\n"
+        if paquete_comprado:
+            texto += "<b>🎁 Paquete de bienvenida: <span style='color:green;'>COMPRADO</span></b>\n"
+        else:
+            texto += "<b>🎁 Paquete de bienvenida: <span style='color:red;'>NO COMPRADO</span></b>\n"
+        texto += "\n"
         for item, cantidad in inventario.items():
             if cantidad > 0:
                 emoji = obtener_emoji(item)
                 nombre = obtener_nombre(item)
-                texto += f"{emoji} <b>{nombre}</b>: <code>{cantidad}</code>\n"
+                ganancia = GANANCIAS_DIARIAS.get(item.lower(), 0)
+                if ganancia > 0:
+                    texto += f"{emoji} <b>{nombre}</b>: <code>{cantidad}</code>  <i>(+{ganancia} TON/día c/u)</i>\n"
+                    total_ganancia += ganancia * cantidad
+                else:
+                    texto += f"{emoji} <b>{nombre}</b>: <code>{cantidad}</code>\n"
+        if total_ganancia > 0:
+            texto += f"\n<b>💸 Ganancia diaria total: <code>{total_ganancia:.3f} TON</code></b>"
     try:
         # Si es callback_query
         if hasattr(event, 'message') and hasattr(event, 'edit_text'):
