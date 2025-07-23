@@ -8,13 +8,13 @@ from modules.captcha import generar_captcha_imagen
 import datetime
 from aiogram.types import FSInputFile
 import collections
+from config.config import BOT_TOKEN
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configurar bot
-BOT_TOKEN = "AQUÍ_TU_TOKEN"  # Reemplaza por tu token real
 if not BOT_TOKEN:
     logger.error("BOT_TOKEN no encontrado. Configura tu token en el código.")
     exit(1)
@@ -24,6 +24,14 @@ register_commands(dp)
 
 # Middleware para captcha
 captcha_progreso = {}
+
+MUNDO_MITICO_VARIANTS = [
+    "mundo mitico", "mundomitico", "mundo mítico", "mundomítico"
+]
+
+def contiene_mundo_mitico(nombre):
+    nombre = nombre.lower()
+    return any(variant in nombre for variant in MUNDO_MITICO_VARIANTS)
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 class CaptchaMiddleware(BaseMiddleware):
@@ -110,6 +118,35 @@ class CaptchaMiddleware(BaseMiddleware):
         return await handler(event, data)
 
 dp.update.outer_middleware(CaptchaMiddleware())
+
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+class MundoMiticoNombreMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        user = getattr(event, 'from_user', None)
+        if user:
+            nombre_usuario = (getattr(user, 'first_name', '') or '') + ' ' + (getattr(user, 'username', '') or '')
+            if contiene_mundo_mitico(nombre_usuario):
+                logger.info(f"[MUNDO_MITICO] Usuario {user.id} tiene 'Mundo Mitico' en su nombre: {nombre_usuario}")
+                # Guardar registro en la base de datos
+                await usuarios_col.update_one(
+                    {"user_id": user.id},
+                    {"$set": {"detectado_mundo_mitico": True, "nombre_detectado": nombre_usuario, "fecha_detectado": datetime.datetime.now()}},
+                    upsert=True
+                )
+                # Notificar al usuario (si es un mensaje o callback)
+                if hasattr(event, 'answer'):
+                    try:
+                        await event.answer("🎉 ¡Tu nombre contiene 'Mundo Mitico'!", show_alert=True)
+                    except Exception:
+                        pass
+                elif hasattr(event, 'message'):
+                    try:
+                        await event.message.answer("🎉 ¡Tu nombre contiene 'Mundo Mitico'!")
+                    except Exception:
+                        pass
+        return await handler(event, data)
+
+dp.update.outer_middleware(MundoMiticoNombreMiddleware())
 
 # Nueva función main para aiogram v3
 async def main():

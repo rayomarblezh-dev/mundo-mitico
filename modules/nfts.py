@@ -2,6 +2,9 @@ from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 import os
 from utils.database import usuario_tiene_nft_comun, usuario_tiene_nft_ghost, comprar_nft, obtener_nft_usuario
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def nfts_handler(callback: types.CallbackQuery):
     """Handler para mostrar la sección de NFTs"""
@@ -112,25 +115,27 @@ async def nft_ghost_handler(callback: types.CallbackQuery):
 
 # Handlers para compra de NFTs
 async def comprar_nft_moguri_handler(callback: types.CallbackQuery):
-    """Handler para comprar NFT Moguri"""
     user_id = callback.from_user.id
-    
-    # Verificar si ya tiene un NFT común
-    if await usuario_tiene_nft_comun(user_id):
-        nft_actual = await obtener_nft_usuario(user_id)
-        mensaje = (
-            f"<b>❌ Ya tienes un NFT común</b>\n\n"
-            f"Ya posees el NFT: <b>{nft_actual['nft_tipo']}</b>\n"
-            f"Solo puedes tener 1 NFT común (Moguri o Gárgola) a la vez.\n\n"
-            f"<i>Si deseas cambiar tu NFT, contacta al soporte.</i>"
-        )
-        await callback.message.edit_text(mensaje, parse_mode="HTML")
-        await callback.answer()
-        return
-    
-    # Procesar compra
     try:
-        await comprar_nft(user_id, "Moguri-NFT", 0.5)
+        if await usuario_tiene_nft_comun(user_id):
+            nft_actual = await obtener_nft_usuario(user_id)
+            mensaje = (
+                f"<b>❌ Ya tienes un NFT común</b>\n\n"
+                f"Ya posees el NFT: <b>{nft_actual['nft_tipo']}</b>\n"
+                f"Solo puedes tener 1 NFT común (Moguri o Gárgola) a la vez.\n\n"
+                f"<i>Si deseas cambiar tu NFT, contacta al soporte.</i>"
+            )
+            await callback.message.edit_text(mensaje, parse_mode="HTML")
+            await callback.answer()
+            return
+        precio = 0.5
+        if precio <= 0:
+            logger.warning(f"Intento de compra de NFT con precio inválido: {precio}")
+            await callback.message.edit_text("<b>❌ Error en la compra</b>\n\nPrecio inválido.", parse_mode="HTML")
+            await callback.answer()
+            return
+        await comprar_nft(user_id, "Moguri-NFT", precio)
+        logger.info(f"Usuario {user_id} compró Moguri-NFT por {precio} TON")
         mensaje = (
             "<b>✅ ¡Compra exitosa!</b>\n\n"
             "Has adquirido el <b>💀 Moguri-NFT</b>\n\n"
@@ -145,6 +150,7 @@ async def comprar_nft_moguri_handler(callback: types.CallbackQuery):
         await callback.message.edit_text(mensaje, parse_mode="HTML")
         await callback.answer()
     except Exception as e:
+        logger.error(f"Error en la compra de Moguri-NFT para user_id={user_id}: {e}")
         mensaje = "<b>❌ Error en la compra</b>\n\nHubo un problema al procesar tu compra. Intenta nuevamente."
         await callback.message.edit_text(mensaje, parse_mode="HTML")
         await callback.answer()

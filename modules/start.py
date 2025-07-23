@@ -81,7 +81,3 @@ async def start_handler(message: types.Message):
     
     # Enviar botones de menú por separado
     await message.answer("🏠 <b>Menú Principal</b>", reply_markup=menu_keyboard, parse_mode="HTML")
-
-    # Al final del handler, mostrar la promo si aplica
-    await mostrar_promo_paquete_bienvenida(message, message.from_user.id)
-

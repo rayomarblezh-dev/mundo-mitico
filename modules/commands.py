@@ -5,6 +5,10 @@ from aiogram import Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.database import es_elegible_paquete_bienvenida, PAQUETE_PRECIO, registrar_compra_paquete_bienvenida, usuario_compro_paquete_bienvenida
+from utils.database import get_last_promo_time, set_last_promo_time
+import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 from modules.start import start_handler
 from modules.guia import guia_callback_handler
@@ -68,18 +72,40 @@ from modules.admin import (
 # Registro de comandos
 # =========================
 async def mostrar_promo_paquete_bienvenida(message, user_id):
-    if await es_elegible_paquete_bienvenida(user_id):
-        promo_text = (
-            '💎 <b>¡Paquete de bienvenida!</b>\n'
-            '7 🧚 Hadas, 3 🧙 Magos, 1 🐺 Licántropo por solo <b>1.5 TON</b>.'
-            '\n<i>Solo por 15 días desde este registro.</i>'
-        )
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="Comprar Ahora!", callback_data="comprar_paquete_bienvenida")]
-            ]
-        )
-        await message.answer(promo_text, parse_mode="HTML", reply_markup=keyboard)
+    if not await es_elegible_paquete_bienvenida(user_id):
+        logger.info(f"[PROMO] Usuario {user_id} no es elegible para la promo.")
+        return
+    now = datetime.datetime.now()
+    last_time = await get_last_promo_time(user_id)
+    logger.info(f"[PROMO] Usuario {user_id} last_promo_time: {last_time} (ahora: {now})")
+    # Convertir last_time a datetime si es string o tipo especial de Mongo
+    if last_time:
+        if not isinstance(last_time, datetime.datetime):
+            try:
+                # Si es string ISO
+                last_time = datetime.datetime.fromisoformat(str(last_time))
+            except Exception as e:
+                logger.warning(f"[PROMO] Error convirtiendo last_promo_time: {e}")
+                last_time = None
+    if last_time:
+        diff = (now - last_time).total_seconds()
+        logger.info(f"[PROMO] Usuario {user_id} segundos desde última promo: {diff}")
+        if diff < 900:
+            logger.info(f"[PROMO] Usuario {user_id} NO se muestra promo (cooldown activo)")
+            return  # Menos de 15 minutos
+    await set_last_promo_time(user_id, now)
+    logger.info(f"[PROMO] Usuario {user_id} SE MUESTRA promo y se actualiza timestamp.")
+    promo_text = (
+        '💎 <b>¡Paquete de bienvenida!</b>\n'
+        '7 🧚 Hadas, 3 🧙 Magos, 1 🐺 Licántropo por solo <b>1.5 TON</b>.'
+        '\n<i>Solo por 15 días desde este registro.</i>'
+    )
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Comprar Ahora!", callback_data="comprar_paquete_bienvenida")]
+        ]
+    )
+    await message.answer(promo_text, parse_mode="HTML", reply_markup=keyboard)
 
 # Handler para el botón Comprar del paquete de bienvenida
 from aiogram import types

@@ -6,6 +6,11 @@ from aiogram.filters import Command
 import re
 import platform
 import psutil
+from utils.database import agregar_credito_usuario, notificar_credito_agregado, contar_usuarios, contar_depositos, contar_retiros, obtener_depositos_pendientes
+from config.config import is_admin, MIN_DEPOSITO, MIN_RETIRO, COMISION_RETIRO, TIEMPO_PROCESAMIENTO
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Estados para FSM de administración
 class AdminStates(StatesGroup):
@@ -14,27 +19,21 @@ class AdminStates(StatesGroup):
     waiting_for_reason = State()       # Esperando razón del crédito
     waiting_for_confirmation = State() # Esperando confirmación
 
-# Lista de administradores (IDs de Telegram)
-ADMIN_IDS = [
-    7828962018  # Reemplaza con tu ID real
-    # Agrega más IDs de administradores aquí
-]
-
-def is_admin(user_id: int) -> bool:
-    """Verificar si el usuario es administrador"""
-    return user_id in ADMIN_IDS
+# Eliminar ADMIN_IDS y función is_admin locales
 
 async def admin_handler(message: types.Message):
     """Handler principal para el comando /admin"""
     user_id = message.from_user.id
     
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado al panel admin por user_id={user_id}")
         await message.answer(
             "<b>❌ Acceso Denegado</b>\n\n"
             "<i>No tienes permisos de administrador.</i>",
             parse_mode="HTML"
         )
         return
+    logger.info(f"Admin user_id={user_id} accedió al panel de administración")
     
     mensaje = (
         "<b>🔧 Panel de Administración</b>\n\n"
@@ -60,8 +59,10 @@ async def admin_agregar_credito_handler(callback: types.CallbackQuery, state: FS
     user_id = callback.from_user.id
     
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado a agregar crédito por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
+    logger.info(f"Admin user_id={user_id} inició proceso de agregar crédito")
     
     mensaje = (
         "<b>💰 Agregar Crédito</b>\n\n"
@@ -215,8 +216,10 @@ async def confirmar_credito_handler(callback: types.CallbackQuery, state: FSMCon
     user_id = callback.from_user.id
     
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado a confirmar crédito por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
+    logger.info(f"Admin user_id={user_id} inició proceso de confirmar crédito")
     
     # Obtener datos del estado
     data = await state.get_data()
@@ -225,12 +228,14 @@ async def confirmar_credito_handler(callback: types.CallbackQuery, state: FSMCon
     razon = data.get('razon', 'Sin razón específica')
     
     try:
-        # Aquí deberías agregar el crédito a la base de datos
-        # await agregar_credito_usuario(target_user_id, cantidad, razon, user_id)
-        
+        await agregar_credito_usuario(target_user_id, cantidad, razon, user_id)
         # Notificar al usuario (si es posible)
-        # await notificar_credito_agregado(target_user_id, cantidad, razon)
-        
+        try:
+            from modules.bot import bot
+            await notificar_credito_agregado(bot, target_user_id, cantidad, razon)
+        except Exception:
+            pass
+        logger.info(f"Admin user_id={user_id} agregó {cantidad} TON a user_id={target_user_id} (razón: {razon})")
         mensaje_exito = (
             f"<b>✅ Crédito Agregado</b>\n\n"
             f"<i><b>👤 Usuario:</b> {target_user_id}\n"
@@ -239,13 +244,10 @@ async def confirmar_credito_handler(callback: types.CallbackQuery, state: FSMCon
             f"<b>👨‍💼 Admin:</b> {callback.from_user.full_name}\n\n"
             f"<b>✅ Estado:</b> Crédito agregado exitosamente</i>"
         )
-        
         await callback.message.edit_text(mensaje_exito, parse_mode="HTML")
-        
-        # Limpiar el estado FSM
         await state.clear()
-        
     except Exception as e:
+        logger.error(f"Error al agregar crédito: {e}")
         mensaje_error = (
             f"<b>❌ Error al Agregar Crédito</b>\n\n"
             f"<i>Hubo un problema al procesar la solicitud:\n"
@@ -253,7 +255,6 @@ async def confirmar_credito_handler(callback: types.CallbackQuery, state: FSMCon
         )
         await callback.message.edit_text(mensaje_error, parse_mode="HTML")
         await state.clear()
-    
     await callback.answer()
 
 async def cancelar_credito_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -275,24 +276,19 @@ async def cancelar_credito_handler(callback: types.CallbackQuery, state: FSMCont
     await callback.answer()
 
 async def admin_estadisticas_handler(callback: types.CallbackQuery):
-    """Handler para mostrar estadísticas del bot"""
     user_id = callback.from_user.id
-    
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado a estadísticas por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    
-    # Aquí deberías obtener estadísticas reales de la base de datos
-    # total_usuarios = await contar_usuarios()
-    # total_depositos = await contar_depositos()
-    # total_retiros = await contar_retiros()
-    
-    # Placeholder para estadísticas
-    total_usuarios = 0
-    total_depositos = 0
-    total_retiros = 0
-    balance_total = 0
-    
+    logger.info(f"Admin user_id={user_id} consultó estadísticas del bot")
+    try:
+        total_usuarios = await contar_usuarios()
+        total_depositos = await contar_depositos()
+        total_retiros = await contar_retiros()
+        balance_total = 0  # Si tienes una función para calcular el balance total, úsala aquí
+    except Exception as e:
+        total_usuarios = total_depositos = total_retiros = balance_total = 0
     mensaje = (
         f"<b>📊 Estadísticas del Bot</b>\n\n"
         f"<i><b>👥 Usuarios:</b> {total_usuarios}\n"
@@ -304,7 +300,6 @@ async def admin_estadisticas_handler(callback: types.CallbackQuery):
         f"— Tasa de conversión: 12%\n"
         f"— Tiempo promedio de respuesta: 2.3s</i>"
     )
-    
     await callback.message.edit_text(mensaje, parse_mode="HTML")
     await callback.answer()
 
@@ -313,45 +308,48 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado a depósitos por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    
-    # Aquí deberías obtener depósitos pendientes de la base de datos
-    # depositos_pendientes = await obtener_depositos_pendientes()
-    
-    mensaje = (
-        "<b>📋 Depósitos Pendientes</b>\n\n"
-        "<i>No hay depósitos pendientes de revisión.\n\n"
-        "<b>📊 Resumen:</b>\n"
-        "— Depósitos procesados hoy: 5\n"
-        "— Depósitos rechazados: 0\n"
-        "— Tiempo promedio de procesamiento: 4.2h</i>"
-    )
-    
+    logger.info(f"Admin user_id={user_id} consultó depósitos pendientes")
+    try:
+        depositos_pendientes = await obtener_depositos_pendientes()
+        if depositos_pendientes:
+            mensaje = "<b>📋 Depósitos Pendientes</b>\n\n"
+            for dep in depositos_pendientes:
+                mensaje += (
+                    f"<b>Usuario:</b> {dep.get('user_id')}\n"
+                    f"<b>Hash:</b> <code>{dep.get('hash')}</code>\n"
+                    f"<b>Red:</b> {dep.get('network_name', 'N/A')}\n"
+                    f"<b>Dirección:</b> <code>{dep.get('address', 'N/A')}</code>\n"
+                    f"<b>Fecha:</b> {dep.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if dep.get('fecha') else 'N/A'}\n"
+                    f"<b>Estado:</b> {dep.get('estado', 'N/A')}\n\n"
+                )
+        else:
+            mensaje = "<b>📋 Depósitos Pendientes</b>\n\n<i>No hay depósitos pendientes de revisión.</i>"
+    except Exception as e:
+        mensaje = f"<b>❌ Error al obtener depósitos:</b> <code>{str(e)}</code>"
     await callback.message.edit_text(mensaje, parse_mode="HTML")
     await callback.answer()
 
 async def admin_config_handler(callback: types.CallbackQuery):
-    """Handler para configuración del sistema"""
     user_id = callback.from_user.id
-    
     if not is_admin(user_id):
+        logger.warning(f"Intento de acceso denegado a configuración por user_id={user_id}")
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    
+    logger.info(f"Admin user_id={user_id} consultó configuración del sistema")
     mensaje = (
-        "<b>⚙️ Configuración del Sistema</b>\n\n"
-        "<i><b>🔧 Parámetros Actuales:</b>\n"
-        "— Mínimo depósito: 0.5 TON\n"
-        "— Mínimo retiro: 1.1 TON\n"
-        "— Comisión de retiro: 0.1 TON\n"
-        "— Tiempo de procesamiento: 24-48h\n\n"
-        "<b>⚠️ Nota:</b>\n"
-        "La configuración se puede modificar desde el panel web.</i>"
+        f"<b>⚙️ Configuración del Sistema</b>\n\n"
+        f"<i><b>🔧 Parámetros Actuales:</b>\n"
+        f"— Mínimo depósito: {MIN_DEPOSITO} TON\n"
+        f"— Mínimo retiro: {MIN_RETIRO} TON\n"
+        f"— Comisión de retiro: {COMISION_RETIRO} TON\n"
+        f"— Tiempo de procesamiento: {TIEMPO_PROCESAMIENTO}\n\n"
+        f"<b>⚠️ Nota:</b>\nLa configuración se puede modificar desde el panel web.</i>"
     )
-    
     await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer() 
+    await callback.answer()
 
 async def info_handler(message: types.Message):
     """Muestra información del sistema en tiempo real"""

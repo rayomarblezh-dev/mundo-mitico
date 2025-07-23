@@ -1,10 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from aiogram import Bot
 import datetime
-
-# URI de Railway MongoDB
-MONGO_URI = "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556"
-DB_NAME = "mundo_mitico_db"
+from config.config import MONGO_URI, DB_NAME
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
@@ -247,3 +244,12 @@ async def usuario_paquete_bienvenida_expirado(user_id: int):
     usuario = await usuarios_col.find_one({"user_id": user_id})
     paquete = usuario.get("paquete_bienvenida", {}) if usuario else {}
     return paquete.get("expirado", False)
+
+async def get_last_promo_time(user_id: int):
+    usuario = await usuarios_col.find_one({"user_id": user_id})
+    if usuario:
+        return usuario.get("last_promo_time")
+    return None
+
+async def set_last_promo_time(user_id: int, dt: datetime.datetime):
+    await usuarios_col.update_one({"user_id": user_id}, {"$set": {"last_promo_time": dt}})
