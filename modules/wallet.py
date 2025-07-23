@@ -360,7 +360,7 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
         f"<b>Cantidad:</b> <code>{cantidad}</code> TON\n"
         f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
         "Tu solicitud está pendiente de revisión.\n\n"
-        "<b>⏰ Tiempo estimado:</b> 24-48 horas\n"
+            "<b>⏰ Tiempo estimado:</b> 24-48 horas\n"
         "<b>📧 Notificación:</b> Recibirás confirmación cuando se complete."
     )
     

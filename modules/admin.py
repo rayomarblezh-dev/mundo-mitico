@@ -548,7 +548,7 @@ async def info_handler(message: types.Message):
     try:
         await message.edit_text(msg, parse_mode="HTML")
     except Exception:
-        await message.answer(msg, parse_mode="HTML")
+        await message.answer(msg, parse_mode="HTML") 
 
 # Nuevo flujo: Buscar usuario y mostrar historial
 class BuscarStates(StatesGroup):
