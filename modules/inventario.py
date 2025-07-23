@@ -57,7 +57,6 @@ GANANCIAS_DIARIAS = {
 
 async def mostrar_inventario_usuario(event, user_id: int):
     inventario = await obtener_inventario_usuario(user_id)
-    paquete_comprado = await usuario_compro_paquete_bienvenida(user_id)
     total_ganancia = 0.0
     if not inventario or all(cantidad == 0 for cantidad in inventario.values()):
         texto = "<b>🧳 Inventario</b>\n\n<i>Tu inventario está vacío. ¡Captura criaturas o compra NFTs para llenarlo!</i>"
