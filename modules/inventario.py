@@ -1,5 +1,4 @@
 from utils.database import usuarios_col
-from utils.database import usuario_compro_paquete_bienvenida
 import logging
 
 # Diccionario de criaturas y NFTs realmente disponibles en el bot
