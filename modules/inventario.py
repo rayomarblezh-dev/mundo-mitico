@@ -64,9 +64,9 @@ async def mostrar_inventario_usuario(event, user_id: int):
     else:
         texto = "<b>🧳 Inventario</b>\n\n"
         if paquete_comprado:
-            texto += "<b>🎁 Paquete de bienvenida: <span style='color:green;'>COMPRADO</span></b>\n"
+            texto += "<b>🎁 Paquete de bienvenida: ✅ COMPRADO</b>\n"
         else:
-            texto += "<b>🎁 Paquete de bienvenida: <span style='color:red;'>NO COMPRADO</span></b>\n"
+            texto += "<b>🎁 Paquete de bienvenida: ❌ NO COMPRADO</b>\n"
         texto += "\n"
         for item, cantidad in inventario.items():
             if cantidad > 0:

@@ -630,7 +630,7 @@ async def mostrar_historial_usuario(event, state: FSMContext):
         f"<b>Balance:</b> <code>{balance}</code> TON\n"
         f"<b>Fecha registro:</b> {fecha_registro.strftime('%Y-%m-%d') if fecha_registro else '-'}\n"
         f"<b>Estado:</b> {'Activo' if activo else 'Inactivo'}\n"
-        f"<hr>"
+        f"----------------------\n"
         f"<b>💵 Depósitos (página {pagina_dep+1}/{max(1,((len(depositos)-1)//per_page)+1)}):</b>\n"
     )
     start_dep = pagina_dep*per_page
@@ -647,7 +647,7 @@ async def mostrar_historial_usuario(event, state: FSMContext):
                 mensaje += f"└ <b>≈</b> <code>{dep.get('equivalente_ton'):.4f}</code> TON\n"
     else:
         mensaje += "Sin depósitos.\n"
-    mensaje += f"<hr>\n<b>💸 Retiros (página {pagina_ret+1}/{max(1,((len(retiros)-1)//per_page)+1)}):</b>\n"
+    mensaje += f"----------------------\n<b>💸 Retiros (página {pagina_ret+1}/{max(1,((len(retiros)-1)//per_page)+1)}):</b>\n"
     start_ret = pagina_ret*per_page
     end_ret = start_ret+per_page
     if retiros[start_ret:end_ret]:
