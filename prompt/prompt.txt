@@ -15,3 +15,27 @@ Botón capturar criatura mística⚔️ (requiere 1 licántropo y 2 orcos):
 
 Backend:
 Usar MongoDB + motor en database.py para inventario, referidos y cooldowns.
+
+
+
+istorial de transacciones
+Permitir a los usuarios ver su propio historial de depósitos y retiros.
+3. Panel web de administración
+Si no existe, un panel web para admins sería más cómodo para gestión avanzada.
+4. Logs y auditoría
+Registro detallado de todas las acciones críticas (cambios de parámetros, movimientos de fondos, etc).
+5. Soporte y feedback
+Botón de contacto directo con soporte.
+Sistema de tickets o mensajes para admins.
+6. Mejoras de seguridad
+Doble confirmación para retiros grandes.
+Alertas de actividad sospechosa.
+7. Automatización de tareas
+Procesamiento automático de pequeños retiros/depsósitos si cumplen ciertos criterios.
+Reglas para auto-aprobar o rechazar ciertas operaciones.
+8. Panel de configuración avanzada
+Permitir cambiar parámetros del sistema desde Telegram (con confirmación).
+9. Estadísticas avanzadas
+Gráficas de crecimiento, actividad, ingresos, etc.
+10. Internacionalización
+Soporte para varios idiomas si tienes usuarios de diferentes países.

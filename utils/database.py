@@ -1,7 +1,8 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from aiogram import Bot
 import datetime
-from config.config import MONGO_URI, DB_NAME
+from config.config import MONGO_URI, DB_NAME, ADMIN_IDS
+from modules.bot import bot
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
@@ -332,3 +333,25 @@ async def log_action(actor_id: int, action: str, target_id: int = None, details:
         "timestamp": datetime.datetime.now()
     }
     await logs_col.insert_one(log)
+
+async def notificar_admins_nuevo_deposito(user_id, cantidad, red, deposito_id):
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(
+                admin_id,
+                f"<b>🔔 Nuevo depósito pendiente</b>\n\nID: <code>{deposito_id}</code>\nUsuario: <code>{user_id}</code>\nCantidad: <b>{cantidad}</b> {red}\nRevisa el panel de administración para gestionarlo.",
+                parse_mode="HTML"
+            )
+        except Exception:
+            pass
+
+async def notificar_admins_nuevo_retiro(user_id, cantidad, wallet, retiro_id):
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(
+                admin_id,
+                f"<b>🔔 Nuevo retiro pendiente</b>\n\nID: <code>{retiro_id}</code>\nUsuario: <code>{user_id}</code>\nCantidad: <b>{cantidad}</b> TON\nWallet: <code>{wallet}</code>\nRevisa el panel de administración para gestionarlo.",
+                parse_mode="HTML"
+            )
+        except Exception:
+            pass

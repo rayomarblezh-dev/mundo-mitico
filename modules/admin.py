@@ -11,6 +11,7 @@ from config.config import is_admin, MIN_DEPOSITO, MIN_RETIRO, COMISION_RETIRO, T
 import logging
 import datetime
 from utils.database import depositos_col, creditos_col
+import bson
 
 logger = logging.getLogger(__name__)
 
@@ -451,15 +452,25 @@ async def admin_importante_handler(callback: types.CallbackQuery):
         return
     logger.info(f"Admin user_id={user_id} consultó Importante")
     mensaje = (
-        f"<b>❗ Importante</b>\n\n"
-        f"<i>Esta sección informa al admin sobre los parámetros críticos del sistema.</i>\n\n"
+        f"<b>❗ Importante: Parámetros Críticos del Sistema</b>\n\n"
+        f"<i>Esta sección te muestra los parámetros clave que afectan la experiencia de todos los usuarios.\n\n"
         f"<b>🔧 Parámetros Actuales:</b>\n"
-        f"— Mínimo depósito: <code>{MIN_DEPOSITO}</code> TON\n"
-        f"— Mínimo retiro: <code>{MIN_RETIRO}</code> TON\n"
-        f"— Comisión de retiro: <code>{COMISION_RETIRO}</code> TON\n"
-        f"— Tiempo de procesamiento: <code>{TIEMPO_PROCESAMIENTO}</code>\n\n"
-        f"<b>⚠️ Nota:</b>\nLa configuración se puede modificar desde el panel web.\n\n"
-        f"<b>Revisa estos parámetros periódicamente para evitar errores en los flujos de usuarios.</b>"
+        f"— <b>Mínimo depósito:</b> <code>{MIN_DEPOSITO}</code> TON\n"
+        f"— <b>Mínimo retiro:</b> <code>{MIN_RETIRO}</code> TON\n"
+        f"— <b>Comisión de retiro:</b> <code>{COMISION_RETIRO}</code> TON\n"
+        f"— <b>Tiempo de procesamiento:</b> <code>{TIEMPO_PROCESAMIENTO}</code>\n\n"
+        f"<b>📝 Explicación de cada parámetro:</b>\n"
+        f"• <b>Mínimo depósito:</b> Monto mínimo que un usuario debe enviar para que su depósito sea aceptado.\n"
+        f"• <b>Mínimo retiro:</b> Monto mínimo que un usuario puede solicitar para retirar.\n"
+        f"• <b>Comisión de retiro:</b> Monto fijo descontado en cada retiro.\n"
+        f"• <b>Tiempo de procesamiento:</b> Tiempo estimado para que un admin procese depósitos y retiros.\n\n"
+        f"<b>⚠️ Recomendaciones:</b>\n"
+        f"• Revisa y ajusta estos parámetros periódicamente según la actividad y feedback de los usuarios.\n"
+        f"• Si cambias algún valor, comunícalo en el canal oficial para evitar confusiones.\n"
+        f"• Mantén el mínimo de retiro mayor que la comisión para evitar retiros no rentables.\n"
+        f"• Si hay problemas de saturación, considera aumentar el tiempo de procesamiento temporalmente.\n\n"
+        f"<b>🔗 Recuerda:</b> Puedes modificar estos valores desde el panel web de administración.\n\n"
+        f"<b>✅ Buenas prácticas = menos soporte y usuarios más felices.</b></i>"
     )
     try:
         await callback.message.edit_text(mensaje, parse_mode="HTML")
@@ -578,6 +589,41 @@ async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
     user_input = message.text.strip()
     from utils.database import usuarios_col, depositos_col, creditos_col
     usuario = None
+    depositos = []
+    retiros = []
+    # Buscar por ID de depósito o retiro si es un ObjectId válido
+    try:
+        if len(user_input) == 24:
+            obj_id = bson.ObjectId(user_input)
+            dep = await depositos_col.find_one({"_id": obj_id})
+            if dep:
+                mensaje = (
+                    f"<b>🔎 Depósito encontrado</b>\n\n"
+                    f"<b>ID:</b> <code>{user_input}</code>\n"
+                    f"<b>Usuario:</b> <code>{dep.get('user_id')}</code>\n"
+                    f"<b>Cantidad:</b> <b>{float(dep.get('cantidad',0)):.3f}</b> {dep.get('network_name','TON').split()[-1]}\n"
+                    f"<b>Estado:</b> <b>{dep.get('estado','?')}</b>\n"
+                    f"<b>Fecha:</b> {dep.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if dep.get('fecha') else '-'}\n"
+                    f"<b>Hash:</b> <code>{dep.get('hash','-')}</code>\n"
+                )
+                await message.edit_text(mensaje, parse_mode="HTML")
+                return
+            ret = await creditos_col.find_one({"_id": obj_id})
+            if ret:
+                mensaje = (
+                    f"<b>🔎 Retiro encontrado</b>\n\n"
+                    f"<b>ID:</b> <code>{user_input}</code>\n"
+                    f"<b>Usuario:</b> <code>{ret.get('user_id')}</code>\n"
+                    f"<b>Cantidad:</b> <b>{float(ret.get('cantidad',0)):.3f}</b> TON\n"
+                    f"<b>Estado:</b> <b>{ret.get('estado','?')}</b>\n"
+                    f"<b>Fecha:</b> {ret.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if ret.get('fecha') else '-'}\n"
+                    f"<b>Wallet:</b> <code>{ret.get('wallet','-')}</code>\n"
+                )
+                await message.edit_text(mensaje, parse_mode="HTML")
+                return
+    except Exception:
+        pass
+    # Buscar por usuario (ID o username)
     if user_input.startswith('@'):
         username = user_input[1:]
         usuario = await usuarios_col.find_one({"username": username})
@@ -589,13 +635,15 @@ async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
             pass
     if not usuario:
         await message.edit_text(
-            f"<b>❌ Usuario no encontrado</b>\n\n<i>No se encontró ningún usuario con ese ID o username.</i>",
+            f"<b>❌ Usuario no encontrado</b>\n\n<i>No se encontró ningún usuario con ese ID, username o ID de operación.</i>",
             parse_mode="HTML"
         )
         return
-    # Buscar todos los depósitos y retiros
-    depositos = await depositos_col.find({"user_id": usuario["user_id"]}).sort("fecha", -1).to_list(length=100)
-    retiros = await creditos_col.find({"user_id": usuario["user_id"], "tipo": "retiro"}).sort("fecha", -1).to_list(length=100)
+    # Buscar todos los depósitos y retiros (últimos 3 meses)
+    from datetime import datetime, timedelta
+    hace_3_meses = datetime.now() - timedelta(days=90)
+    depositos = await depositos_col.find({"user_id": usuario["user_id"], "fecha": {"$gte": hace_3_meses}}).sort("fecha", -1).to_list(length=100)
+    retiros = await creditos_col.find({"user_id": usuario["user_id"], "tipo": "retiro", "fecha": {"$gte": hace_3_meses}}).sort("fecha", -1).to_list(length=100)
     await state.update_data(
         usuario_id=usuario["user_id"],
         username=usuario.get("username","-"),
@@ -627,7 +675,7 @@ async def mostrar_historial_usuario(event, state: FSMContext):
     mensaje = (
         f"<b>👤 Usuario:</b> <code>{usuario_id}</code> | @{username}\n"
         f"<b>Nombre:</b> {first_name}\n"
-        f"<b>Balance:</b> <code>{balance}</code> TON\n"
+        f"<b>Balance:</b> <code>{balance:.3f}</code> TON\n"
         f"<b>Fecha registro:</b> {fecha_registro.strftime('%Y-%m-%d') if fecha_registro else '-'}\n"
         f"<b>Estado:</b> {'Activo' if activo else 'Inactivo'}\n"
         f"----------------------\n"
@@ -639,12 +687,12 @@ async def mostrar_historial_usuario(event, state: FSMContext):
         for i, dep in enumerate(depositos[start_dep:end_dep], start=start_dep+1):
             mensaje += (
                 f"<b>{i}.</b> <code>{dep.get('fecha').strftime('%Y-%m-%d')}</code> | "
-                f"<b>{dep.get('cantidad','?')}</b> {dep.get('network_name','TON').split()[-1]} | Estado: <b>{dep.get('estado','?')}</b>\n"
+                f"<b>{float(dep.get('cantidad',0)):.3f}</b> {dep.get('network_name','TON').split()[-1]} | Estado: <b>{dep.get('estado','?')}</b> | <b>ID:</b> <code>{dep.get('_id')}</code>\n"
             )
             if dep.get('hash'):
                 mensaje += f"└ <b>Hash:</b> <code>{dep.get('hash')}</code>\n"
             if dep.get('equivalente_ton') and dep.get('network_name','ton').lower() != 'ton':
-                mensaje += f"└ <b>≈</b> <code>{dep.get('equivalente_ton'):.4f}</code> TON\n"
+                mensaje += f"└ <b>≈</b> <code>{float(dep.get('equivalente_ton')):.3f}</code> TON\n"
     else:
         mensaje += "Sin depósitos.\n"
     mensaje += f"----------------------\n<b>💸 Retiros (página {pagina_ret+1}/{max(1,((len(retiros)-1)//per_page)+1)}):</b>\n"
@@ -654,7 +702,7 @@ async def mostrar_historial_usuario(event, state: FSMContext):
         for i, ret in enumerate(retiros[start_ret:end_ret], start=start_ret+1):
             mensaje += (
                 f"<b>{i}.</b> <code>{ret.get('fecha').strftime('%Y-%m-%d')}</code> | "
-                f"<b>{ret.get('cantidad','?')}</b> TON | Estado: <b>{ret.get('estado','?')}</b>\n"
+                f"<b>{float(ret.get('cantidad',0)):.3f}</b> TON | Estado: <b>{ret.get('estado','?')}</b> | <b>ID:</b> <code>{ret.get('_id')}</code>\n"
             )
             if ret.get('wallet'):
                 mensaje += f"└ <b>Wallet:</b> <code>{ret.get('wallet')}</code>\n"
