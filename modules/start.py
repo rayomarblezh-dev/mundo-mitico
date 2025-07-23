@@ -71,7 +71,7 @@ async def start_handler(message: types.Message):
         ]
     ])
     # Enviar un solo mensaje con ambos teclados (reply y inline)
-    await message.reply("👋", reply_markup=reply_kb)
+    await message.reply("", reply_markup=reply_kb)
     await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
     
     
