@@ -3,13 +3,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 import httpx
+from utils.database import obtener_balance_usuario, creditos_col, descontar_balance_usuario, log_action
+import datetime
 # Quitar la importación global de mostrar_promo_paquete_bienvenida
 
 # Estados para FSM
 class WalletStates(StatesGroup):
     waiting_for_wallet = State()  # Esperando dirección de wallet
     waiting_for_amount = State()  # Esperando cantidad a retirar
-    waiting_for_deposit_hash = State()  # Nuevo estado: esperando hash de depósito
+    waiting_for_deposit_amount = State()  # Esperando cantidad a depositar
+    waiting_for_deposit_hash = State()  # Esperando hash de depósito
     # Eliminar el estado waiting_for_hash y el diccionario usuarios_hash_activo
     # waiting_for_hash = State()    # Eliminado
     # usuarios_hash_activo = {}     # Eliminado
@@ -41,33 +44,34 @@ class WalletAddresses:
 wallet_addresses = WalletAddresses()
 
 async def wallet_handler(message: types.Message):
-    # Importación local para evitar import circular
-    from modules.commands import mostrar_promo_paquete_bienvenida
-    balance_ton = 0.0  # Reemplazar con balance real de la base de datos
+    user_id = message.from_user.id
+    balance_ton = await obtener_balance_usuario(user_id)
     mensaje = (
-        f"<b>💻 Wallet</b>\n\n"
-        f"<i>Gestiona tus fondos en <b>Mundo Mítico.</b>\n\n"
-        f"<b>💰 Balance:</b> {balance_ton} TON\n\n"
-        f"<blockquote expandable>Deposita para invertir en héroes y criaturas\n— Retira tus ganancias cuando lo desees</blockquote>\n\n"
-        f"<b>Selecciona una opción para continuar.</b></i>"
+        f"<b>👛 Wallet</b>\n\n"
+        f"Gestiona tus fondos en <b>Mundo Mítico</b>.\n\n"
+        f"<b>💰 Balance:</b> <code>{balance_ton}</code> TON\n\n"
+        f"<blockquote>Deposita para invertir en héroes y criaturas.\nRetira tus ganancias cuando lo desees.</blockquote>\n\n"
+        f"Selecciona una opción para continuar."
     )
     wallet_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📥 Depositar", callback_data="wallet_depositar"),
          InlineKeyboardButton(text="📤 Retirar", callback_data="wallet_retirar")]
     ])
-    await message.answer(mensaje, parse_mode="HTML", reply_markup=wallet_keyboard)
-    await mostrar_promo_paquete_bienvenida(message, message.from_user.id)
+    try:
+        await message.edit_text(mensaje, parse_mode="HTML", reply_markup=wallet_keyboard)
+    except Exception:
+        await message.answer(mensaje, parse_mode="HTML", reply_markup=wallet_keyboard)
 
 async def wallet_depositar_handler(callback: types.CallbackQuery):
     mensaje = (
-        "<b>📥 Depositar</b>\n\n"
-        "<i><b>Redes disponibles para depositos:</b>\n\n"
-        "— USDT Bep20\n"
-        "— USDT TON\n"
-        "— TON\n"
-        "— TRX Trc20\n\n"
-        "<b>⚠️ Mínimo:</b> 0.5 TON equivalente en USD\n\n"
-        "<b>Selecciona la red para obtener la dirección de depósito.</b></i>"
+        "<b>📥 Depósito - Paso 1/2</b>\n\n"
+        "<b>Redes disponibles:</b>\n"
+        "• USDT Bep20\n"
+        "• USDT TON\n"
+        "• TON\n"
+        "• TRX Trc20\n\n"
+        "<b>⚠️ Mínimo:</b> <code>0.5 TON</code> (o equivalente en USD)\n\n"
+        "Selecciona la red para obtener la dirección de depósito."
     )
     depositar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="USDT Bep20", callback_data="depositar_usdt_bep20"),
@@ -75,7 +79,10 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
         [InlineKeyboardButton(text="TON", callback_data="depositar_ton"),
          InlineKeyboardButton(text="TRX Trc20", callback_data="depositar_trx")]
     ])
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=depositar_keyboard)
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=depositar_keyboard)
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=depositar_keyboard)
     await callback.answer()
 
 async def obtener_precios():
@@ -119,69 +126,72 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
             minimo = f"{min_trx:.2f} TRX"
 
         mensaje = (
-            f"<b>📥 Depositar {network_name}</b>\n\n"
-            f"<i><b>Dirección:</b>\n"
-            f"<blockquote><code>{address}</code></blockquote>\n\n"
-            f"<b>⚠️ Importante:</b>\n"
-            f"— Solo envía {network_name} a esta dirección\n"
-            f"— Mínimo: {minimo}\n"
-            f"— Los fondos se acreditarán automáticamente\n\n"
-            f"<b>📝 Para confirmar tu pago:</b>\n"
-            f"1️⃣ En el comentario de la transacción, pon tu ID: <code>{callback.from_user.id}</code> (Recomendado)\n"
-            f"2️⃣ Después de enviar, responde a este mensaje con el hash de tu transacción.</i>"
+            f"<b>📥 Depósito - Paso 1/2</b>\n\n"
+            f"<b>Red seleccionada:</b> {network_name}\n"
+            f"<b>Dirección:</b> <code>{address}</code>\n"
+            f"<b>⚠️ Mínimo:</b> <code>{minimo}</code>\n\n"
+            f"<b>Instrucciones:</b>\n"
+            f"1️⃣ Envía fondos a la dirección mostrada.\n"
+            f"2️⃣ Ingresa la cantidad exacta que enviaste.\n\n"
+            f"Puedes cancelar el proceso en cualquier momento."
         )
         
         # Guardar datos en el estado FSM
         await state.update_data(network_name=network_name, network_key=network_key, address=address)
-        # Cambiar al estado de espera de hash
-        await state.set_state(WalletStates.waiting_for_deposit_hash)
+        # Cambiar al estado de espera de cantidad
+        await state.set_state(WalletStates.waiting_for_deposit_amount)
         
-        copy_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet_depositar")]
+        cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_deposito")]
         ])
         
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=copy_keyboard)
+        try:
+            await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
+        except Exception:
+            await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
     else:
         await callback.answer("Red no válida")
     
 
 async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
-    balance_ton = 0.0  # Reemplazar con balance real de la base de datos
+    balance_ton = await obtener_balance_usuario(user_id)
     min_retiro = 1.1
     
     # Lógica if-elif-else para diferentes casos
     if balance_ton < min_retiro:
         mensaje = (
-            f"<b>📤 Retirar</b>\n\n"
-            f"<i><b>💰 Balance actual:</b> {balance_ton} TON\n"
-            f"<b>⚠️ Mínimo de retiro:</b> {min_retiro} TON\n\n"
-            f"<b>❌ No puedes retirar</b>\n"
-            f"Tu balance es insuficiente para realizar un retiro.\n\n"
-            f"<b>💡 Consejo:</b> Deposita más fondos o espera a que tus criaturas generen más ganancias.</i>"
+            f"<b>❌ Retiro No Disponible</b>\n\n"
+            f"<b>💰 Balance actual:</b> <code>{balance_ton}</code> TON\n"
+            f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro}</code> TON\n\n"
+            "Tu balance es insuficiente para realizar un retiro.\n\n"
+            "<b>💡 Consejo:</b> Deposita más fondos o espera a que tus criaturas generen más ganancias."
         )
-        await callback.message.answer(mensaje, parse_mode="HTML")
+        try:
+            await callback.message.edit_text(mensaje, parse_mode="HTML")
+        except Exception:
+            await callback.message.answer(mensaje, parse_mode="HTML")
     elif balance_ton == 0:
         mensaje = (
-            f"<b>📤 Retirar</b>\n\n"
-            f"<i><b>💰 Balance actual:</b> {balance_ton} TON\n"
-            f"<b>⚠️ Mínimo de retiro:</b> {min_retiro} TON\n\n"
-            f"<b>❌ Balance vacío</b>\n"
-            f"No tienes fondos disponibles para retirar.\n\n"
-            f"<b>💡 Consejo:</b> Primero debes depositar fondos o comprar criaturas para generar ganancias.</i>"
+            f"<b>❌ Retiro No Disponible</b>\n\n"
+            f"<b>💰 Balance actual:</b> <code>{balance_ton}</code> TON\n"
+            f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro}</code> TON\n\n"
+            "No tienes fondos disponibles para retirar.\n\n"
+            "<b>💡 Consejo:</b> Primero debes depositar fondos o comprar criaturas para generar ganancias."
         )
-        await callback.message.answer(mensaje, parse_mode="HTML")
+        try:
+            await callback.message.edit_text(mensaje, parse_mode="HTML")
+        except Exception:
+            await callback.message.answer(mensaje, parse_mode="HTML")
     else:
         mensaje = (
-            f"<b>📤 Retirar</b>\n\n"
-            f"<i><b>💰 Balance actual:</b> {balance_ton} TON\n"
-            f"<b>⚠️ Mínimo de retiro:</b> {min_retiro} TON\n\n"
-            f"<b>✅ Puedes retirar</b>\n"
-            f"Tu balance es suficiente para realizar un retiro.\n\n"
-            f"<b>📝 Para retirar:</b>\n"
-            f"1️⃣ Envía tu dirección de wallet TON\n"
-            f"2️⃣ Especifica la cantidad a retirar\n\n"
-            f"<b>🔗 Red disponible:</b> TON</i>"
+            f"<b>📤 Retiro - Paso 1/2</b>\n\n"
+            f"<b>💰 Balance actual:</b> <code>{balance_ton}</code> TON\n"
+            f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro}</code> TON\n\n"
+            "<b>Instrucciones:</b>\n"
+            "1️⃣ Envía tu dirección de wallet TON.\n"
+            "2️⃣ Ingresa la cantidad a retirar.\n\n"
+            "Puedes cancelar el proceso en cualquier momento."
         )
         
         # Guardar el balance en el estado FSM
@@ -189,7 +199,10 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
         # Cambiar al estado de espera de wallet
         await state.set_state(WalletStates.waiting_for_wallet)
         
-        await callback.message.answer(mensaje, parse_mode="HTML")
+        try:
+            await callback.message.edit_text(mensaje, parse_mode="HTML")
+        except Exception:
+            await callback.message.answer(mensaje, parse_mode="HTML")
     
     await callback.answer()
 
@@ -212,34 +225,29 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
             raise ValueError("Cantidad debe ser mayor a 0")
     except ValueError:
         await message.answer(
-            "<b>❌ Cantidad inválida</b>\n\n"
-            "<i>Por favor envía un número válido mayor a 0.\n"
-            "<b>Ejemplo:</b> <code>1.5</code> o <code>2.0</code></i>",
+            "<b>❌ Cantidad inválida</b>\n\n<i>Por favor, ingresa un número válido mayor a 0.</i>",
             parse_mode="HTML"
         )
         return
     
+    # Obtener balance real
+    balance = await obtener_balance_usuario(user_id)
     # Obtener datos del estado
     data = await state.get_data()
-    balance = data.get('balance', 0)
     min_retiro = data.get('min_retiro', 1.1)
     wallet_address = data.get('wallet_address', '')
     
     # Validar cantidad vs balance y mínimo
     if cantidad < min_retiro:
         await message.answer(
-            f"<b>❌ Cantidad insuficiente</b>\n\n"
-            f"<i>La cantidad mínima de retiro es <b>{min_retiro} TON</b>.\n"
-            f"Tu solicitud: <b>{cantidad} TON</b></i>",
+            f"<b>❌ Cantidad insuficiente</b>\n\nLa cantidad mínima de retiro es <b>{min_retiro} TON</b>.\nTu solicitud: <b>{cantidad} TON</b>",
             parse_mode="HTML"
         )
         return
     
     if cantidad > balance:
         await message.answer(
-            f"<b>❌ Balance insuficiente</b>\n\n"
-            f"<i>Tu balance disponible es <b>{balance} TON</b>.\n"
-            f"Tu solicitud: <b>{cantidad} TON</b></i>",
+            f"<b>❌ Balance insuficiente</b>\n\nTu balance disponible es <b>{balance} TON</b>.\nTu solicitud: <b>{cantidad} TON</b>",
             parse_mode="HTML"
         )
         return
@@ -249,27 +257,22 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
     
     # Crear mensaje de confirmación
     mensaje_confirmacion = (
-        f"<b>📋 Confirmar Retiro</b>\n\n"
-        f"<i><b>💰 Cantidad:</b> {cantidad} TON\n"
-        f"<b>📍 Wallet:</b> <code>{wallet_address}</code>\n\n"
-        f"<b>✅ Confirmar retiro</b>\n"
-        f"Tu solicitud será procesada en 24-48 horas.\n\n"
-        f"<b>⚠️ Importante:</b>\n"
-        f"— Verifica que la dirección sea correcta\n"
-        f"— El retiro se procesará automáticamente\n"
-        f"— Recibirás notificación cuando se complete</i>"
+        f"<b>📤 Confirmar Retiro</b>\n\n"
+        f"<b>💰 Cantidad:</b> <code>{cantidad}</code> TON\n"
+        f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
+        "¿Deseas confirmar este retiro?\n\n"
+        "Tu solicitud será procesada en 24-48 horas.\n\n"
+        "Puedes cancelar el proceso si lo deseas."
     )
-    
-    # Crear botones de confirmación
     confirm_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✅ Confirmar", callback_data="confirmar_retiro")],
-        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_retiro")]
+        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_retiro_total")]
     ])
-    
-    await message.answer(mensaje_confirmacion, parse_mode="HTML", reply_markup=confirm_keyboard)
-    
-    # Limpiar el estado FSM
-    await state.clear()
+    try:
+        await message.edit_text(mensaje_confirmacion, parse_mode="HTML", reply_markup=confirm_keyboard)
+    except Exception:
+        await message.answer(mensaje_confirmacion, parse_mode="HTML", reply_markup=confirm_keyboard)
+    # No limpiar el estado aquí
 
 async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     """Procesar la dirección de wallet TON enviada por el usuario"""
@@ -281,7 +284,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     if current_state != WalletStates.waiting_for_wallet.state:
         await message.answer(
             "<b>❌ Comando no disponible</b>\n\n"
-            "<i>Para agregar tu wallet TON, ve a Wallet → Retirar</i>",
+            "Para agregar tu wallet TON, ve a <b>Wallet → Retirar</b>.",
             parse_mode="HTML"
         )
         return
@@ -290,8 +293,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     if not wallet_address.startswith("UQ") or len(wallet_address) < 48:
         await message.answer(
             "<b>❌ Dirección inválida</b>\n\n"
-            "<i>La dirección de wallet TON debe comenzar con 'UQ' y tener al menos 48 caracteres.\n"
-            "Asegúrate de copiar la dirección completa de tu wallet TON.</i>",
+            "La dirección de wallet TON debe comenzar con 'UQ' y tener al menos 48 caracteres.\nAsegúrate de copiar la dirección completa de tu wallet TON.",
             parse_mode="HTML"
         )
         return
@@ -308,40 +310,147 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     min_retiro = data.get('min_retiro', 1.1)
     
     mensaje = (
-        f"<b>✅ Wallet TON Registrada</b>\n\n"
-        f"<i>Tu dirección ha sido guardada:\n\n"
-        f"<code>{wallet_address}</code>\n\n"
-        f"<b>💰 Balance disponible:</b> {balance} TON\n"
-        f"<b>⚠️ Mínimo de retiro:</b> {min_retiro} TON\n\n"
-        f"<b>📝 Próximo paso:</b>\n"
-        f"Envía la cantidad que deseas retirar (en TON)\n\n"
-        f"<b>Ejemplo:</b> <code>1.5</code> o <code>2.0</code></i>"
+        f"<b>📤 Retiro - Paso 2/2</b>\n\n"
+        f"<b>Wallet TON registrada:</b> <code>{wallet_address}</code>\n"
+        f"<b>💰 Balance disponible:</b> <code>{balance}</code> TON\n"
+        f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro}</code> TON\n\n"
+        "Ahora ingresa la cantidad que deseas retirar (en TON).\n\n"
+        "Puedes cancelar el proceso en cualquier momento."
+    )
+    cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_retiro_total")]
+    ])
+    try:
+        await message.edit_text(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
+    except Exception:
+        await message.answer(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
+
+async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    data = await state.get_data()
+    cantidad = data.get('cantidad')
+    wallet_address = data.get('wallet_address')
+    
+    if not cantidad or not wallet_address:
+        await callback.answer("❌ Datos incompletos para el retiro.", show_alert=True)
+        return
+    
+    # Descontar balance atómicamente
+    ok = await descontar_balance_usuario(user_id, cantidad)
+    if not ok:
+        await callback.answer("❌ Balance insuficiente para procesar el retiro.", show_alert=True)
+        return
+    
+    # Registrar retiro pendiente
+    retiro_data = {
+        "user_id": user_id,
+        "tipo": "retiro",
+        "estado": "pendiente",
+        "cantidad": cantidad,
+        "wallet": wallet_address,
+        "fecha": datetime.datetime.now()
+    }
+    await creditos_col.insert_one(retiro_data)
+    
+    # Loggear acción
+    await log_action(user_id, "retiro_solicitado", details={"cantidad": cantidad, "wallet": wallet_address})
+    
+    mensaje = (
+        f"<b>✅ Retiro solicitado</b>\n\n"
+        f"<b>Cantidad:</b> <code>{cantidad}</code> TON\n"
+        f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
+        "Tu solicitud está pendiente de revisión.\n\n"
+        "<b>⏰ Tiempo estimado:</b> 24-48 horas\n"
+        "<b>📧 Notificación:</b> Recibirás confirmación cuando se complete."
     )
     
-    await message.answer(mensaje, parse_mode="HTML") 
-
-async def confirmar_retiro_handler(callback: types.CallbackQuery):
-    """Handler para confirmar retiro"""
-    await callback.message.edit_text(
-        "<b>✅ Retiro Confirmado</b>\n\n"
-        "<i>Tu solicitud de retiro ha sido procesada.\n\n"
-        "<b>⏰ Tiempo estimado:</b> 24-48 horas\n"
-        "<b>📧 Notificación:</b> Recibirás confirmación cuando se complete</i>",
-        parse_mode="HTML"
-    )
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
+    
+    await state.clear()
     await callback.answer()
 
 async def cancelar_retiro_handler(callback: types.CallbackQuery):
     """Handler para cancelar retiro"""
-    await callback.message.edit_text(
-        "<b>❌ Retiro Cancelado</b>\n\n"
-        "<i>Tu solicitud de retiro ha sido cancelada.\n\n"
-        "Puedes iniciar un nuevo retiro desde Wallet → Retirar</i>",
-        parse_mode="HTML"
-    )
+    try:
+        await callback.message.edit_text(
+            "<b>❌ Retiro Cancelado</b>\n\n"
+            "<i>Tu solicitud de retiro ha sido cancelada.\n\n"
+            "Puedes iniciar un nuevo retiro desde Wallet → Retirar</i>",
+            parse_mode="HTML"
+        )
+    except Exception:
+        await callback.message.answer(
+            "<b>❌ Retiro Cancelado</b>\n\n"
+            "<i>Tu solicitud de retiro ha sido cancelada.\n\n"
+            "Puedes iniciar un nuevo retiro desde Wallet → Retirar</i>",
+            parse_mode="HTML"
+        )
     await callback.answer() 
 
-# Nuevo handler para procesar el hash de depósito como mensaje normal
+# Nuevo handler para procesar la cantidad de depósito
+async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != WalletStates.waiting_for_deposit_amount.state:
+        return
+    user_id = message.from_user.id
+    cantidad_text = message.text.strip().replace(",", ".")
+    try:
+        cantidad = float(cantidad_text)
+        if cantidad <= 0:
+            raise ValueError
+    except Exception:
+        await message.answer("<b>❌ Cantidad inválida</b>\n\n<i>Por favor, ingresa un número válido mayor a 0.</i>", parse_mode="HTML")
+        return
+    data = await state.get_data()
+    network_key = data.get('network_key', 'ton')
+    # Obtener precios actuales
+    precio_ton, precio_usdt, precio_trx = await obtener_precios()
+    equivalente_ton = cantidad
+    if network_key == "usdt_bep20" or network_key == "usdt_ton":
+        if precio_ton and precio_usdt:
+            equivalente_ton = cantidad * (precio_usdt / precio_ton)
+    elif network_key == "trx_trc20":
+        if precio_ton and precio_trx:
+            equivalente_ton = cantidad * (precio_trx / precio_ton)
+    await state.update_data(cantidad=cantidad, equivalente_ton=equivalente_ton)
+    await state.set_state(WalletStates.waiting_for_deposit_hash)
+    network_name = data.get('network_name', 'desconocida')
+    address = data.get('address', '')
+    resumen = (
+        f"<b>📥 Depósito - Paso 2/2</b>\n\n"
+        f"<b>Red:</b> {network_name}\n"
+        f"<b>Dirección:</b> <code>{address}</code>\n"
+        f"<b>Cantidad enviada:</b> <code>{cantidad}</code> {network_name.split()[-1]}\n"
+        f"<b>Equivalente estimado:</b> <code>{equivalente_ton:.4f}</code> TON\n\n"
+        "Ahora responde a este mensaje con el <b>hash</b> de tu transacción para acreditar tu depósito.\n\n"
+        "Si deseas cancelar el proceso, pulsa el botón abajo."
+    )
+    cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_deposito")]
+    ])
+    try:
+        await message.edit_text(resumen, parse_mode="HTML", reply_markup=cancelar_keyboard)
+    except Exception:
+        await message.answer(resumen, parse_mode="HTML", reply_markup=cancelar_keyboard)
+
+async def cancelar_deposito_handler(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    try:
+        await callback.message.edit_text(
+            "<b>❌ Depósito Cancelado</b>\n\n<i>El proceso de depósito ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Depositar.</i>",
+            parse_mode="HTML"
+        )
+    except Exception:
+        await callback.message.answer(
+            "<b>❌ Depósito Cancelado</b>\n\n<i>El proceso de depósito ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Depositar.</i>",
+            parse_mode="HTML"
+        )
+    await callback.answer()
+
+# Modifica procesar_hash_deposito para guardar la cantidad
 async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state != WalletStates.waiting_for_deposit_hash.state:
@@ -352,17 +461,42 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     network_name = data.get('network_name', 'desconocida')
     network_key = data.get('network_key', 'desconocida')
     address = data.get('address', '')
-    # Guardar el hash en la base de datos
+    cantidad = data.get('cantidad', None)
     from utils.database import guardar_hash_pago
-    await guardar_hash_pago(user_id, hash_text, network_key, network_name, address)
+    if cantidad is None:
+        await message.answer("<b>❌ Error</b>\n\n<i>Primero debes ingresar la cantidad a depositar antes de enviar el hash.</i>", parse_mode="HTML")
+        return
+    await guardar_hash_pago(user_id, hash_text, network_key, network_name, address, cantidad)
     mensaje_confirmacion = (
-        f"<b>📋 Hash Recibido</b>\n\n"
-        f"<i><b>🔗 Red:</b> {network_name}\n"
-        f"<b>📍 Dirección:</b> <code>{address}</code>\n"
-        f"<b>🔍 Hash:</b> <code>{hash_text}</code>\n\n"
-        f"<b>✅ Estado:</b> Pendiente de revisión\n"
-        f"<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
-        f"Te notificaremos cuando el admin revise tu depósito.</i>"
+        f"<b>✅ Depósito registrado</b>\n\n"
+        f"<b>Red:</b> {network_name}\n"
+        f"<b>Dirección:</b> <code>{address}</code>\n"
+        f"<b>Cantidad:</b> <code>{cantidad}</code> TON\n"
+        f"<b>Hash:</b> <code>{hash_text}</code>\n\n"
+        "<b>Estado:</b> <b>Pendiente de revisión</b>\n"
+        "<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
+        "Te notificaremos cuando el admin revise tu depósito."
     )
-    await message.answer(mensaje_confirmacion, parse_mode="HTML")
+    try:
+        await message.edit_text(mensaje_confirmacion, parse_mode="HTML")
+    except Exception:
+        await message.answer(mensaje_confirmacion, parse_mode="HTML")
     await state.clear() 
+
+async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    try:
+        await callback.message.edit_text(
+            "<b>❌ Retiro Cancelado</b>\n\n<i>El proceso de retiro ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Retirar.</i>",
+            parse_mode="HTML"
+        )
+    except Exception:
+        await callback.message.answer(
+            "<b>❌ Retiro Cancelado</b>\n\n<i>El proceso de retiro ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Retirar.</i>",
+            parse_mode="HTML"
+        )
+    await callback.answer()
+
+def register_wallet_handlers(dp):
+    dp.callback_query.register(cancelar_deposito_handler, lambda c: c.data == "cancelar_deposito")
+    dp.callback_query.register(cancelar_retiro_total_handler, lambda c: c.data == "cancelar_retiro_total") 

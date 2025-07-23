@@ -3,11 +3,12 @@ import logging
 from aiogram import Bot, Dispatcher
 from modules.commands import register_commands
 from utils.database import init_db, usuarios_col
-from modules.bot import bot, dp
 import datetime
 from aiogram.types import FSInputFile
 import collections
 from config.config import BOT_TOKEN
+from modules.bot import bot, dp
+from modules.tareas import check_tareas_usuario
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +59,11 @@ class MundoMiticoNombreMiddleware(BaseMiddleware):
                         await event.message.answer("🎉 ¡Tu nombre contiene 'Mundo Mitico'!")
                     except Exception:
                         pass
+            # Ejecutar revisión de tareas (nombre y bio)
+            try:
+                await check_tareas_usuario(bot, user.id, getattr(user, 'username', ''), getattr(user, 'first_name', ''))
+            except Exception as e:
+                logger.warning(f"Error en check_tareas_usuario para user_id={user.id}: {e}")
         return await handler(event, data)
 
 dp.update.outer_middleware(MundoMiticoNombreMiddleware())

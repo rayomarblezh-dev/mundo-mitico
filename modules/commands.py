@@ -16,28 +16,24 @@ from modules.referidos import referidos_handler
 from modules.tienda import (
     tienda_handler,
     tienda_criaturas_handler,
-    tienda_volver_handler
+    tienda_volver_handler,
+    register_tienda_handlers
 )
 
 from modules.criaturas import (
+    mostrar_criatura_carrito,
+    carrito_cantidad_handler,
+    carrito_comprar_handler,
+    # Handlers individuales generados dinámicamente:
     criatura_hada_handler,
-    criatura_elfo_handler,
+    criatura_mago_handler,
     criatura_dragon_handler,
     criatura_orco_handler,
     criatura_gremnli_handler,
     criatura_unicornio_handler,
     criatura_genio_handler,
     criatura_kraken_handler,
-    criatura_licantropo_handler,
-    comprar_hada_handler,
-    comprar_elfo_handler,
-    comprar_dragon_handler,
-    comprar_orco_handler,
-    comprar_gremnli_handler,
-    comprar_unicornio_handler,
-    comprar_genio_handler,
-    comprar_kraken_handler,
-    comprar_licantropo_handler
+    criatura_licantropo_handler
 )
 from modules.wallet import (
     wallet_handler,
@@ -50,6 +46,10 @@ from modules.wallet import (
     cancelar_retiro_handler,
     WalletStates,
     procesar_hash_deposito,  # Importar el nuevo handler
+    procesar_cantidad_deposito,
+    cancelar_deposito_handler,
+    cancelar_retiro_total_handler,
+    register_wallet_handlers,
 )
 from modules.explorar import explorar_handler
 from modules.nfts import (
@@ -73,8 +73,24 @@ from modules.admin import (
     admin_depositos_handler,
     admin_config_handler,
     AdminStates,
-    info_handler
+    info_handler,
+    admin_tareas_handler,
+    aceptar_deposito_handler,
+    admin_retiros_handler,
+    aceptar_retiro_handler,
+    admin_resumen_fondos_handler,
 )
+from modules.inventario import mostrar_inventario_usuario
+
+
+async def inventario_handler(message):
+    from modules.inventario import mostrar_inventario_usuario
+    try:
+        await mostrar_inventario_usuario(message, message.from_user.id)
+        logging.info(f"Inventario mostrado correctamente para user_id={message.from_user.id}")
+    except Exception as e:
+        logging.error(f"Error mostrando inventario para user_id={message.from_user.id}: {e}")
+        await message.answer("⚠️ Ocurrió un error mostrando tu inventario. Intenta de nuevo más tarde.")
 
 
 # =========================
@@ -91,6 +107,11 @@ def register_commands(dp: Dispatcher):
     # Comando /start
     # =========================
     dp.message.register(start_handler, Command("start"))
+    
+    # =========================
+    # Comando /inventario
+    # =========================
+    dp.message.register(inventario_handler, Command("inventario"))
     
     # =========================
     # Comando /admin
@@ -117,8 +138,12 @@ def register_commands(dp: Dispatcher):
     # =========================
     # Callbacks de criaturas
     # =========================
+    # Handlers de carrito de criaturas
+    dp.callback_query.register(carrito_cantidad_handler, lambda c: c.data.startswith("carrito_") and ("_mas_" in c.data or "_menos_" in c.data))
+    dp.callback_query.register(carrito_comprar_handler, lambda c: c.data.startswith("carrito_") and "_comprar_" in c.data)
+    # Handlers de criaturas para mostrar el carrito
     dp.callback_query.register(criatura_hada_handler, lambda c: c.data == "criatura_hada")
-    dp.callback_query.register(criatura_elfo_handler, lambda c: c.data == "criatura_elfo")
+    dp.callback_query.register(criatura_mago_handler, lambda c: c.data == "criatura_mago")
     dp.callback_query.register(criatura_dragon_handler, lambda c: c.data == "criatura_dragon")
     dp.callback_query.register(criatura_orco_handler, lambda c: c.data == "criatura_orco")
     dp.callback_query.register(criatura_gremnli_handler, lambda c: c.data == "criatura_gremnli")
@@ -126,16 +151,6 @@ def register_commands(dp: Dispatcher):
     dp.callback_query.register(criatura_genio_handler, lambda c: c.data == "criatura_genio")
     dp.callback_query.register(criatura_kraken_handler, lambda c: c.data == "criatura_kraken")
     dp.callback_query.register(criatura_licantropo_handler, lambda c: c.data == "criatura_licantropo")
-    # Handlers de compra de criaturas
-    dp.callback_query.register(comprar_hada_handler, lambda c: c.data == "comprar_hada")
-    dp.callback_query.register(comprar_elfo_handler, lambda c: c.data == "comprar_elfo")
-    dp.callback_query.register(comprar_dragon_handler, lambda c: c.data == "comprar_dragon")
-    dp.callback_query.register(comprar_orco_handler, lambda c: c.data == "comprar_orco")
-    dp.callback_query.register(comprar_gremnli_handler, lambda c: c.data == "comprar_gremnli")
-    dp.callback_query.register(comprar_unicornio_handler, lambda c: c.data == "comprar_unicornio")
-    dp.callback_query.register(comprar_genio_handler, lambda c: c.data == "comprar_genio")
-    dp.callback_query.register(comprar_kraken_handler, lambda c: c.data == "comprar_kraken")
-    dp.callback_query.register(comprar_licantropo_handler, lambda c: c.data == "comprar_licantropo")
 
     # =========================
     # Callbacks de NFTs
@@ -159,19 +174,31 @@ def register_commands(dp: Dispatcher):
     dp.message.register(procesar_wallet_ton, WalletStates.waiting_for_wallet)
     # Handler para procesar cantidad de retiro (con FSM)
     dp.message.register(procesar_cantidad_retiro, WalletStates.waiting_for_amount)
+    # Handler para procesar cantidad de depósito (con FSM)
+    dp.message.register(procesar_cantidad_deposito, WalletStates.waiting_for_deposit_amount)
     # Handlers para confirmar/cancelar retiro
     dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
     dp.callback_query.register(cancelar_retiro_handler, lambda c: c.data == "cancelar_retiro")
+    # Handlers para cancelar depósito y retiro total
+    dp.callback_query.register(cancelar_deposito_handler, lambda c: c.data == "cancelar_deposito")
+    dp.callback_query.register(cancelar_retiro_total_handler, lambda c: c.data == "cancelar_retiro_total")
+    # Registrar handlers agrupados
+    register_wallet_handlers(dp)
     
     # =========================
     # Callbacks de administración
     # =========================
     dp.callback_query.register(admin_agregar_credito_handler, lambda c: c.data == "admin_agregar_credito")
+    dp.callback_query.register(admin_tareas_handler, lambda c: c.data == "admin_tareas")
     dp.callback_query.register(confirmar_credito_handler, lambda c: c.data == "admin_confirmar_credito")
     dp.callback_query.register(cancelar_credito_handler, lambda c: c.data == "admin_cancelar_credito")
     dp.callback_query.register(admin_estadisticas_handler, lambda c: c.data == "admin_estadisticas")
     dp.callback_query.register(admin_depositos_handler, lambda c: c.data == "admin_depositos")
+    dp.callback_query.register(aceptar_deposito_handler, lambda c: c.data.startswith("aceptar_deposito_"))
     dp.callback_query.register(admin_config_handler, lambda c: c.data == "admin_config")
+    dp.callback_query.register(admin_retiros_handler, lambda c: c.data == "admin_retiros")
+    dp.callback_query.register(aceptar_retiro_handler, lambda c: c.data.startswith("aceptar_retiro_"))
+    dp.callback_query.register(admin_resumen_fondos_handler, lambda c: c.data == "admin_resumen_fondos")
     
     # =========================
     # Handlers de administración con FSM
@@ -187,4 +214,6 @@ def register_commands(dp: Dispatcher):
     dp.message.register(tienda_handler, lambda m: m.text and "Tienda" in m.text)
     dp.message.register(wallet_handler, lambda m: m.text and "Wallet" in m.text)
     dp.message.register(explorar_handler, lambda m: m.text and "Explorar" in m.text)
+    dp.message.register(inventario_handler, lambda m: m.text and "Inventario" in m.text)
     dp.message.register(procesar_hash_deposito, WalletStates.waiting_for_deposit_hash)
+    register_tienda_handlers(dp)

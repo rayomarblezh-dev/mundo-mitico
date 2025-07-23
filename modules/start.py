@@ -6,7 +6,6 @@ import datetime
 
 async def start_handler(message: types.Message):
     # Importación local para evitar import circular
-    from modules.commands import mostrar_promo_paquete_bienvenida
     from utils.database import usuarios_col
     user_id = message.from_user.id
     username = message.from_user.username
@@ -50,7 +49,7 @@ async def start_handler(message: types.Message):
         "— <b>Combates Épicos</b>  - Enfréntate a desafíos legendarios\n"
         "— <b>Invertir TON</b>  - Gestiona tu economía en el mundo mítico\n"
         "— <b>Generar Ganancias</b>  - Atrapa criaturas y compra héroes que producen diariamente</blockquote></i>\n"
-        "<b>🤩 ¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
+        "<b>¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
     )
     
     # Crear botones de menú

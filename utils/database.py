@@ -22,6 +22,11 @@ async def init_db():
         unique=True,
         name="unique_referido"
     )
+    # Índices en user_id para búsquedas rápidas
+    await usuarios_col.create_index([("user_id", 1)], unique=True, name="user_id_idx")
+    await creditos_col.create_index([("user_id", 1)], name="user_id_idx_creditos")
+    await depositos_col.create_index([("user_id", 1)], name="user_id_idx_depositos")
+    await nfts_col.create_index([("user_id", 1)], name="user_id_idx_nfts")
 
 # Funciones base referidos
 async def agregar_referido(referidor_id: int, referido_id: int):
@@ -97,6 +102,17 @@ async def obtener_nft_usuario(user_id: int):
 usuarios_col = db["usuarios"]
 creditos_col = db["creditos"]
 depositos_col = db["depositos"]
+admin_logs_col = db["admin_logs"]
+
+async def log_admin_action(admin_id: int, action: str, target_id: int = None, extra: dict = None):
+    log = {
+        "admin_id": admin_id,
+        "action": action,
+        "target_id": target_id,
+        "extra": extra or {},
+        "fecha": datetime.datetime.now()
+    }
+    await admin_logs_col.insert_one(log)
 
 async def obtener_o_crear_usuario(user_id: int, username: str = None, first_name: str = None):
     """Obtener usuario existente o crear uno nuevo"""
@@ -137,6 +153,8 @@ async def agregar_credito_usuario(user_id: int, cantidad: float, admin_id: int):
         {"$inc": {"balance": cantidad}},
         upsert=True
     )
+    # Log de auditoría
+    await log_admin_action(admin_id, "agregar_credito", target_id=user_id, extra={"cantidad": cantidad})
 
 async def obtener_usuario_por_username(username: str):
     """Obtener usuario por username"""
@@ -158,7 +176,7 @@ async def obtener_depositos_pendientes():
     """Obtener depósitos pendientes de revisión"""
     return await depositos_col.find({"estado": "pendiente"}).to_list(length=50)
 
-async def guardar_hash_pago(user_id: int, hash_text: str, network_key: str, network_name: str, address: str):
+async def guardar_hash_pago(user_id: int, hash_text: str, network_key: str, network_name: str, address: str, cantidad: float = None):
     """Guardar hash de pago en la base de datos"""
     deposito_data = {
         "user_id": user_id,
@@ -166,6 +184,7 @@ async def guardar_hash_pago(user_id: int, hash_text: str, network_key: str, netw
         "network_key": network_key,
         "network_name": network_name,
         "address": address,
+        "cantidad": cantidad,
         "estado": "pendiente",
         "fecha": datetime.datetime.now()
     }
@@ -253,6 +272,14 @@ async def get_last_promo_time(user_id: int):
 async def set_last_promo_time(user_id: int, dt: datetime.datetime):
     await usuarios_col.update_one({"user_id": user_id}, {"$set": {"last_promo_time": dt}})
 
+async def descontar_balance_usuario(user_id: int, cantidad: float) -> bool:
+    """Descontar balance de un usuario de forma atómica. Retorna True si tuvo éxito."""
+    res = await usuarios_col.update_one(
+        {"user_id": user_id, "balance": {"$gte": cantidad}},
+        {"$inc": {"balance": -cantidad}}
+    )
+    return res.modified_count > 0
+
 async def procesar_compra_item(user_id: int, item: dict) -> dict:
     '''
     Procesa la compra de un ítem (NFT, criatura, promo).
@@ -282,11 +309,26 @@ async def procesar_compra_item(user_id: int, item: dict) -> dict:
         inventario[item["nombre"]] = inventario.get(item["nombre"], 0) + 1
         await usuarios_col.update_one({"user_id": user_id}, {"$set": {"inventario": inventario}})
     elif item["tipo"] == "promo":
-        # Ejemplo: paquete de bienvenida
         from utils.database import registrar_compra_paquete_bienvenida
         ok = await registrar_compra_paquete_bienvenida(user_id)
         if not ok:
             return {"ok": False, "msg": "❌ No se pudo procesar la promoción."}
-    # Descontar TON
-    await usuarios_col.update_one({"user_id": user_id}, {"$inc": {"balance": -item["precio"]}})
+    # Descontar TON de forma atómica
+    ok = await descontar_balance_usuario(user_id, item["precio"])
+    if not ok:
+        return {"ok": False, "msg": "❌ No tienes suficiente TON para comprar este producto (verificado)."}
+    await log_action(user_id, "compra_realizada", details={"tipo": item["tipo"], "nombre": item["nombre"], "precio": item["precio"]})
     return {"ok": True, "msg": "✅ ¡Compra exitosa!"}
+
+# Colecciones adicionales
+logs_col = db["logs"]
+
+async def log_action(actor_id: int, action: str, target_id: int = None, details: dict = None):
+    log = {
+        "actor_id": actor_id,
+        "action": action,
+        "target_id": target_id,
+        "details": details or {},
+        "timestamp": datetime.datetime.now()
+    }
+    await logs_col.insert_one(log)

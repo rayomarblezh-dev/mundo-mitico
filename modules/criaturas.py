@@ -2,291 +2,101 @@ from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.database import procesar_compra_item
 
+# Diccionario de criaturas y precios
+CRIATURAS = {
+    "hada": {"emoji": "🧚‍♀️", "nombre": "Hada", "precio": 0.10, "desc": "Seres mágicos de los bosques encantados que traen buena fortuna y protección a sus dueños."},
+    "mago": {"emoji": "🧙‍♂️", "nombre": "Mago", "precio": 0.11, "desc": "Guardianes ancestrales de la sabiduría mágica, conocedores de los secretos más profundos de la naturaleza."},
+    "dragon": {"emoji": "🐉", "nombre": "Dragón", "precio": 0.20, "desc": "Majestuosas criaturas de fuego y poder, guardianes de tesoros legendarios y maestros del cielo."},
+    "orco": {"emoji": "👹", "nombre": "Orco", "precio": 0.22, "desc": "Guerreros feroces de las montañas oscuras, conocidos por su fuerza bruta y resistencia en batalla."},
+    "gremnli": {"emoji": "👺", "nombre": "Gremnli", "precio": 0.25, "desc": "Tramposos astutos de las cavernas subterráneas, maestros del engaño y la supervivencia."},
+    "unicornio": {"emoji": "🦄", "nombre": "Unicornio", "precio": 0.30, "desc": "Criaturas puras y mágicas, símbolos de pureza y poder curativo, guardianes de la luz."},
+    "genio": {"emoji": "🧞", "nombre": "Genio", "precio": 0.40, "desc": "Seres de poder ilimitado, capaces de conceder deseos y manipular la realidad misma."},
+    "kraken": {"emoji": "👾", "nombre": "Kraken", "precio": 1.20, "desc": "Titanes del océano profundo, criaturas colosales que gobiernan las aguas más oscuras."},
+    "licantropo": {"emoji": "🐺", "nombre": "Licántropo", "precio": 1.00, "desc": "Guerreros que se transforman bajo la luna llena, combinando la ferocidad del lobo con la inteligencia humana."}
+}
 
-async def criatura_hada_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Hada"""
+# Handler general para mostrar criatura con carrito
+async def mostrar_criatura_carrito(callback: types.CallbackQuery, criatura_key: str, cantidad: int = 1):
+    c = CRIATURAS[criatura_key]
+    precio_total = c["precio"] * cantidad
     mensaje = (
-        "<b>🧚‍♀️ Hada</b>\n\n"
-        "<i>Seres mágicos de los bosques encantados que traen buena fortuna y protección a sus dueños.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.10 TON\n"
-        "• Producción diaria: 1.00%\n"
-        "• Ganancia diaria: 0.0010 TON\n"
-        "• ROI: 70%\n"
-        "• ROI total: 0.17 TON\n"
-        "• Tiempo de vida: 100 días</i>"
+        f"<b>{c['emoji']} {c['nombre']}</b>\n\n"
+        f"{c['desc']}\n\n"
+        f"<b>💰 Precio unitario:</b> <code>{c['precio']}</code> TON\n"
+        f"<b>🛒 Cantidad:</b> <code>{cantidad}</code>\n"
+        f"<b>💸 Total:</b> <code>{precio_total:.2f}</code> TON\n\n"
+        "Ajusta la cantidad y confirma tu compra."
     )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.10 TON", callback_data="comprar_hada")]
+    carrito_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="➖", callback_data=f"carrito_{criatura_key}_menos_{cantidad}"),
+            InlineKeyboardButton(text=f"{cantidad}", callback_data="noop"),
+            InlineKeyboardButton(text="➕", callback_data=f"carrito_{criatura_key}_mas_{cantidad}")
+        ],
+        [InlineKeyboardButton(text=f"Comprar {cantidad} por {precio_total:.2f} TON", callback_data=f"carrito_{criatura_key}_comprar_{cantidad}")],
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="tienda_criaturas")]
     ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=carrito_keyboard)
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=carrito_keyboard)
     await callback.answer()
 
-async def criatura_elfo_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Elfo"""
-    mensaje = (
-        "<b>🧙‍♂️ Elfo</b>\n\n"
-        "<i>Guardianes ancestrales de la sabiduría mágica, conocedores de los secretos más profundos de la naturaleza.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.11 TON\n"
-        "• Producción diaria: 1.30%\n"
-        "• Ganancia diaria: 0.00143 TON\n"
-        "• ROI: 75%\n"
-        "• ROI total: 0.1925 TON\n"
-        "• Tiempo de vida: ~77 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.11 TON", callback_data="comprar_elfo")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
+# Handlers para cada criatura (muestran el carrito)
+for key in CRIATURAS.keys():
+    exec(f"""
+async def criatura_{key}_handler(callback: types.CallbackQuery):
+    await mostrar_criatura_carrito(callback, '{key}', 1)
+""")
 
-async def criatura_dragon_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Dragón"""
-    mensaje = (
-        "<b>🐉 Dragón</b>\n\n"
-        "<i>Majestuosas criaturas de fuego y poder, guardianes de tesoros legendarios y maestros del cielo.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.20 TON\n"
-        "• Producción diaria: 1.45%\n"
-        "• Ganancia diaria: 0.0029 TON\n"
-        "• ROI: 80%\n"
-        "• ROI total: 0.36 TON\n"
-        "• Tiempo de vida: ~69 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.20 TON", callback_data="comprar_dragon")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
+# Handler para sumar/restar cantidad en el carrito
+def get_carrito_callback_data(data):
+    # Ejemplo: carrito_hada_mas_2, carrito_hada_menos_3, carrito_hada_comprar_5
+    parts = data.split('_')
+    if len(parts) < 4:
+        return None, None, None
+    criatura = parts[1]
+    accion = parts[2]
+    cantidad = int(parts[3])
+    return criatura, accion, cantidad
 
-async def criatura_orco_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Orco"""
-    mensaje = (
-        "<b>👹 Orco</b>\n\n"
-        "<i>Guerreros feroces de las montañas oscuras, conocidos por su fuerza bruta y resistencia en batalla.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.22 TON\n"
-        "• Producción diaria: 1.50%\n"
-        "• Ganancia diaria: 0.0033 TON\n"
-        "• ROI: 90%\n"
-        "• ROI total: 0.418 TON\n"
-        "• Tiempo de vida: ~67 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.22 TON", callback_data="comprar_orco")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
+async def carrito_cantidad_handler(callback: types.CallbackQuery):
+    data = callback.data
+    criatura, accion, cantidad = get_carrito_callback_data(data)
+    if not criatura or not accion:
+        await callback.answer("Acción inválida", show_alert=True)
+        return
+    if accion == "mas":
+        cantidad += 1
+    elif accion == "menos":
+        cantidad = max(1, cantidad - 1)
+    await mostrar_criatura_carrito(callback, criatura, cantidad)
 
-async def criatura_gremnli_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Gremnli"""
-    mensaje = (
-        "<b>👺 Gremnli</b>\n\n"
-        "<i>Tramposos astutos de las cavernas subterráneas, maestros del engaño y la supervivencia.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.25 TON\n"
-        "• Producción diaria: 1.55%\n"
-        "• Ganancia diaria: 0.003875 TON\n"
-        "• ROI: 99%\n"
-        "• ROI total: 0.4975 TON\n"
-        "• Tiempo de vida: ~65 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.25 TON", callback_data="comprar_gremnli")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
+# Handler para comprar la cantidad seleccionada
+def get_item_criatura(criatura_key):
+    c = CRIATURAS[criatura_key]
+    return {"tipo": "criatura", "nombre": criatura_key, "precio": c["precio"]}
 
-async def criatura_unicornio_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Unicornio"""
-    mensaje = (
-        "<b>🦄 Unicornio</b>\n\n"
-        "<i>Criaturas puras y mágicas, símbolos de pureza y poder curativo, guardianes de la luz.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.30 TON\n"
-        "• Producción diaria: 1.60%\n"
-        "• Ganancia diaria: 0.0048 TON\n"
-        "• ROI: 110%\n"
-        "• ROI total: 0.63 TON\n"
-        "• Tiempo de vida: ~63 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.30 TON", callback_data="comprar_unicornio")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
-
-async def criatura_genio_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Genio"""
-    mensaje = (
-        "<b>🧞 Genio</b>\n\n"
-        "<i>Seres de poder ilimitado, capaces de conceder deseos y manipular la realidad misma.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 0.40 TON\n"
-        "• Producción diaria: 2.00%\n"
-        "• Ganancia diaria: 0.0080 TON\n"
-        "• ROI: 150%\n"
-        "• ROI total: 1.00 TON\n"
-        "• Tiempo de vida: 50 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 0.40 TON", callback_data="comprar_genio")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
-
-async def criatura_kraken_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Kraken"""
-    mensaje = (
-        "<b>👾 Kraken</b>\n\n"
-        "<i>Titanes del océano profundo, criaturas colosales que gobiernan las aguas más oscuras.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 1.20 TON\n"
-        "• Producción diaria: 3.50%\n"
-        "• Ganancia diaria: 0.0420 TON\n"
-        "• ROI: 210%\n"
-        "• ROI total: 3.72 TON\n"
-        "• Tiempo de vida: ~29 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 1.20 TON", callback_data="comprar_kraken")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
-
-async def criatura_licantropo_handler(callback: types.CallbackQuery):
-    """Handler para la criatura Licántropo"""
-    mensaje = (
-        "<b>🐺 Licántropo</b>\n\n"
-        "<i>Guerreros que se transforman bajo la luna llena, combinando la ferocidad del lobo con la inteligencia humana.\n\n"
-        "<b>💰 Información de Inversión:</b>\n"
-        "• Precio: 1.00 TON\n"
-        "• Producción diaria: 3.00%\n"
-        "• Ganancia diaria: 0.0300 TON\n"
-        "• ROI: 200%\n"
-        "• ROI total: 3.00 TON\n"
-        "• Tiempo de vida: ~34 días</i>"
-    )
-    
-    compra_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 Comprar por 1.00 TON", callback_data="comprar_licantropo")]
-    ])
-    
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    await callback.answer()
-
-async def comprar_hada_handler(callback: types.CallbackQuery):
+async def carrito_comprar_handler(callback: types.CallbackQuery):
+    data = callback.data
+    criatura, accion, cantidad = get_carrito_callback_data(data)
+    if accion != "comprar":
+        await callback.answer("Acción inválida", show_alert=True)
+        return
     user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "hada", "precio": 0.10}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado una Hada!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
+    item = get_item_criatura(criatura)
+    ok = True
+    for _ in range(cantidad):
+        resultado = await procesar_compra_item(user_id, item)
+        if not resultado["ok"]:
+            ok = False
+            break
+    if ok:
+        mensaje = f"<b>✅ ¡Has comprado {cantidad} {CRIATURAS[criatura]['nombre']}(s)!</b>\n\n<i>Ya están en tu inventario y comenzarán a producir ganancias.</i>"
     else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_elfo_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "elfo", "precio": 0.11}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Elfo!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_dragon_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "dragon", "precio": 0.20}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Dragón!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_orco_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "orco", "precio": 0.22}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Orco!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_gremnli_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "gremnli", "precio": 0.25}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Gremnli!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_unicornio_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "unicornio", "precio": 0.30}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Unicornio!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_genio_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "genio", "precio": 0.40}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Genio!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_kraken_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "kraken", "precio": 1.20}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Kraken!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
-    await callback.answer()
-
-async def comprar_licantropo_handler(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    item = {"tipo": "criatura", "nombre": "licantropo", "precio": 1.00}
-    resultado = await procesar_compra_item(user_id, item)
-    if resultado["ok"]:
-        mensaje = "<b>✅ ¡Has comprado un Licántropo!</b>\n\n<i>Ya está en tu inventario y comenzará a producir ganancias.</i>"
-    else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
+        mensaje = f"<b>❌ Error en compra</b>\n\n<i>{resultado['msg']}</i>"
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
     await callback.answer()

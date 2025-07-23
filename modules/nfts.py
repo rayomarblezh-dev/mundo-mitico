@@ -8,17 +8,16 @@ logger = logging.getLogger(__name__)
 
 async def nfts_handler(callback: types.CallbackQuery):
     """Handler para mostrar la sección de NFTs"""
-    # Eliminar el mensaje anterior si existe
     try:
         await callback.message.delete()
     except Exception:
         pass
     mensaje = (
-        "<i><b>🎨 NFTs</b>\n\n"
+        "<b>🎨 NFTs</b>\n\n"
         "Los NFTs son colecciones únicas y limitadas de arte digital.\n\n"
-        "<blockquote expandable>Cada NFT tiene características especiales y puede generar ganancias diarias en TON.</blockquote>\n\n"
+        "<blockquote>Cada NFT tiene características especiales y puede generar ganancias diarias en TON.</blockquote>\n\n"
         "<b>⚠️ Importante:</b> Solo puedes tener <b>1 NFT común</b> (Moguri o Gárgola) y <b>1 NFT Ghost</b> a la vez.\n\n"
-        "<b>Selecciona un NFT para ver sus detalles y precio.</b></i>"
+        "Selecciona un NFT para ver sus detalles y precio."
     )
     nfts_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💀 Moguri-NFT", callback_data="nft_moguri"),
@@ -26,7 +25,10 @@ async def nfts_handler(callback: types.CallbackQuery):
         [InlineKeyboardButton(text="👻 Ghost-NFT", callback_data="nft_ghost")],
         [InlineKeyboardButton(text="🔙 Volver Atrás", callback_data="tienda_volver")]
     ])
-    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=nfts_keyboard)
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=nfts_keyboard)
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=nfts_keyboard)
     await callback.answer()
 
 async def nft_moguri_handler(callback: types.CallbackQuery):
@@ -53,8 +55,10 @@ async def nft_moguri_handler(callback: types.CallbackQuery):
     # Enviar imagen con caption y solo el botón de comprar
     image_path = os.path.join("images", "moguri.jpg")
     photo = FSInputFile(image_path)
-    await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
+    except Exception:
+        await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
     await callback.answer()
 
 async def nft_gargola_handler(callback: types.CallbackQuery):
@@ -81,8 +85,10 @@ async def nft_gargola_handler(callback: types.CallbackQuery):
     # Enviar imagen con caption y solo el botón de comprar
     image_path = os.path.join("images", "gargola.jpg")
     photo = FSInputFile(image_path)
-    await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
+    except Exception:
+        await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
     await callback.answer()
 
 async def nft_ghost_handler(callback: types.CallbackQuery):
@@ -109,8 +115,10 @@ async def nft_ghost_handler(callback: types.CallbackQuery):
     # Enviar imagen con caption y solo el botón de comprar
     image_path = os.path.join("images", "ghost.jpg")
     photo = FSInputFile(image_path)
-    await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
-    
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
+    except Exception:
+        await callback.message.answer_photo(photo, caption=mensaje, parse_mode="HTML", reply_markup=compra_keyboard)
     await callback.answer()
 
 # Handlers para compra de NFTs
@@ -131,8 +139,11 @@ async def comprar_nft_moguri_handler(callback: types.CallbackQuery):
             "<i>Tu NFT comenzará a generar ganancias automáticamente.</i>"
         )
     else:
-        mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
+        mensaje = f"<b>❌ Error en compra</b>\n\n<i>{resultado['msg']}</i>"
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
     await callback.answer()
 
 async def comprar_nft_gargola_handler(callback: types.CallbackQuery):
@@ -151,7 +162,10 @@ async def comprar_nft_gargola_handler(callback: types.CallbackQuery):
         )
     else:
         mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
     await callback.answer()
 
 async def comprar_nft_ghost_handler(callback: types.CallbackQuery):
@@ -172,5 +186,8 @@ async def comprar_nft_ghost_handler(callback: types.CallbackQuery):
         )
     else:
         mensaje = resultado["msg"]
-    await callback.message.edit_text(mensaje, parse_mode="HTML")
+    try:
+        await callback.message.edit_text(mensaje, parse_mode="HTML")
+    except Exception:
+        await callback.message.answer(mensaje, parse_mode="HTML")
     await callback.answer() 
