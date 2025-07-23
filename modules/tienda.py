@@ -54,7 +54,8 @@ async def tienda_volver_handler(callback: types.CallbackQuery):
     )
     tienda_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🐾 Criaturas", callback_data="tienda_criaturas"),
-         InlineKeyboardButton(text="🎨 NFTs", callback_data="tienda_nfts")]
+         InlineKeyboardButton(text="🎨 NFTs", callback_data="tienda_nfts")],
+         [InlineKeyboardButton(text="🔥 Promociones", callback_data="tienda_promos")]
     ])
     await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=tienda_keyboard)
     await callback.answer()
@@ -72,8 +73,7 @@ async def tienda_promos_handler(callback: CallbackQuery):
         )
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Comprar Paquete de Bienvenida", callback_data="comprar_paquete_bienvenida")],
-                [InlineKeyboardButton(text="❌ Cancelar", callback_data="tienda_volver")]
+                [InlineKeyboardButton(text="Comprar", callback_data="comprar_paquete_bienvenida")],
             ]
         )
         try:

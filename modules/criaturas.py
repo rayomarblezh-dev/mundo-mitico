@@ -29,9 +29,9 @@ async def mostrar_criatura_carrito(callback: types.CallbackQuery, criatura_key: 
     )
     carrito_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="➖", callback_data=f"carrito_{criatura_key}_menos_{cantidad}"),
+            InlineKeyboardButton(text="-", callback_data=f"carrito_{criatura_key}_menos_{cantidad}"),
             InlineKeyboardButton(text=f"{cantidad}", callback_data="noop"),
-            InlineKeyboardButton(text="➕", callback_data=f"carrito_{criatura_key}_mas_{cantidad}")
+            InlineKeyboardButton(text="+", callback_data=f"carrito_{criatura_key}_mas_{cantidad}")
         ],
         [InlineKeyboardButton(text=f"Comprar {cantidad} por {precio_total:.2f} TON", callback_data=f"carrito_{criatura_key}_comprar_{cantidad}")],
         [InlineKeyboardButton(text="🔙 Volver", callback_data="tienda_criaturas")]

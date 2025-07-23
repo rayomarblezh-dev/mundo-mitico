@@ -94,17 +94,17 @@ async def obtener_precios():
         "vs_currencies": "usd"
     }
     try:
-        async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient() as client:
             response = await client.get(url, params=params, timeout=10)
             if response.status_code != 200:
                 import logging
                 logging.warning(f"CoinGecko API error: {response.status_code} {response.text}")
                 return None, None, None
-            data = response.json()
-            precio_ton = data.get("the-open-network", {}).get("usd")
-            precio_usdt = data.get("tether", {}).get("usd")
-            precio_trx = data.get("tron", {}).get("usd")
-            return precio_ton, precio_usdt, precio_trx
+        data = response.json()
+        precio_ton = data.get("the-open-network", {}).get("usd")
+        precio_usdt = data.get("tether", {}).get("usd")
+        precio_trx = data.get("tron", {}).get("usd")
+        return precio_ton, precio_usdt, precio_trx
     except Exception as e:
         import logging
         logging.error(f"Error al consultar CoinGecko: {e}")
