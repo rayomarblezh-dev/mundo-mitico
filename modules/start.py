@@ -1,6 +1,5 @@
-import os
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile, inline_keyboard_button, reply_markup_union
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
 from utils.database import agregar_referido
 import datetime
 
@@ -61,18 +60,18 @@ async def start_handler(message: types.Message):
         resize_keyboard=True,
         one_time_keyboard=False
     )
+    copy_button = CopyTextButton(text="ABC123")
+
     inline_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
-            InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
-        ],
-        [
-            InlineKeyboardButton(text="📕 Guia", callback_data="guia")
-        ]
-    ])
+    [
+        InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
+        InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
+    ],
+    [copy_button]  # Añadido como fila separada
+])
+
     # Enviar un solo mensaje con ambos teclados (reply y inline)
-    await message.reply("¡Bienvenido! Usa los botones para navegar.", reply_markup=reply_kb)
+    await message.reply("Hola", reply_markup=reply_kb)
     await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
-    
     
     
