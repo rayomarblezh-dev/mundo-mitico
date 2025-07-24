@@ -11,7 +11,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from modules.start import start_handler
-from modules.guia import guia_callback_handler
 from modules.referidos import referidos_handler
 from modules.tienda import (
     tienda_handler,
