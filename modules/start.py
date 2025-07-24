@@ -67,7 +67,7 @@ async def start_handler(message: types.Message):
         InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
         InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
     ],
-    [copy_button]  # Añadido como fila separada
+    [InlineKeyboardButton(text="Copiar"[copy_button]) ] # Añadido como fila separada
 ])
 
     # Enviar un solo mensaje con ambos teclados (reply y inline)
