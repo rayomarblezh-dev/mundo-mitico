@@ -127,11 +127,6 @@ def register_commands(dp: Dispatcher):
     dp.message.register(info_handler, Command("info"))
     
     # =========================
-    # Callbacks de guia
-    # =========================
-    dp.callback_query.register(guia_callback_handler, lambda c: c.data == "guia")
-
-    # =========================
     # Callbacks de tienda
     # =========================
     dp.callback_query.register(tienda_criaturas_handler, lambda c: c.data == "tienda_criaturas")

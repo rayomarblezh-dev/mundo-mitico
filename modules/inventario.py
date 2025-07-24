@@ -73,15 +73,26 @@ async def mostrar_inventario_usuario(event, user_id: int):
                     texto += f"{emoji} <b>{nombre}</b>: <code>{cantidad}</code>\n"
         if total_ganancia > 0:
             texto += f"\n<b>💸 Ganancia diaria total: <code>{total_ganancia:.3f} TON</code></b>"
+        # Agregar botón de volver
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 Volver", callback_data="tienda_volver")]
+        ])
     try:
         # Si es callback_query
         if hasattr(event, 'message') and hasattr(event, 'edit_text'):
             try:
-                await event.message.edit_text(texto, parse_mode="HTML")
+                if not inventario or all(cantidad == 0 for cantidad in inventario.values()):
+                    await event.message.edit_text(texto, parse_mode="HTML")
+                else:
+                    await event.message.edit_text(texto, parse_mode="HTML", reply_markup=volver_keyboard)
                 logging.info(f"Inventario editado para user_id={user_id}")
             except Exception as e:
                 logging.warning(f"Fallo edit_text, usando answer para user_id={user_id}: {e}")
-                await event.message.answer(texto, parse_mode="HTML")
+                if not inventario or all(cantidad == 0 for cantidad in inventario.values()):
+                    await event.message.answer(texto, parse_mode="HTML")
+                else:
+                    await event.message.answer(texto, parse_mode="HTML", reply_markup=volver_keyboard)
         # Si es mensaje directo
         elif hasattr(event, 'answer'):
             await event.answer(texto, parse_mode="HTML")

@@ -1,5 +1,6 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 import httpx
@@ -55,10 +56,11 @@ async def wallet_handler(message: types.Message):
         f"<blockquote>Deposita para invertir en héroes y criaturas.\nRetira tus ganancias cuando lo desees.</blockquote>\n\n"
         f"Selecciona una opción para continuar."
     )
-    wallet_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📥 Depositar", callback_data="wallet_depositar"),
-         InlineKeyboardButton(text="📤 Retirar", callback_data="wallet_retirar")]
-    ])
+    builder = InlineKeyboardBuilder()
+    builder.button(text="📥 Depositar", callback_data="wallet_depositar")
+    builder.button(text="📤 Retirar", callback_data="wallet_retirar")
+    builder.adjust(2)
+    wallet_keyboard = builder.as_markup()
     try:
         await message.edit_text(mensaje, parse_mode="HTML", reply_markup=wallet_keyboard)
     except Exception:
@@ -75,12 +77,13 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
         "<b>⚠️ Mínimo:</b> <code>0.5 TON</code> (o equivalente en USD)\n\n"
         "Selecciona la red para obtener la dirección de depósito."
     )
-    depositar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="USDT Bep20", callback_data="depositar_usdt_bep20"),
-         InlineKeyboardButton(text="USDT TON", callback_data="depositar_usdt_ton")],
-        [InlineKeyboardButton(text="TON", callback_data="depositar_ton"),
-         InlineKeyboardButton(text="TRX Trc20", callback_data="depositar_trx")]
-    ])
+    builder = InlineKeyboardBuilder()
+    builder.button(text="USDT Bep20", callback_data="depositar_usdt_bep20")
+    builder.button(text="USDT TON", callback_data="depositar_usdt_ton")
+    builder.button(text="TON", callback_data="depositar_ton")
+    builder.button(text="TRX Trc20", callback_data="depositar_trx")
+    builder.adjust(2)
+    depositar_keyboard = builder.as_markup()
     try:
         await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=depositar_keyboard)
     except Exception:
@@ -158,9 +161,9 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
         # Cambiar al estado de espera de cantidad
         await state.set_state(WalletStates.waiting_for_deposit_amount)
         
-        cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_deposito")]
-        ])
+        cancelar_keyboard = InlineKeyboardBuilder()
+        cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_deposito")
+        cancelar_keyboard = cancelar_keyboard.as_markup()
         
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
@@ -281,10 +284,10 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
         "Tu solicitud será procesada en 24-48 horas.\n\n"
         "Puedes cancelar el proceso si lo deseas."
     )
-    confirm_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Confirmar", callback_data="confirmar_retiro")],
-        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_retiro_total")]
-    ])
+    confirm_keyboard = InlineKeyboardBuilder()
+    confirm_keyboard.button(text="✅ Confirmar", callback_data="confirmar_retiro")
+    confirm_keyboard.button(text="❌ Cancelar", callback_data="cancelar_retiro_total")
+    confirm_keyboard = confirm_keyboard.as_markup()
     try:
         await message.edit_text(mensaje_confirmacion, parse_mode="HTML", reply_markup=confirm_keyboard)
     except Exception:
@@ -334,9 +337,9 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
         "Ahora ingresa la cantidad que deseas retirar (en TON).\n\n"
         "Puedes cancelar el proceso en cualquier momento."
     )
-    cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_retiro_total")]
-    ])
+    cancelar_keyboard = InlineKeyboardBuilder()
+    cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_retiro_total")
+    cancelar_keyboard = cancelar_keyboard.as_markup()
     try:
         await message.edit_text(mensaje, parse_mode="HTML", reply_markup=cancelar_keyboard)
     except Exception:
@@ -450,9 +453,9 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
         "Ahora responde a este mensaje con el <b>hash</b> de tu transacción para acreditar tu depósito.\n\n"
         "Si deseas cancelar el proceso, pulsa el botón abajo."
     )
-    cancelar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="❌ Cancelar", callback_data="cancelar_deposito")]
-    ])
+    cancelar_keyboard = InlineKeyboardBuilder()
+    cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_deposito")
+    cancelar_keyboard = cancelar_keyboard.as_markup()
     try:
         await message.edit_text(resumen, parse_mode="HTML", reply_markup=cancelar_keyboard)
     except Exception:

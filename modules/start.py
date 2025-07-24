@@ -1,5 +1,6 @@
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from utils.database import agregar_referido
 import datetime
 
@@ -60,19 +61,15 @@ async def start_handler(message: types.Message):
         resize_keyboard=True,
         one_time_keyboard=False
     )
-    copy_button = CopyTextButton(text="ABC123")
 
-    inline_kb = InlineKeyboardMarkup(inline_keyboard=[
-    #[
-        #InlineKeyboardButton(text="📣 Canal", url="https://t.me/MundoMitico"),
-       # InlineKeyboardButton(text="📮 Soporte", url="http://t.me/wolfpromot")   
-    #],
-    [InlineKeyboardButton(text="Copiar"[copy_button])] # Añadido como fila separada
-])
+    builder = InlineKeyboardBuilder()
+    builder.button(text="📣 Canal", url="https://t.me/MundoMitico")
+    builder.button(text="📮 Soporte", url="http://t.me/wolfpromot")
+    builder.adjust(2)
+    inline_kb = builder.as_markup()
 
     # Enviar un solo mensaje con ambos teclados (reply y inline)
     await message.reply("Hola", reply_markup=reply_kb)
-    
     await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
     
     
