@@ -14,11 +14,6 @@ RUN wget -qO - https://pgp.mongodb.com/server-6.0.asc | apt-key add - \
 
 # Prueba la conexión a MongoDB
 RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.runCommand({ connectionStatus: 1 })"
-# Limpia todas las colecciones relevantes de mundo_mitico (temporal)
-RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.getCollection('mundo_mitico').deleteMany({})"
-RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.getCollection('usuarios').deleteMany({})"
-RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.getCollection('depositos').deleteMany({})"
-RUN mongosh "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556" --eval "db.getCollection('creditos').deleteMany({})"
 
 COPY . .
 EXPOSE 8080

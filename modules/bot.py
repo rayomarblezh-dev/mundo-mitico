@@ -1,9 +1,9 @@
-import os
 import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config.config import BOT_TOKEN
 from config.config import is_admin
+from modules.tareas import MundoMiticoNombreMiddleware
 
 # Cargar variables de entorno
 
@@ -52,4 +52,5 @@ class RestriccionPorTipoUsuarioMiddleware(BaseMiddleware):
                     return
         return await handler(event, data)
 
-dp.update.outer_middleware(RestriccionPorTipoUsuarioMiddleware()) 
+dp.update.outer_middleware(RestriccionPorTipoUsuarioMiddleware())
+dp.update.outer_middleware(MundoMiticoNombreMiddleware()) 

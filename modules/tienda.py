@@ -25,7 +25,7 @@ async def tienda_criaturas_handler(callback: types.CallbackQuery):
     )
     criaturas_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🧚‍♀️ Hada", callback_data="criatura_hada"),
-         InlineKeyboardButton(text="🧙‍♂️ Mago", callback_data="criatura_elfo")],
+         InlineKeyboardButton(text="🧙‍♂️ Mago", callback_data="criatura_mago")],
         [InlineKeyboardButton(text="🐉 Dragón", callback_data="criatura_dragon"),
          InlineKeyboardButton(text="👹 Orco", callback_data="criatura_orco")],
         [InlineKeyboardButton(text="👺 Gremnli", callback_data="criatura_gremnli"),

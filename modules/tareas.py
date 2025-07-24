@@ -2,11 +2,52 @@ import re
 import datetime
 from utils.database import usuarios_col, agregar_credito_usuario
 from aiogram import Bot
+import unicodedata
 
 # Palabras clave para detectar "Mundo Mitico" en el nombre
 MUNDO_MITICO_VARIANTS = [
     "mundo mitico", "mundomitico", "mundo mítico", "mundomítico"
 ]
+
+def contiene_mundo_mitico(nombre):
+    # Normaliza a minúsculas y elimina tildes
+    nombre = unicodedata.normalize('NFD', nombre).encode('ascii', 'ignore').decode('utf-8').lower()
+    return any(variant in nombre for variant in MUNDO_MITICO_VARIANTS)
+
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+import logging
+class MundoMiticoNombreMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        user = getattr(event, 'from_user', None)
+        if user:
+            nombre_usuario = (getattr(user, 'first_name', '') or '') + ' ' + (getattr(user, 'username', '') or '')
+            if contiene_mundo_mitico(nombre_usuario):
+                logging.info(f"[MUNDO_MITICO] Usuario {user.id} tiene 'Mundo Mitico' en su nombre: {nombre_usuario}")
+                # Guardar registro en la base de datos
+                await usuarios_col.update_one(
+                    {"user_id": user.id},
+                    {"$set": {"detectado_mundo_mitico": True, "nombre_detectado": nombre_usuario, "fecha_detectado": datetime.datetime.now()}},
+                    upsert=True
+                )
+                # Notificar al usuario (si es un mensaje o callback)
+                if hasattr(event, 'answer'):
+                    try:
+                        await event.answer("🎉 ¡Tu nombre contiene 'Mundo Mitico'!", show_alert=True)
+                    except Exception:
+                        pass
+                elif hasattr(event, 'message'):
+                    try:
+                        await event.message.answer("🎉 ¡Tu nombre contiene 'Mundo Mitico'!")
+                    except Exception:
+                        pass
+            # Ejecutar revisión de tareas (nombre y bio)
+            try:
+                from modules.tareas import check_tareas_usuario
+                from modules.bot import bot
+                await check_tareas_usuario(bot, user.id, getattr(user, 'username', ''), getattr(user, 'first_name', ''))
+            except Exception as e:
+                logging.warning(f"Error en check_tareas_usuario para user_id={user.id}: {e}")
+        return await handler(event, data)
 
 # Regex para detectar el enlace de referido
 REF_LINK_REGEX = re.compile(r"t\.me/\w+\?start=ref_\d+")

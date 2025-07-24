@@ -13,7 +13,7 @@ import logging
 import datetime
 from utils.database import depositos_col, creditos_col
 import bson
-from modules.constants import TEXTO_DEPOSITO_PENDIENTE, TEXTO_RETIRO_PENDIENTE, EMOJI_OK, EMOJI_CANCEL
+from modules.constants import TEXTO_DEPOSITO_PENDIENTE, TEXTO_RETIRO_PENDIENTE, EMOJI_OK, EMOJI_CANCEL, EMOJI_DEPOSITO, EMOJI_RETIRO
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +314,7 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
         )
         aceptar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text=f"{EMOJI_OK} Aceptar", callback_data=f"aceptar_deposito_{dep['_id']}"),
-             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data="admin_depositos")]
+             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data=f"cancelar_deposito_{dep['_id']}")]
         ])
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=aceptar_keyboard)
@@ -395,7 +395,7 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
         )
         aceptar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text=f"{EMOJI_OK} Aceptar", callback_data=f"aceptar_retiro_{ret['_id']}"),
-             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data="admin_retiros")]
+             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data=f"cancelar_retiro_{ret['_id']}")]
         ])
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=aceptar_keyboard)
@@ -748,4 +748,50 @@ async def paginacion_busqueda_handler(callback: types.CallbackQuery, state: FSMC
     await state.update_data(pagina_dep=pagina_dep, pagina_ret=pagina_ret)
     await mostrar_historial_usuario(callback.message, state)
     await callback.answer() 
+
+# Handlers para cancelar depósito/retiro por ID:
+async def cancelar_deposito_admin_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    if not is_admin(user_id):
+        await callback.answer(f"{EMOJI_CANCEL} Acceso denegado", show_alert=True)
+        return
+    dep_id = callback.data.replace("cancelar_deposito_", "")
+    import bson
+    try:
+        dep_obj_id = bson.ObjectId(dep_id)
+    except Exception:
+        await callback.answer("ID de depósito inválido", show_alert=True)
+        return
+    dep = await depositos_col.find_one({"_id": dep_obj_id})
+    if not dep or dep.get("estado") != "pendiente":
+        await callback.answer("Depósito no válido o ya procesado", show_alert=True)
+        return
+    await depositos_col.update_one({"_id": dep_obj_id}, {"$set": {"estado": "cancelado", "fecha_cancelado": datetime.datetime.now()}})
+    await callback.message.edit_text(f"<b>{EMOJI_CANCEL} Depósito Cancelado</b>\n\n<i>El depósito ha sido cancelado correctamente.</i>", parse_mode="HTML")
+    await callback.answer()
+
+async def cancelar_retiro_admin_handler(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    if not is_admin(user_id):
+        await callback.answer(f"{EMOJI_CANCEL} Acceso denegado", show_alert=True)
+        return
+    ret_id = callback.data.replace("cancelar_retiro_", "")
+    import bson
+    try:
+        ret_obj_id = bson.ObjectId(ret_id)
+    except Exception:
+        await callback.answer("ID de retiro inválido", show_alert=True)
+        return
+    ret = await creditos_col.find_one({"_id": ret_obj_id})
+    if not ret or ret.get("estado") != "pendiente":
+        await callback.answer("Retiro no válido o ya procesado", show_alert=True)
+        return
+    await creditos_col.update_one({"_id": ret_obj_id}, {"$set": {"estado": "cancelado", "fecha_cancelado": datetime.datetime.now()}})
+    await callback.message.edit_text(f"<b>{EMOJI_CANCEL} Retiro Cancelado</b>\n\n<i>El retiro ha sido cancelado correctamente.</i>", parse_mode="HTML")
+    await callback.answer()
+
+# Registrar los handlers:
+# (esto debe ir en la función de registro de comandos o router)
+# dp.callback_query.register(cancelar_deposito_admin_handler, lambda c: c.data == "admin_depositos")
+# dp.callback_query.register(cancelar_retiro_admin_handler, lambda c: c.data == "admin_retiros") 
     

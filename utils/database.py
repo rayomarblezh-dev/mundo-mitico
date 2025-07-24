@@ -2,7 +2,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from aiogram import Bot
 import datetime
 from config.config import MONGO_URI, DB_NAME, ADMIN_IDS
-from modules.bot import bot
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
@@ -335,6 +334,7 @@ async def log_action(actor_id: int, action: str, target_id: int = None, details:
     await logs_col.insert_one(log)
 
 async def notificar_admins_nuevo_deposito(user_id, cantidad, red, deposito_id):
+    from modules.bot import bot
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(
@@ -346,6 +346,7 @@ async def notificar_admins_nuevo_deposito(user_id, cantidad, red, deposito_id):
             pass
 
 async def notificar_admins_nuevo_retiro(user_id, cantidad, wallet, retiro_id):
+    from modules.bot import bot
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(
