@@ -1,5 +1,6 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
@@ -12,6 +13,7 @@ import logging
 import datetime
 from utils.database import depositos_col, creditos_col
 import bson
+from modules.constants import TEXTO_DEPOSITO_PENDIENTE, TEXTO_RETIRO_PENDIENTE, EMOJI_OK, EMOJI_CANCEL
 
 logger = logging.getLogger(__name__)
 
@@ -284,7 +286,7 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
     from utils.database import depositos_col
     depositos_pendientes = await depositos_col.find({"estado": "pendiente"}).to_list(length=20)
     if not depositos_pendientes:
-        mensaje = "<b>💵 Depósitos Pendientes</b>\n\n<i>No hay depósitos pendientes de revisión.</i>"
+        mensaje = f"<b>{TEXTO_DEPOSITO_PENDIENTE}s</b>\n\n<i>No hay depósitos pendientes de revisión.</i>"
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML")
         except Exception:
@@ -296,7 +298,7 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
         red = dep.get('network_name', 'N/A')
         cantidad = dep.get('cantidad', 'No especificada')
         mensaje = (
-            f"<b>💵 Depósito Pendiente</b>\n\n"
+            f"<b>{TEXTO_DEPOSITO_PENDIENTE}</b>\n\n"
             f"<b>Usuario:</b> <code>{dep.get('user_id')}</code>\n"
             f"<b>Red:</b> {red}\n"
             f"<b>Dirección:</b> <code>{dep.get('address', 'N/A')}</code>\n"
@@ -311,8 +313,8 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
             f"<i>Puedes aceptar el depósito para acreditar la cantidad al usuario o cancelar si es inválido.</i>"
         )
         aceptar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="✅ Aceptar", callback_data=f"aceptar_deposito_{dep['_id']}"),
-             InlineKeyboardButton(text="❌ Cancelar", callback_data="admin_depositos")]
+            [InlineKeyboardButton(text=f"{EMOJI_OK} Aceptar", callback_data=f"aceptar_deposito_{dep['_id']}"),
+             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data="admin_depositos")]
         ])
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=aceptar_keyboard)
@@ -358,7 +360,7 @@ async def aceptar_deposito_handler(callback: types.CallbackQuery):
     # Después de actualizar y notificar
     await log_action(user_id, "deposito_aceptado", target_id=user_target, details={"cantidad": cantidad})
     await callback.message.edit_text(
-        f"<b>✅ Depósito Aceptado</b>\n\n"
+        f"<b>{EMOJI_OK} Depósito Aceptado</b>\n\n"
         f"<i>Se han acreditado <b>{cantidad} TON</b> al usuario {user_target}.</i>",
         parse_mode="HTML"
     )
@@ -374,7 +376,7 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
     from utils.database import creditos_col
     retiros_pendientes = await creditos_col.find({"tipo": "retiro", "estado": "pendiente"}).to_list(length=20)
     if not retiros_pendientes:
-        mensaje = "<b>💸 Retiros Pendientes</b>\n\n<i>No hay retiros pendientes de revisión.</i>"
+        mensaje = f"<b>{TEXTO_RETIRO_PENDIENTE}s</b>\n\n<i>No hay retiros pendientes de revisión.</i>"
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML")
         except Exception:
@@ -383,7 +385,7 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
         return
     for ret in retiros_pendientes:
         mensaje = (
-            f"<b>💸 Retiro Pendiente</b>\n\n"
+            f"<b>{TEXTO_RETIRO_PENDIENTE}</b>\n\n"
             f"<b>Usuario:</b> <code>{ret.get('user_id')}</code>\n"
             f"<b>Cantidad:</b> <code>{ret.get('cantidad', 'No especificada')}</code>\n"
             f"<b>Wallet:</b> <code>{ret.get('wallet', 'N/A')}</code>\n"
@@ -392,8 +394,8 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
             f"<i>Puedes aceptar el retiro para marcarlo como completado y notificar al usuario, o cancelar si es inválido.</i>"
         )
         aceptar_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="✅ Aceptar", callback_data=f"aceptar_retiro_{ret['_id']}"),
-             InlineKeyboardButton(text="❌ Cancelar", callback_data="admin_retiros")]
+            [InlineKeyboardButton(text=f"{EMOJI_OK} Aceptar", callback_data=f"aceptar_retiro_{ret['_id']}"),
+             InlineKeyboardButton(text=f"{EMOJI_CANCEL} Cancelar", callback_data="admin_retiros")]
         ])
         try:
             await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=aceptar_keyboard)
@@ -438,7 +440,7 @@ async def aceptar_retiro_handler(callback: types.CallbackQuery):
     # Después de actualizar y notificar
     await log_action(user_id, "retiro_aceptado", target_id=user_target, details={"cantidad": cantidad, "wallet": wallet})
     await callback.message.edit_text(
-        f"<b>✅ Retiro Aceptado</b>\n\n"
+        f"<b>{EMOJI_OK} Retiro Aceptado</b>\n\n"
         f"<i>El retiro de <b>{cantidad} TON</b> a <code>{wallet}</code> ha sido marcado como completado.</i>",
         parse_mode="HTML"
     )

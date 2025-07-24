@@ -9,6 +9,7 @@ import datetime
 # Quitar la importación global de mostrar_promo_paquete_bienvenida
 import bson
 from utils.database import depositos_col, creditos_col
+from modules.constants import EMOJI_DEPOSITO, EMOJI_RETIRO
 
 # Estados para FSM
 class WalletStates(StatesGroup):
@@ -52,13 +53,12 @@ async def wallet_handler(message: types.Message):
     mensaje = (
         f"<b>👛 Wallet</b>\n\n"
         f"Gestiona tus fondos en <b>Mundo Mítico</b>.\n\n"
-        f"<b>💰 Balance:</b> <code>{balance_ton:.3f}</code> TON\n\n"
-        f"<blockquote>Deposita para invertir en héroes y criaturas.\nRetira tus ganancias cuando lo desees.</blockquote>\n\n"
+        f"<b>Balance:</b> <code>{balance_ton:.3f}</code> TON\n\n"
         f"Selecciona una opción para continuar."
     )
     builder = InlineKeyboardBuilder()
-    builder.button(text="📥 Depositar", callback_data="wallet_depositar")
-    builder.button(text="📤 Retirar", callback_data="wallet_retirar")
+    builder.button(text=f"{EMOJI_DEPOSITO} Depositar", callback_data="wallet_depositar")
+    builder.button(text=f"{EMOJI_RETIRO} Retirar", callback_data="wallet_retirar")
     builder.adjust(2)
     wallet_keyboard = builder.as_markup()
     try:
@@ -162,7 +162,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
         await state.set_state(WalletStates.waiting_for_deposit_amount)
         
         cancelar_keyboard = InlineKeyboardBuilder()
-        cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_deposito")
+        cancelar_keyboard.button(text="❌", callback_data="cancelar_deposito")
         cancelar_keyboard = cancelar_keyboard.as_markup()
         
         try:
@@ -182,7 +182,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     if balance_ton < min_retiro:
         mensaje = (
             f"<b>❌ Retiro No Disponible</b>\n\n"
-            f"<b>💰 Balance actual:</b> <code>{balance_ton:.3f}</code> TON\n"
+            f"<b>💰 Balance:</b> <code>{balance_ton:.3f}</code> TON\n"
             f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro:.3f}</code> TON\n\n"
             "Tu balance es insuficiente para realizar un retiro.\n\n"
             "<b>💡 Consejo:</b> Deposita más fondos o espera a que tus criaturas generen más ganancias."
@@ -194,7 +194,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     elif balance_ton == 0:
         mensaje = (
             f"<b>❌ Retiro No Disponible</b>\n\n"
-            f"<b>💰 Balance actual:</b> <code>{balance_ton:.3f}</code> TON\n"
+            f"<b>💰 Balance:</b> <code>{balance_ton:.3f}</code> TON\n"
             f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro:.3f}</code> TON\n\n"
             "No tienes fondos disponibles para retirar.\n\n"
             "<b>💡 Consejo:</b> Primero debes depositar fondos o comprar criaturas para generar ganancias."
@@ -206,7 +206,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     else:
         mensaje = (
             f"<b>📤 Retiro - Paso 1/2</b>\n\n"
-            f"<b>💰 Balance actual:</b> <code>{balance_ton:.3f}</code> TON\n"
+            f"<b>Balance:</b> <code>{balance_ton:.3f}</code> TON\n"
             f"<b>⚠️ Mínimo de retiro:</b> <code>{min_retiro:.3f}</code> TON\n\n"
             "<b>Instrucciones:</b>\n"
             "1️⃣ Envía tu dirección de wallet TON.\n"
@@ -379,14 +379,14 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     
     mensaje = (
         f"<b>✅ Retiro solicitado</b>\n\n"
-        f"<b>ID de Retiro:</b> <code>{retiro_id}</code>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> TON\n"
+        f"<b>ID de Retiro:</b> <code>{retiro_id}</code>\n\n"
+        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> TON\n\n"
         f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
-        "Tu solicitud está pendiente de revisión.\n\n"
-            "<b>⏰ Tiempo estimado:</b> 24-48 horas\n"
-        "<b>📧 Notificación:</b> Recibirás confirmación cuando se complete.\n"
-        "Guarda este ID para cualquier reporte o consulta.\n"
-        f"Puedes consultar el estado con: <code>/estado {retiro_id}</code>"
+        f"Tu solicitud está pendiente de revisión.\n\n"
+        f"<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
+        f"<b>📧 Notificación:</b> Recibirás confirmación cuando se complete.\n\n"
+        f"Guarda este ID para cualquier reporte o consulta.\n\n"
+        f"Puedes consultar el estado con: /estado [id]"
     )
     
     try:
@@ -508,15 +508,15 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     await notificar_admins_nuevo_deposito(user_id, cantidad, network_name, deposito_id)
     mensaje_confirmacion = (
         f"<b>✅ Depósito registrado</b>\n\n"
-        f"<b>ID de Depósito:</b> <code>{deposito_id}</code>\n"
-        f"<b>Red:</b> {network_name}\n"
-        f"<b>Dirección:</b> <code>{address}</code>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> TON\n"
+        f"<b>ID de Depósito:</b> <code>{deposito_id}</code>\n\n"
+        f"<b>Red:</b> {network_name}\n\n"
+        f"<b>Dirección:</b> <code>{address}</code>\n\n"
+        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> TON\n\n"
         f"<b>Hash:</b> <code>{hash_text}</code>\n\n"
-        "<b>Estado:</b> <b>Pendiente de revisión</b>\n"
+        "<b>Estado:</b> <b>Pendiente de revisión</b>\n\n"
         "<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
-        "Guarda este ID para cualquier reporte o consulta.\n"
-        f"Puedes consultar el estado con: <code>/estado {deposito_id}</code>\n"
+        "Guarda este ID para cualquier reporte o consulta.\n\n"
+        f"Puedes consultar el estado con: /estado [id]\n\n"
         "Te notificaremos cuando el admin revise tu depósito."
     )
     try:
