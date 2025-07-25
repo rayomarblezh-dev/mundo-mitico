@@ -3,7 +3,6 @@ from modules.commands import register_commands
 from utils.database import init_db
 from config.config import BOT_TOKEN
 from modules.bot import bot, dp
-from modules.tareas import check_tareas_usuario
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)

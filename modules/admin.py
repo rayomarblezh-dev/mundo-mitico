@@ -1,30 +1,31 @@
-from aiogram import types, F
+from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.filters import Command
-import re
 import platform
 import psutil
-from utils.database import agregar_credito_usuario, notificar_credito_agregado, contar_usuarios, contar_depositos, contar_retiros, obtener_depositos_pendientes, log_action
-from config.config import is_admin, MIN_DEPOSITO, MIN_RETIRO, COMISION_RETIRO, TIEMPO_PROCESAMIENTO
 import logging
 import datetime
-from utils.database import depositos_col, creditos_col
 import bson
-from modules.constants import TEXTO_DEPOSITO_PENDIENTE, TEXTO_RETIRO_PENDIENTE, EMOJI_OK, EMOJI_CANCEL, EMOJI_DEPOSITO, EMOJI_RETIRO
+
+from utils.database import (
+    agregar_credito_usuario, notificar_credito_agregado, contar_usuarios,
+    contar_depositos, contar_retiros, log_action, depositos_col, creditos_col
+)
+from config.config import is_admin, MIN_DEPOSITO, MIN_RETIRO, COMISION_RETIRO, TIEMPO_PROCESAMIENTO
+from modules.constants import (
+    TEXTO_DEPOSITO_PENDIENTE, TEXTO_RETIRO_PENDIENTE, EMOJI_OK, EMOJI_CANCEL,
+    EMOJI_DEPOSITO, EMOJI_RETIRO
+)
 
 logger = logging.getLogger(__name__)
 
 # Estados para FSM de administración
 class AdminStates(StatesGroup):
-    waiting_for_user_id = State()      # Esperando ID del usuario
-    waiting_for_amount = State()       # Esperando cantidad a agregar
-    waiting_for_reason = State()       # Esperando razón del crédito
-    waiting_for_confirmation = State() # Esperando confirmación
-
-# Eliminar ADMIN_IDS y función is_admin locales
+    waiting_for_user_id = State()
+    waiting_for_amount = State()
+    waiting_for_reason = State()
+    waiting_for_confirmation = State()
 
 async def admin_handler(message: types.Message):
     user_id = message.from_user.id
@@ -283,7 +284,6 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
     logger.info(f"Admin user_id={user_id} consultó depósitos pendientes")
-    from utils.database import depositos_col
     depositos_pendientes = await depositos_col.find({"estado": "pendiente"}).to_list(length=20)
     if not depositos_pendientes:
         mensaje = f"<b>{TEXTO_DEPOSITO_PENDIENTE}s</b>\n\n<i>No hay depósitos pendientes de revisión.</i>"
@@ -323,15 +323,11 @@ async def admin_depositos_handler(callback: types.CallbackQuery):
         await callback.answer()
         return  # Mostrar de uno en uno
 
-# Handler para aceptar depósito
 async def aceptar_deposito_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     if not is_admin(user_id):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    from utils.database import depositos_col, agregar_credito_usuario
-    import bson
-    # Extraer el ID del depósito
     dep_id = callback.data.replace("aceptar_deposito_", "")
     try:
         dep_obj_id = bson.ObjectId(dep_id)
@@ -347,17 +343,13 @@ async def aceptar_deposito_handler(callback: types.CallbackQuery):
     if not cantidad or not user_target:
         await callback.answer("Datos incompletos en el depósito", show_alert=True)
         return
-    # Acreditar la cantidad exacta
     await agregar_credito_usuario(user_target, float(cantidad), user_id)
-    # Marcar depósito como completado
     await depositos_col.update_one({"_id": dep_obj_id}, {"$set": {"estado": "completado", "fecha_completado": datetime.datetime.now()}})
-    # Notificar al usuario
     try:
         from modules.bot import bot
         await bot.send_message(user_target, f"<b>💵 Depósito acreditado</b>\n\n<i>Tu depósito de <b>{cantidad} TON</b> ha sido acreditado correctamente.</i>", parse_mode="HTML")
     except Exception:
         pass
-    # Después de actualizar y notificar
     await log_action(user_id, "deposito_aceptado", target_id=user_target, details={"cantidad": cantidad})
     await callback.message.edit_text(
         f"<b>{EMOJI_OK} Depósito Aceptado</b>\n\n"
@@ -373,7 +365,6 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
     logger.info(f"Admin user_id={user_id} consultó retiros pendientes")
-    from utils.database import creditos_col
     retiros_pendientes = await creditos_col.find({"tipo": "retiro", "estado": "pendiente"}).to_list(length=20)
     if not retiros_pendientes:
         mensaje = f"<b>{TEXTO_RETIRO_PENDIENTE}s</b>\n\n<i>No hay retiros pendientes de revisión.</i>"
@@ -404,15 +395,11 @@ async def admin_retiros_handler(callback: types.CallbackQuery):
         await callback.answer()
         return  # Mostrar de uno en uno
 
-# Handler para aceptar retiro
 async def aceptar_retiro_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     if not is_admin(user_id):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    from utils.database import creditos_col
-    import bson
-    # Extraer el ID del retiro
     ret_id = callback.data.replace("aceptar_retiro_", "")
     try:
         ret_obj_id = bson.ObjectId(ret_id)
@@ -429,15 +416,12 @@ async def aceptar_retiro_handler(callback: types.CallbackQuery):
     if not cantidad or not user_target:
         await callback.answer("Datos incompletos en el retiro", show_alert=True)
         return
-    # Marcar retiro como completado
     await creditos_col.update_one({"_id": ret_obj_id}, {"$set": {"estado": "completado", "fecha_completado": datetime.datetime.now()}})
-    # Notificar al usuario
     try:
         from modules.bot import bot
         await bot.send_message(user_target, f"<b>💸 Retiro procesado</b>\n\n<i>Tu retiro de <b>{cantidad} TON</b> a la wallet <code>{wallet}</code> ha sido procesado correctamente.</i>", parse_mode="HTML")
     except Exception:
         pass
-    # Después de actualizar y notificar
     await log_action(user_id, "retiro_aceptado", target_id=user_target, details={"cantidad": cantidad, "wallet": wallet})
     await callback.message.edit_text(
         f"<b>{EMOJI_OK} Retiro Aceptado</b>\n\n"
@@ -486,7 +470,6 @@ async def admin_tareas_handler(callback: types.CallbackQuery):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
     from utils.database import usuarios_col
-    # Contar tareas pendientes y completadas (ejemplo simple)
     total_usuarios = await usuarios_col.count_documents({})
     tareas_pendientes = await usuarios_col.count_documents({"tareas": {"$exists": True, "$ne": {}}})
     mensaje = (
@@ -507,7 +490,6 @@ async def admin_resumen_fondos_handler(callback: types.CallbackQuery):
     if not is_admin(user_id):
         await callback.answer("❌ Acceso denegado", show_alert=True)
         return
-    # Obtener depósitos y retiros (máximo 15 de cada uno, ordenados de viejo a reciente)
     depositos = await depositos_col.find({}).sort("fecha", 1).to_list(length=15)
     retiros = await creditos_col.find({"tipo": "retiro"}).sort("fecha", 1).to_list(length=15)
     mensaje = "<b>📊 Resumen de Fondos</b>\n\n"
@@ -563,7 +545,6 @@ async def info_handler(message: types.Message):
     except Exception:
         await message.answer(msg, parse_mode="HTML") 
 
-# Nuevo flujo: Buscar usuario y mostrar historial
 class BuscarStates(StatesGroup):
     waiting_for_user = State()
     mostrando_usuario = State()
@@ -593,7 +574,6 @@ async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
     usuario = None
     depositos = []
     retiros = []
-    # Buscar por ID de depósito o retiro si es un ObjectId válido
     try:
         if len(user_input) == 24:
             obj_id = bson.ObjectId(user_input)
@@ -625,7 +605,6 @@ async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
                 return
     except Exception:
         pass
-    # Buscar por usuario (ID o username)
     if user_input.startswith('@'):
         username = user_input[1:]
         usuario = await usuarios_col.find_one({"username": username})
@@ -641,7 +620,6 @@ async def procesar_busqueda_usuario(message: types.Message, state: FSMContext):
             parse_mode="HTML"
         )
         return
-    # Buscar todos los depósitos y retiros (últimos 3 meses)
     from datetime import datetime, timedelta
     hace_3_meses = datetime.now() - timedelta(days=90)
     depositos = await depositos_col.find({"user_id": usuario["user_id"], "fecha": {"$gte": hace_3_meses}}).sort("fecha", -1).to_list(length=100)
@@ -710,24 +688,19 @@ async def mostrar_historial_usuario(event, state: FSMContext):
                 mensaje += f"└ <b>Wallet:</b> <code>{ret.get('wallet')}</code>\n"
     else:
         mensaje += "Sin retiros.\n"
-    # Botones de paginación
     botones = []
-    # Depósitos
     max_dep = ((len(depositos)-1)//per_page)
     if pagina_dep > 0:
         botones.append(InlineKeyboardButton(text="⬅️ Depósitos", callback_data="dep_prev"))
     if pagina_dep < max_dep:
         botones.append(InlineKeyboardButton(text="Depósitos ➡️", callback_data="dep_next"))
-    # Retiros
     max_ret = ((len(retiros)-1)//per_page)
     if pagina_ret > 0:
         botones.append(InlineKeyboardButton(text="⬅️ Retiros", callback_data="ret_prev"))
     if pagina_ret < max_ret:
         botones.append(InlineKeyboardButton(text="Retiros ➡️", callback_data="ret_next"))
-    # Volver
     botones.append(InlineKeyboardButton(text="🔙 Volver", callback_data="admin"))
     keyboard = InlineKeyboardMarkup(inline_keyboard=[botones[i:i+2] for i in range(0, len(botones), 2)])
-    # Mostrar
     if hasattr(event, 'edit_text'):
         await event.edit_text(mensaje, parse_mode="HTML", reply_markup=keyboard)
     else:
@@ -749,14 +722,12 @@ async def paginacion_busqueda_handler(callback: types.CallbackQuery, state: FSMC
     await mostrar_historial_usuario(callback.message, state)
     await callback.answer() 
 
-# Handlers para cancelar depósito/retiro por ID:
 async def cancelar_deposito_admin_handler(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     if not is_admin(user_id):
         await callback.answer(f"{EMOJI_CANCEL} Acceso denegado", show_alert=True)
         return
     dep_id = callback.data.replace("cancelar_deposito_", "")
-    import bson
     try:
         dep_obj_id = bson.ObjectId(dep_id)
     except Exception:
@@ -776,7 +747,6 @@ async def cancelar_retiro_admin_handler(callback: types.CallbackQuery):
         await callback.answer(f"{EMOJI_CANCEL} Acceso denegado", show_alert=True)
         return
     ret_id = callback.data.replace("cancelar_retiro_", "")
-    import bson
     try:
         ret_obj_id = bson.ObjectId(ret_id)
     except Exception:
@@ -789,9 +759,3 @@ async def cancelar_retiro_admin_handler(callback: types.CallbackQuery):
     await creditos_col.update_one({"_id": ret_obj_id}, {"$set": {"estado": "cancelado", "fecha_cancelado": datetime.datetime.now()}})
     await callback.message.edit_text(f"<b>{EMOJI_CANCEL} Retiro Cancelado</b>\n\n<i>El retiro ha sido cancelado correctamente.</i>", parse_mode="HTML")
     await callback.answer()
-
-# Registrar los handlers:
-# (esto debe ir en la función de registro de comandos o router)
-# dp.callback_query.register(cancelar_deposito_admin_handler, lambda c: c.data == "admin_depositos")
-# dp.callback_query.register(cancelar_retiro_admin_handler, lambda c: c.data == "admin_retiros") 
-    

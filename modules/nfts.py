@@ -1,5 +1,5 @@
 from aiogram import types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile, ReplyKeyboardMarkup, KeyboardButton
 import os
 from utils.database import usuario_tiene_nft_comun, usuario_tiene_nft_ghost, comprar_nft, obtener_nft_usuario, procesar_compra_item
 import logging
@@ -19,16 +19,12 @@ async def nfts_handler(callback: types.CallbackQuery):
         "<b>⚠️ Importante:</b> Solo puedes tener <b>1 NFT común</b> (Moguri o Gárgola) y <b>1 NFT Ghost</b> a la vez.\n\n"
         "Selecciona un NFT para ver sus detalles y precio."
     )
-    nfts_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💀 Moguri-NFT", callback_data="nft_moguri"),
-         InlineKeyboardButton(text="🦇 Gargola-NFT", callback_data="nft_gargola")],
-        [InlineKeyboardButton(text="👻 Ghost-NFT", callback_data="nft_ghost")],
-        [InlineKeyboardButton(text="🔙 Volver Atrás", callback_data="tienda_volver")]
-    ])
-    try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=nfts_keyboard)
-    except Exception:
-        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=nfts_keyboard)
+    volver_keyboard = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="‹ Back")]],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     await callback.answer()
 
 async def nft_moguri_handler(callback: types.CallbackQuery):
@@ -191,3 +187,12 @@ async def comprar_nft_ghost_handler(callback: types.CallbackQuery):
     except Exception:
         await callback.message.answer(mensaje, parse_mode="HTML")
     await callback.answer() 
+
+# Handler para el botón de menú '‹ Back' desde NFTs
+async def back_from_nfts_handler(message: types.Message):
+    # Regresa al menú de la tienda
+    from modules.tienda import tienda_handler
+    await tienda_handler(message)
+
+def register_nfts_handlers(dp):
+    dp.message.register(back_from_nfts_handler, lambda m: m.text == "‹ Back") 
