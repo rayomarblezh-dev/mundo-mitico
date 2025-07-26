@@ -382,4 +382,6 @@ async def cancel_withdrawal_async(withdrawal_id, admin_id):
         return {'success': False, 'message': 'Error interno del servidor'}
 
 if __name__ == '__main__':
-    app.run(debug=FLASK_DEBUG, host=FLASK_HOST, port=FLASK_PORT) 
+    import os
+    port = int(os.environ.get('PORT', FLASK_PORT))
+    app.run(debug=FLASK_DEBUG, host=FLASK_HOST, port=port) 
