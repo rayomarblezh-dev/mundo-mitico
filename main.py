@@ -7,6 +7,7 @@ from utils.logging_config import setup_logging, get_logger
 from utils.database import init_db
 from modules.commands import register_commands
 from modules.bot import bot, dp
+from config.config import API_HOST, API_PORT, API_WORKERS
 
 # Configurar logging
 setup_logging()
@@ -16,7 +17,9 @@ logger = get_logger(__name__)
 app = FastAPI(
     title="Mundo Mítico Bot API",
     description="API para el bot de Telegram Mundo Mítico",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Variable global para el estado del bot
@@ -75,7 +78,9 @@ async def start_bot():
         logger.error(f"❌ Error en el bot: {e}")
         bot_running = False
 
-# Endpoints de la API
+# =========================
+# ENDPOINTS DE LA API
+# =========================
 
 @app.get("/")
 async def root():
@@ -83,7 +88,9 @@ async def root():
     return {
         "message": "Mundo Mítico Bot API",
         "status": "running" if bot_running else "stopped",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
     }
 
 @app.get("/health")
@@ -101,7 +108,8 @@ async def health_check():
         return {
             "status": "healthy",
             "bot_running": bot_running,
-            "database": "connected"
+            "database": "connected",
+            "timestamp": asyncio.get_event_loop().time()
         }
     except Exception as e:
         logger.error(f"Error en health check: {e}")
@@ -115,7 +123,8 @@ async def bot_status():
         "bot_info": {
             "username": bot.username if bot.username else "Unknown",
             "id": bot.id if bot.id else "Unknown"
-        }
+        },
+        "uptime": asyncio.get_event_loop().time() if bot_running else 0
     }
 
 @app.post("/restart")
@@ -161,14 +170,31 @@ async def get_stats():
             "total_retiros": stats.get('total_retiros', 0),
             "volumen_total": stats.get('volumen_total', 0),
             "usuarios_activos_7d": usuarios_activos,
-            "bot_running": bot_running
+            "bot_running": bot_running,
+            "timestamp": asyncio.get_event_loop().time()
         }
         
     except Exception as e:
         logger.error(f"Error obteniendo estadísticas: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo estadísticas: {str(e)}")
 
-# Manejo de errores global
+@app.get("/info")
+async def get_info():
+    """Endpoint para obtener información del sistema"""
+    return {
+        "app_name": "Mundo Mítico Bot",
+        "version": "1.0.0",
+        "environment": "production",
+        "api_host": API_HOST,
+        "api_port": API_PORT,
+        "api_workers": API_WORKERS,
+        "bot_running": bot_running
+    }
+
+# =========================
+# MANEJO DE ERRORES GLOBAL
+# =========================
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     logger.error(f"Error no manejado: {exc}")
@@ -181,8 +207,9 @@ if __name__ == "__main__":
     # Configuración para desarrollo local
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=443,
+        host=API_HOST,
+        port=API_PORT,
+        workers=API_WORKERS,
         reload=False,
         log_level="info"
     )

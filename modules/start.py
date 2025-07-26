@@ -62,11 +62,11 @@ async def start_handler(event):
     welcome_text = (
         "🌍 ¡Bienvenido a Mundo Mítico!\n\n"
         "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
-        "— Cazar Criaturas - Encuentra y captura bestias míticas\n"
+        "<blockquote expandable>Cazar Criaturas - Encuentra y captura bestias míticas\n"
         "— Expediciones - Explora territorios desconocidos\n"
         "— Combates Épicos - Enfréntate a desafíos legendarios\n"
         "— Invertir TON - Gestiona tu economía en el mundo mítico\n"
-        "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente\n\n"
+        "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n\n"
         "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.\n\n"
         "Accesos rápidos:"
     )
@@ -81,7 +81,7 @@ async def start_handler(event):
     builder.button(text="📋 Tareas", callback_data="tareas")
     builder.button(text="📣 Canal", url="https://t.me/MundoMitico")
     builder.button(text="📮 Soporte", url="http://t.me/wolfpromot")
-    builder.adjust(2, 2, 2, 2)
+    builder.adjust(1, 2, 1, 2, 2)
     keyboard = builder.as_markup()
 
     # Enviar mensaje según el tipo de evento
