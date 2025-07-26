@@ -39,7 +39,7 @@ from modules.wallet import (
 from modules.explorar import explorar_handler, register_explorar_handlers
 from modules.nfts import register_nfts_handlers
 from modules.inventario import mostrar_inventario_usuario, register_inventario_handlers
-from modules.admin import register_admin_handlers
+
 from utils.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -97,6 +97,6 @@ def register_commands(dp: Dispatcher):
     register_criaturas_handlers(dp)
     register_nfts_handlers(dp)
     register_tareas_handlers(dp)
-    register_admin_handlers(dp)
+
     
     logger.info("✅ Todos los comandos y handlers registrados correctamente")

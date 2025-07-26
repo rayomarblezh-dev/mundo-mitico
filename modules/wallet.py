@@ -5,15 +5,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 import httpx
 import datetime
-import bson
 import logging
 from utils.database import (
     obtener_balance_usuario,
     creditos_col,
     descontar_balance_usuario,
     log_action,
-    notificar_admins_nuevo_deposito,
-    notificar_admins_nuevo_retiro,
     depositos_col,
 )
 from modules.constants import (
@@ -393,9 +390,6 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     result = await creditos_col.insert_one(retiro_data)
     retiro_id = str(result.inserted_id)
     
-    # Notificar a administradores
-    await notificar_admins_nuevo_retiro(user_id, cantidad, wallet_address, retiro_id)
-    
     # Log de auditoría
     await log_action(user_id, "retiro_solicitado", details={
         "cantidad": cantidad, 
@@ -409,10 +403,8 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
         f"Cantidad: {cantidad:.3f} TON\n"
         f"Wallet: {wallet_address}\n\n"
         "Tu solicitud está pendiente de revisión.\n\n"
-        "Tiempo estimado: 24-48 horas\n"
-        "Notificación: Recibirás confirmación cuando se complete.\n\n"
-        "Guarda este ID para cualquier reporte o consulta.\n"
-        "Puedes consultar el estado con: /estado [id]"
+        "Tiempo estimado: 24-48 horas\n\n"
+        "Guarda este ID para cualquier reporte o consulta."
     )
     
     # Botones para volver
@@ -525,9 +517,6 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     result = await depositos_col.insert_one(deposito_data)
     deposito_id = str(result.inserted_id)
     
-    # Notificar a administradores
-    await notificar_admins_nuevo_deposito(user_id, cantidad, network_name, deposito_id)
-    
     # Log de auditoría
     await log_action(user_id, "deposito_registrado", details={
         "network": network_name,
@@ -545,9 +534,7 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
         f"<b>🔗 Hash:</b> <code>{hash_text}</code>\n"
         "<b>📊 Estado:</b> <b>Pendiente de revisión</b>\n"
         "<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
-        "Guarda este ID para cualquier reporte o consulta.\n"
-        "Puedes consultar el estado con: <code>/estado [id]</code>\n\n"
-        "Te notificaremos cuando el admin revise tu depósito."
+        "Guarda este ID para cualquier reporte o consulta."
     )
     
     await message.answer(mensaje_confirmacion, parse_mode="HTML")
@@ -620,59 +607,7 @@ async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FS
     await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     await callback.answer()
 
-async def estado_handler(message: types.Message):
-    """Consulta el estado de una operación por ID"""
-    user_id = message.from_user.id
-    args = message.text.split()
-    
-    if len(args) < 2:
-        await message.answer(
-            "📋 Uso: /estado [ID_de_operacion]\n\n"
-            "Ejemplo: /estado 507f1f77bcf86cd799439011"
-        )
-        return
-    
-    op_id = args[1].strip()
-    
-    try:
-        if len(op_id) == 24:
-            obj_id = bson.ObjectId(op_id)
-            
-            # Buscar en depósitos
-            dep = await depositos_col.find_one({"_id": obj_id, "user_id": user_id})
-            if dep:
-                mensaje = (
-                    "🔎 Estado de tu Depósito\n\n"
-                    f"ID: {op_id}\n"
-                    f"Cantidad: {float(dep.get('cantidad', 0)):.3f} {dep.get('network_name', 'TON').split()[-1]}\n"
-                    f"Estado: {dep.get('estado', '?')}\n"
-                    f"Fecha: {dep.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if dep.get('fecha') else '-'}\n"
-                    f"Hash: {dep.get('hash', '-')}\n"
-                )
-                await message.answer(mensaje, parse_mode="HTML")
-                return
-            
-            # Buscar en retiros
-            ret = await creditos_col.find_one({"_id": obj_id, "user_id": user_id})
-            if ret:
-                mensaje = (
-                    "🔎 Estado de tu Retiro\n\n"
-                    f"ID: {op_id}\n"
-                    f"Cantidad: {float(ret.get('cantidad', 0)):.3f} TON\n"
-                    f"Estado: {ret.get('estado', '?')}\n"
-                    f"Fecha: {ret.get('fecha').strftime('%Y-%m-%d %H:%M:%S') if ret.get('fecha') else '-'}\n"
-                    f"Wallet: {ret.get('wallet', '-')}\n"
-                )
-                await message.answer(mensaje, parse_mode="HTML")
-                return
-                
-    except Exception as e:
-        logger.error(f"Error consultando estado: {e}")
-    
-    await message.answer(
-        "❌ No se encontró ninguna operación con ese ID asociada a tu cuenta.",
-        parse_mode="HTML"
-    )
+
 
 def register_wallet_handlers(dp):
     """Registra todos los handlers del módulo wallet"""
@@ -694,5 +629,3 @@ def register_wallet_handlers(dp):
     dp.message.register(procesar_cantidad_deposito, WalletStates.esperando_cantidad_deposito)
     dp.message.register(procesar_hash_deposito, WalletStates.esperando_hash_deposito)
     
-    # Comando de estado
-    dp.message.register(estado_handler, lambda m: m.text.startswith("/estado"))

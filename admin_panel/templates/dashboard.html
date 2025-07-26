@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    sans: ['Poppins', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        black: {
+                            900: '#000000',
+                            800: '#1A1A1A',
+                            700: '#2D2D2D',
+                            600: '#404040',
+                            500: '#525252',
+                            400: '#666666',
+                            300: '#808080',
+                            200: '#999999',
+                            100: '#B3B3B3',
+                            50: '#E6E6E6'
+                        },
+                        white: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .icon {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white font-sans" style="background-color: #0a0a0a; background-image: linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px); background-size: 20px 20px;">
+    <nav class="bg-black-800/80 border-b border-black-700 py-4 px-8 flex justify-between items-center backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <span class="text-xl font-bold">Admin Dashboard</span>
+        </div>
+        <a href="/logout" class="bg-black-700/80 hover:bg-black-600/80 px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <path d="M16 17l5-5-5-5"/>
+                <path d="M21 12H9"/>
+            </svg>
+            Cerrar sesión
+        </a>
+    </nav>
+    <main class="max-w-6xl mx-auto py-10 px-4">
+        <h2 class="text-3xl font-bold mb-8">Bienvenido al Panel de Administración</h2>
+        
+        <div id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Estadísticas -->
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section class="bg-black-800/60 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Depósitos Pendientes</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-black-700">
+                                <th class="px-3 py-2 text-left">ID</th>
+                                <th class="px-3 py-2 text-left">Usuario</th>
+                                <th class="px-3 py-2 text-left">Cantidad</th>
+                                <th class="px-3 py-2 text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="depositsTable">
+                            <tr><td colspan="4" class="text-center py-4 text-black-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section class="bg-black-800/60 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Retiros Pendientes</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-black-700">
+                                <th class="px-3 py-2 text-left">ID</th>
+                                <th class="px-3 py-2 text-left">Usuario</th>
+                                <th class="px-3 py-2 text-left">Cantidad</th>
+                                <th class="px-3 py-2 text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="withdrawalsTable">
+                            <tr><td colspan="4" class="text-center py-4 text-black-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Cargar estadísticas
+        fetch('/api/stats').then(r => r.json()).then(stats => {
+            document.getElementById('stats').innerHTML = `
+                <div class="bg-black-800/80 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black-700 p-3 rounded-full">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">${stats.total_users ?? 0}</div>
+                            <div class="text-black-400">Usuarios totales</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black-800/80 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black-700 p-3 rounded-full">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">${stats.total_deposits ?? 0}</div>
+                            <div class="text-black-400">Depósitos totales</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black-800/80 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black-700 p-3 rounded-full">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">${stats.total_volume ?? 0}</div>
+                            <div class="text-black-400">Volumen total</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black-800/80 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black-700 p-3 rounded-full">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">${stats.total_withdrawals ?? 0}</div>
+                            <div class="text-black-400">Retiros totales</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black-800/80 border border-black-700 rounded-2xl p-6 backdrop-blur-md shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black-700 p-3 rounded-full">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">${stats.active_users ?? 0}</div>
+                            <div class="text-black-400">Usuarios activos (7d)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Cargar depósitos pendientes
+        fetch('/api/deposits').then(r => r.json()).then(deposits => {
+            const tbody = document.getElementById('depositsTable');
+            if (!deposits.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-black-400">Sin depósitos pendientes</td></tr>';
+                return;
+            }
+            tbody.innerHTML = deposits.map(dep => `
+                <tr class="border-b border-black-700 hover:bg-black-700/30 transition-colors">
+                    <td class="px-3 py-3">${dep.id}</td>
+                    <td class="px-3 py-3">${dep.user_id}</td>
+                    <td class="px-3 py-3">${dep.amount}</td>
+                    <td class="px-3 py-3 flex gap-2">
+                        <button onclick="processDeposit('${dep.id}')" class="bg-black-700 hover:bg-black-600 px-3 py-1 rounded-full text-sm flex items-center gap-1 transition-all">
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                            Procesar
+                        </button>
+                        <button onclick="cancelDeposit('${dep.id}')" class="bg-black-700 hover:bg-black-600 px-3 py-1 rounded text-sm flex items-center gap-1">
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                            Cancelar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+
+        // Cargar retiros pendientes
+        fetch('/api/withdrawals').then(r => r.json()).then(withdrawals => {
+            const tbody = document.getElementById('withdrawalsTable');
+            if (!withdrawals.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-black-400">Sin retiros pendientes</td></tr>';
+                return;
+            }
+            tbody.innerHTML = withdrawals.map(w => `
+                <tr class="border-b border-black-700 hover:bg-black-700/30 transition-colors">
+                    <td class="px-3 py-3">${w.id}</td>
+                    <td class="px-3 py-3">${w.user_id}</td>
+                    <td class="px-3 py-3">${w.amount}</td>
+                    <td class="px-3 py-3 flex gap-2">
+                        <button onclick="processWithdrawal('${w.id}')" class="bg-black-700 hover:bg-black-600 px-3 py-1 rounded text-sm flex items-center gap-1">
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                            Procesar
+                        </button>
+                        <button onclick="cancelWithdrawal('${w.id}')" class="bg-black-700 hover:bg-black-600 px-3 py-1 rounded text-sm flex items-center gap-1">
+                            <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                            Cancelar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+
+        // Acciones de depósitos
+        function processDeposit(id) {
+            const amount = prompt('Ingresa la cantidad real recibida (TON):');
+            if (!amount || isNaN(amount) || Number(amount) <= 0) return alert('Cantidad inválida');
+            fetch('/api/process-deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deposit_id: id, amount })
+            }).then(r => r.json()).then(res => {
+                alert(res.message);
+                location.reload();
+            });
+        }
+        function cancelDeposit(id) {
+            if (!confirm('¿Seguro que deseas cancelar este depósito?')) return;
+            fetch('/api/cancel-deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deposit_id: id })
+            }).then(r => r.json()).then(res => {
+                alert(res.message);
+                location.reload();
+            });
+        }
+        // Acciones de retiros
+        function processWithdrawal(id) {
+            if (!confirm('¿Seguro que deseas marcar este retiro como procesado?')) return;
+            fetch('/api/process-withdrawal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ withdrawal_id: id })
+            }).then(r => r.json()).then(res => {
+                alert(res.message);
+                location.reload();
+            });
+        }
+        function cancelWithdrawal(id) {
+            if (!confirm('¿Seguro que deseas cancelar este retiro y devolver los fondos?')) return;
+            fetch('/api/cancel-withdrawal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ withdrawal_id: id })
+            }).then(r => r.json()).then(res => {
+                alert(res.message);
+                location.reload();
+            });
+        }
+        window.processDeposit = processDeposit;
+        window.cancelDeposit = cancelDeposit;
+        window.processWithdrawal = processWithdrawal;
+        window.cancelWithdrawal = cancelWithdrawal;
+    </script>
+</body>
+</html> 

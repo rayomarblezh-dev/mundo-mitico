@@ -437,53 +437,7 @@ async def guardar_hash_pago(user_id: int, hash_text: str, network_key: str, netw
         logger.error(f"Error guardando hash de pago para {user_id}: {e}")
         return False
 
-async def procesar_deposito(deposito_id: str, admin_id: int, cantidad_real: float):
-    """Procesa un depósito confirmado por un admin"""
-    try:
-        from bson import ObjectId
-        
-        # Buscar el depósito
-        deposito = await depositos_col.find_one({"_id": ObjectId(deposito_id)})
-        if not deposito:
-            return False
-        
-        user_id = deposito["user_id"]
-        
-        # Verificar que no haya sido procesado ya
-        if deposito.get("estado") != "pendiente":
-            return False
-        
-        # Actualizar depósito como procesado
-        await depositos_col.update_one(
-            {"_id": ObjectId(deposito_id)},
-            {
-                "$set": {
-                    "estado": "procesado",
-                    "cantidad_real": cantidad_real,
-                    "admin_id": admin_id,
-                    "fecha_procesamiento": datetime.datetime.now()
-                }
-            }
-        )
-        
-        # Agregar balance al usuario
-        await agregar_balance_usuario(user_id, cantidad_real)
-        
-        # Notificar al usuario
-        from modules.bot import bot
-        await notificar_credito_agregado(bot, user_id, cantidad_real, "Depósito confirmado")
-        
-        # Log de la acción
-        await log_admin_action(admin_id, "deposito_procesado", user_id, {
-            "deposito_id": deposito_id,
-            "cantidad_real": cantidad_real
-        })
-        
-        logger.info(f"✅ Depósito procesado: {deposito_id} -> {cantidad_real} TON")
-        return True
-    except Exception as e:
-        logger.error(f"Error procesando depósito {deposito_id}: {e}")
-        return False
+
 
 async def solicitar_retiro(user_id: int, cantidad: float, wallet_address: str):
     """Solicita un retiro para un usuario"""
@@ -510,8 +464,7 @@ async def solicitar_retiro(user_id: int, cantidad: float, wallet_address: str):
         result = await creditos_col.insert_one(retiro_data)
         retiro_id = str(result.inserted_id)
         
-        # Notificar a admins
-        await notificar_admins_nuevo_retiro(user_id, cantidad, wallet_address, retiro_id)
+
         
         # Log de la acción
         await log_action(user_id, "retiro_solicitado", details={
@@ -525,45 +478,7 @@ async def solicitar_retiro(user_id: int, cantidad: float, wallet_address: str):
         logger.error(f"Error solicitando retiro para {user_id}: {e}")
         return False, "Error interno"
 
-async def procesar_retiro(retiro_id: str, admin_id: int):
-    """Procesa un retiro confirmado por un admin"""
-    try:
-        from bson import ObjectId
-        
-        # Buscar el retiro
-        retiro = await creditos_col.find_one({"_id": ObjectId(retiro_id)})
-        if not retiro:
-            return False
-        
-        user_id = retiro["user_id"]
-        
-        # Verificar que no haya sido procesado ya
-        if retiro.get("estado") != "pendiente":
-            return False
-        
-        # Actualizar retiro como procesado
-        await creditos_col.update_one(
-            {"_id": ObjectId(retiro_id)},
-            {
-                "$set": {
-                    "estado": "procesado",
-                    "admin_id": admin_id,
-                    "fecha_procesamiento": datetime.datetime.now()
-                }
-            }
-        )
-        
-        # Log de la acción
-        await log_admin_action(admin_id, "retiro_procesado", user_id, {
-            "retiro_id": retiro_id,
-            "cantidad": retiro["cantidad_solicitada"]
-        })
-        
-        logger.info(f"✅ Retiro procesado: {retiro_id}")
-        return True
-    except Exception as e:
-        logger.error(f"Error procesando retiro {retiro_id}: {e}")
-        return False
+
 
 async def es_elegible_paquete_bienvenida(user_id: int):
     """Verifica si un usuario es elegible para el paquete de bienvenida"""
@@ -649,41 +564,7 @@ async def usuario_paquete_bienvenida_expirado(user_id: int):
         logger.error(f"Error verificando expiración paquete bienvenida para {user_id}: {e}")
         return False
 
-async def agregar_credito_usuario(user_id: int, cantidad: float, admin_id: int):
-    """Agrega crédito a un usuario (acción de admin)"""
-    try:
-        # Agregar balance
-        if not await agregar_balance_usuario(user_id, cantidad):
-            return False
-        
-        # Notificar al usuario
-        from modules.bot import bot
-        await notificar_credito_agregado(bot, user_id, cantidad, "Crédito agregado por administrador")
-        
-        # Log de la acción
-        await log_admin_action(admin_id, "credito_agregado", user_id, {
-            "cantidad": cantidad
-        })
-        
-        logger.info(f"✅ Crédito agregado: {user_id} -> {cantidad} TON")
-        return True
-    except Exception as e:
-        logger.error(f"Error agregando crédito para {user_id}: {e}")
-        return False
 
-async def log_admin_action(admin_id: int, action: str, target_id: int = None, extra: dict = None):
-    """Registra una acción de administrador"""
-    try:
-        log_data = {
-            "admin_id": admin_id,
-            "action": action,
-            "target_id": target_id,
-            "extra": extra or {},
-            "fecha": datetime.datetime.now()
-        }
-        await logs_col.insert_one(log_data)
-    except Exception as e:
-        logger.error(f"Error registrando acción de admin {admin_id}: {e}")
 
 async def contar_usuarios():
     """Cuenta el total de usuarios registrados"""
@@ -709,26 +590,7 @@ async def contar_retiros():
         logger.error(f"Error contando retiros: {e}")
         return 0
 
-async def obtener_depositos_pendientes():
-    """Obtiene los depósitos pendientes de revisión"""
-    try:
-        cursor = depositos_col.find({"estado": "pendiente"}).sort("fecha", -1)
-        return await cursor.to_list(length=None)
-    except Exception as e:
-        logger.error(f"Error obteniendo depósitos pendientes: {e}")
-        return []
 
-async def obtener_retiros_pendientes():
-    """Obtiene los retiros pendientes de procesamiento"""
-    try:
-        cursor = creditos_col.find({
-            "tipo": "retiro",
-            "estado": "pendiente"
-        }).sort("fecha", -1)
-        return await cursor.to_list(length=None)
-    except Exception as e:
-        logger.error(f"Error obteniendo retiros pendientes: {e}")
-        return []
 
 async def notificar_credito_agregado(bot, user_id: int, cantidad: float, razon: str):
     """Notifica a un usuario sobre crédito agregado"""
@@ -744,74 +606,7 @@ async def notificar_credito_agregado(bot, user_id: int, cantidad: float, razon: 
     except Exception as e:
         logger.error(f"Error enviando notificación de crédito a {user_id}: {e}")
 
-async def notificar_admins_nuevo_deposito(user_id, cantidad, red, deposito_id):
-    """Notifica a los administradores sobre un nuevo depósito"""
-    try:
-        from config.config import ADMIN_IDS
-        from modules.bot import bot
-        
-        mensaje = (
-            f"📥 Nuevo Depósito\n\n"
-            f"Usuario: {user_id}\n"
-            f"Cantidad: {cantidad} {red}\n"
-            f"ID: {deposito_id}\n\n"
-            "Revisa y confirma el depósito."
-        )
-        
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Confirmar", callback_data=f"admin_deposito_confirmar_{deposito_id}"),
-                InlineKeyboardButton(text="❌ Cancelar", callback_data=f"admin_deposito_cancelar_{deposito_id}")
-            ],
-            [
-                InlineKeyboardButton(text="💬 Contactar", callback_data=f"admin_deposito_contactar_{deposito_id}")
-            ]
-        ])
-        
-        for admin_id in ADMIN_IDS:
-            try:
-                await bot.send_message(admin_id, mensaje, parse_mode="HTML", reply_markup=keyboard)
-            except Exception as e:
-                logger.error(f"Error enviando notificación a admin {admin_id}: {e}")
-        
-        logger.info(f"✅ Notificaciones de depósito enviadas a admins")
-    except Exception as e:
-        logger.error(f"Error enviando notificaciones de depósito: {e}")
 
-async def notificar_admins_nuevo_retiro(user_id, cantidad, wallet, retiro_id):
-    """Notifica a los administradores sobre un nuevo retiro"""
-    try:
-        from config.config import ADMIN_IDS
-        from modules.bot import bot
-        
-        mensaje = (
-            f"📤 Nuevo Retiro\n\n"
-            f"Usuario: {user_id}\n"
-            f"Cantidad: {cantidad:.3f} TON\n"
-            f"Wallet: {wallet}\n"
-            f"ID: {retiro_id}\n\n"
-            "Procesa el retiro cuando esté listo."
-        )
-        
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Procesar", callback_data=f"admin_retiro_confirmar_{retiro_id}"),
-                InlineKeyboardButton(text="❌ Cancelar", callback_data=f"admin_retiro_cancelar_{retiro_id}")
-            ],
-            [
-                InlineKeyboardButton(text="💬 Contactar", callback_data=f"admin_retiro_contactar_{retiro_id}")
-            ]
-        ])
-        
-        for admin_id in ADMIN_IDS:
-            try:
-                await bot.send_message(admin_id, mensaje, parse_mode="HTML", reply_markup=keyboard)
-            except Exception as e:
-                logger.error(f"Error enviando notificación a admin {admin_id}: {e}")
-        
-        logger.info(f"✅ Notificaciones de retiro enviadas a admins")
-    except Exception as e:
-        logger.error(f"Error enviando notificaciones de retiro: {e}")
 
 async def log_action(actor_id: int, action: str, target_id: int = None, details: dict = None):
     """Registra una acción en el sistema"""

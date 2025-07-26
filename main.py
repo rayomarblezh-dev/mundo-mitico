@@ -1,13 +1,21 @@
 import asyncio
 import logging
+import threading
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from utils.logging_config import setup_logging, get_logger
 from utils.database import init_db
 from modules.commands import register_commands
 from modules.bot import bot, dp
 from config.config import API_HOST, API_PORT, API_WORKERS
+
+# Importar Flask app del panel de administración
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'admin_panel'))
+from app import app as flask_app
 
 # Configurar logging
 setup_logging()
@@ -20,6 +28,15 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+# Configurar CORS para el panel de administración
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Variable global para el estado del bot
@@ -45,6 +62,11 @@ async def startup_event():
         # Iniciar el bot en segundo plano
         bot_task = asyncio.create_task(start_bot())
         bot_running = True
+        
+        # Iniciar Flask en un hilo separado
+        flask_thread = threading.Thread(target=run_flask, daemon=True)
+        flask_thread.start()
+        logger.info("✅ Panel de administración iniciado en http://localhost:5000")
         
         logger.info("✅ Bot iniciado correctamente")
         
@@ -82,6 +104,11 @@ async def start_bot():
 # ENDPOINTS DE LA API
 # =========================
 
+def run_flask():
+    """Función para ejecutar Flask en un hilo separado"""
+    from admin_panel.config import FLASK_HOST, FLASK_PORT, FLASK_DEBUG
+    flask_app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG, use_reloader=False)
+
 @app.get("/")
 async def root():
     """Endpoint raíz con información del bot"""
@@ -90,7 +117,8 @@ async def root():
         "status": "running" if bot_running else "stopped",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "admin_panel": "http://localhost:5000"
     }
 
 @app.get("/health")
