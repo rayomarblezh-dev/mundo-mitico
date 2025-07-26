@@ -84,27 +84,8 @@ async def admin_handler(event):
         )
         return
     
-    # Obtener la URL del panel de administración
-    admin_url = "http://localhost:5001"
-    
-    # Intentar obtener la URL desde la API del bot
-    try:
-        import httpx
-        import asyncio
-        
-        # URL base de la API del bot
-        api_base = "http://localhost:5000"
-        if os.environ.get('API_BASE_URL'):
-            api_base = os.environ.get('API_BASE_URL')
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{api_base}/admin-panel-url", timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                admin_url = data.get('admin_panel_url', admin_url)
-    except Exception as e:
-        # Si no se puede obtener desde la API, usar URL por defecto
-        pass
+    # Obtener la URL del panel de administración desde variables de entorno
+    admin_url = os.environ.get('ADMIN_PANEL_URL', 'https://mundomitico-dashboard.up.railway.app')
     
     mensaje = (
         "🔐 Panel de Administración\n\n"

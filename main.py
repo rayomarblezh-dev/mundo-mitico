@@ -11,19 +11,9 @@ from modules.commands import register_commands
 from modules.bot import bot, dp
 from config.config import API_HOST, API_PORT, API_WORKERS
 
-# Importar Flask app del panel de administración
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'admin_panel'))
-
-# Importación condicional para evitar errores si no está instalado Flask
-try:
-    from app import app as flask_app
-    FLASK_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️ Flask no disponible: {e}")
-    FLASK_AVAILABLE = False
-    flask_app = None
+# Panel de administración como servicio independiente
+FLASK_AVAILABLE = False
+flask_app = None
 
 # Configurar logging
 setup_logging()
@@ -71,13 +61,9 @@ async def startup_event():
         bot_task = asyncio.create_task(start_bot())
         bot_running = True
         
-        # Iniciar Flask en un hilo separado
-        if FLASK_AVAILABLE:
-            flask_thread = threading.Thread(target=run_flask, daemon=True)
-            flask_thread.start()
-            logger.info("✅ Panel de administración iniciado en http://localhost:5001")
-        else:
-            logger.warning("⚠️ Panel de administración no disponible (Flask no instalado)")
+        # Panel de administración como servicio independiente
+        logger.info("ℹ️ Panel de administración ejecutándose como servicio independiente")
+        logger.info("🌐 URL: https://mundomitico-dashboard.up.railway.app")
         
         logger.info("✅ Bot iniciado correctamente")
         
@@ -117,16 +103,8 @@ async def start_bot():
 
 def run_flask():
     """Función para ejecutar Flask en un hilo separado"""
-    if not FLASK_AVAILABLE:
-        print("❌ Flask no disponible, no se puede iniciar el panel de administración")
-        return
-    
-    try:
-        # En Railway, usar la variable PORT que asigna automáticamente
-        port = int(os.environ.get('PORT', 5001))
-        flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-    except Exception as e:
-        print(f"❌ Error iniciando Flask: {e}")
+    print("ℹ️ Panel de administración ejecutándose como servicio independiente")
+    print("🌐 URL: https://mundomitico-dashboard.up.railway.app")
 
 @app.get("/")
 async def root():
@@ -137,8 +115,8 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "admin_panel": "http://localhost:5001" if FLASK_AVAILABLE else "no disponible",
-        "admin_panel_url": "http://localhost:5001" if FLASK_AVAILABLE else None
+        "admin_panel": "https://mundomitico-dashboard.up.railway.app",
+        "admin_panel_url": "https://mundomitico-dashboard.up.railway.app"
     }
 
 @app.get("/health")
@@ -178,16 +156,7 @@ async def bot_status():
 @app.get("/admin-panel-url")
 async def get_admin_panel_url():
     """Endpoint para obtener la URL del panel de administración"""
-    if not FLASK_AVAILABLE:
-        raise HTTPException(status_code=404, detail="Panel de administración no disponible")
-    
-    # Intentar obtener la URL desde la configuración del panel
-    try:
-        from admin_panel.config import PANEL_URL
-        admin_url = PANEL_URL
-    except ImportError:
-        # Si no se puede importar, usar URL por defecto
-        admin_url = "http://localhost:5001"
+    admin_url = os.environ.get('ADMIN_PANEL_URL', 'https://mundomitico-dashboard.up.railway.app')
     
     return {
         "admin_panel_url": admin_url,
