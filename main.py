@@ -135,7 +135,8 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "admin_panel": "http://localhost:5000" if FLASK_AVAILABLE else "no disponible"
+        "admin_panel": "http://localhost:5000" if FLASK_AVAILABLE else "no disponible",
+        "admin_panel_url": "http://localhost:5000" if FLASK_AVAILABLE else None
     }
 
 @app.get("/health")
@@ -170,6 +171,25 @@ async def bot_status():
             "id": bot.id if bot.id else "Unknown"
         },
         "uptime": asyncio.get_event_loop().time() if bot_running else 0
+    }
+
+@app.get("/admin-panel-url")
+async def get_admin_panel_url():
+    """Endpoint para obtener la URL del panel de administración"""
+    if not FLASK_AVAILABLE:
+        raise HTTPException(status_code=404, detail="Panel de administración no disponible")
+    
+    # Intentar obtener la URL desde la configuración del panel
+    try:
+        from admin_panel.config import PANEL_URL
+        admin_url = PANEL_URL
+    except ImportError:
+        # Si no se puede importar, usar URL por defecto
+        admin_url = "http://localhost:5000"
+    
+    return {
+        "admin_panel_url": admin_url,
+        "status": "available"
     }
 
 @app.post("/restart")

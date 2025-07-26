@@ -3,6 +3,7 @@
 # =========================
 import logging
 import datetime
+import os
 
 from aiogram import Dispatcher
 from aiogram.filters import Command
@@ -23,6 +24,9 @@ from modules.constants import PAQUETE_PRECIO
 from modules.start import start_handler
 from modules.referidos import referidos_handler
 from modules.tareas import tareas_handler, register_tareas_handlers
+
+# Configuración de administradores
+from config.config import is_admin
 from modules.tienda import (
     tienda_handler,
     tienda_criaturas_handler,
@@ -60,6 +64,80 @@ async def inventario_handler(event):
     await mostrar_inventario_usuario(event, user_id)
 
 # =========================
+# Handler de admin
+# =========================
+async def admin_handler(event):
+    """Handler del comando /admin - Solo para administradores"""
+    # Determinar si es un mensaje o callback
+    if hasattr(event, 'from_user'):
+        user_id = event.from_user.id
+        is_callback = hasattr(event, 'data')
+    else:
+        return
+    
+    # Verificar si el usuario es administrador
+    if not is_admin(user_id):
+        await event.answer(
+            "❌ Acceso denegado\n\n"
+            "Este comando solo está disponible para administradores.",
+            parse_mode="HTML"
+        )
+        return
+    
+    # Obtener la URL del panel de administración
+    admin_url = "http://localhost:5000"
+    
+    # Intentar obtener la URL desde la API del bot
+    try:
+        import httpx
+        import asyncio
+        
+        # URL base de la API del bot
+        api_base = "http://localhost:8000"
+        if os.environ.get('API_BASE_URL'):
+            api_base = os.environ.get('API_BASE_URL')
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{api_base}/admin-panel-url", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                admin_url = data.get('admin_panel_url', admin_url)
+    except Exception as e:
+        # Si no se puede obtener desde la API, usar URL por defecto
+        pass
+    
+    mensaje = (
+        "🔐 Panel de Administración\n\n"
+        "Accede al panel web de administración para gestionar:\n"
+        "• Depósitos pendientes\n"
+        "• Retiros pendientes\n"
+        "• Estadísticas del sistema\n"
+        "• Logs de actividad\n\n"
+        "Haz clic en el botón para acceder al panel."
+    )
+    
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🌐 Panel de Administración", url=admin_url)]
+    ])
+    
+    # Enviar mensaje según el tipo de evento
+    if is_callback:
+        try:
+            await event.message.edit_text(mensaje, parse_mode="HTML", reply_markup=keyboard)
+        except Exception as e:
+            if "message is not modified" in str(e):
+                # El mensaje es el mismo, solo responder al callback
+                pass
+            else:
+                # Otro error, intentar enviar nuevo mensaje
+                await event.message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
+        await event.answer()
+    else:
+        await event.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
+
+# =========================
 # Registro de comandos y callbacks
 # =========================
 def register_commands(dp: Dispatcher):
@@ -88,6 +166,8 @@ def register_commands(dp: Dispatcher):
     
     dp.message.register(referidos_handler, lambda m: m.text == "/referidos")
     dp.callback_query.register(referidos_handler, lambda c: c.data == "referidos")
+    
+    dp.message.register(admin_handler, lambda m: m.text == "/admin")
     
     # Registrar handlers específicos de cada módulo
     register_wallet_handlers(dp)

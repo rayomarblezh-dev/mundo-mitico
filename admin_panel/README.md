@@ -53,6 +53,10 @@ El panel se inicia automáticamente junto con el bot:
 python main.py
 ```
 
+**Acceso desde el bot:**
+- Los administradores pueden usar el comando `/admin` en Telegram
+- El bot enviará un botón con el enlace directo al panel
+
 ### Opción 2: Independiente
 
 Ejecutar solo el panel de administración:
@@ -74,9 +78,10 @@ chmod +x deploy.sh
 
 ### Acceso
 
-1. Abre tu navegador en: `http://localhost:5000`
-2. Ingresa tu ID de administrador de Telegram
-3. ¡Listo! Ya puedes gestionar depósitos y retiros
+1. **Desde Telegram:** Usa el comando `/admin` (solo administradores)
+2. **Directo:** Abre tu navegador en: `http://localhost:5000`
+3. Ingresa tu ID de administrador de Telegram
+4. ¡Listo! Ya puedes gestionar depósitos y retiros
 
 ### Puertos
 
