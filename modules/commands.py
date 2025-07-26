@@ -63,60 +63,7 @@ async def inventario_handler(event):
     from modules.inventario import mostrar_inventario_usuario
     await mostrar_inventario_usuario(event, user_id)
 
-# =========================
-# Handler de admin
-# =========================
-async def admin_handler(event):
-    """Handler del comando /admin - Solo para administradores"""
-    # Determinar si es un mensaje o callback
-    if hasattr(event, 'from_user'):
-        user_id = event.from_user.id
-        is_callback = hasattr(event, 'data')
-    else:
-        return
-    
-    # Verificar si el usuario es administrador
-    if not is_admin(user_id):
-        await event.answer(
-            "❌ Acceso denegado\n\n"
-            "Este comando solo está disponible para administradores.",
-            parse_mode="HTML"
-        )
-        return
-    
-    # Obtener la URL del panel de administración desde variables de entorno
-    admin_url = os.environ.get('ADMIN_PANEL_URL', 'https://mundomitico-admin.up.railway.app')
-    
-    mensaje = (
-        "🔐 Panel de Administración\n\n"
-        "Accede al panel web de administración para gestionar:\n"
-        "• Depósitos pendientes\n"
-        "• Retiros pendientes\n"
-        "• Estadísticas del sistema\n"
-        "• Logs de actividad\n\n"
-        "Haz clic en el botón para acceder al panel."
-    )
-    
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Panel de Administración", url=admin_url)]
-    ])
-    
-    # Enviar mensaje según el tipo de evento
-    if is_callback:
-        try:
-            await event.message.edit_text(mensaje, parse_mode="HTML", reply_markup=keyboard)
-        except Exception as e:
-            if "message is not modified" in str(e):
-                # El mensaje es el mismo, solo responder al callback
-                pass
-            else:
-                # Otro error, intentar enviar nuevo mensaje
-                await event.message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
-        await event.answer()
-    else:
-        await event.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
+
 
 # =========================
 # Registro de comandos y callbacks
@@ -147,8 +94,6 @@ def register_commands(dp: Dispatcher):
     
     dp.message.register(referidos_handler, lambda m: m.text == "/referidos")
     dp.callback_query.register(referidos_handler, lambda c: c.data == "referidos")
-    
-    dp.message.register(admin_handler, lambda m: m.text == "/admin")
     
     # Registrar handlers específicos de cada módulo
     register_wallet_handlers(dp)

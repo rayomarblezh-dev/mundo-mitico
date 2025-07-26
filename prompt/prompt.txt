@@ -20,13 +20,12 @@ https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-8.0.12-signed.msi
 
 istorial de transacciones
 Permitir a los usuarios ver su propio historial de depósitos y retiros.
-3. Panel web de administración
-Si no existe, un panel web para admins sería más cómodo para gestión avanzada.
+
 4. Logs y auditoría
 Registro detallado de todas las acciones críticas (cambios de parámetros, movimientos de fondos, etc).
 5. Soporte y feedback
 Botón de contacto directo con soporte.
-Sistema de tickets o mensajes para admins.
+
 6. Mejoras de seguridad
 Doble confirmación para retiros grandes.
 Alertas de actividad sospechosa.

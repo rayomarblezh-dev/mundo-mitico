@@ -15,7 +15,6 @@
     "BOT_TOKEN": "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8",
     "MONGO_URI": "mongodb+srv://rayomarblezh:tatico.10@telegram.yxpl0n0.mongodb.net/?retryWrites=true&w=majority&appName=Telegram&ssl=true&ssl_cert_reqs=CERT_NONE",
     "DB_NAME": "mundomi",
-    "ADMIN_IDS": "7828962018",
-    "ADMIN_PANEL_URL": "https://mundomitico-admin.up.railway.app"
+    "ADMIN_IDS": "7828962018"
   }
 } 
