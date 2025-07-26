@@ -5,9 +5,16 @@ from utils.database import (
     contar_referidos_activos
 )
 
-async def referidos_handler(message: types.Message):
-    user_id = message.from_user.id
-    bot_username = (await message.bot.get_me()).username
+async def referidos_handler(event):
+    """Handler de referidos (funciona con mensajes y callbacks)"""
+    # Determinar si es un mensaje o callback
+    if hasattr(event, 'from_user'):
+        user_id = event.from_user.id
+        is_callback = hasattr(event, 'data')
+    else:
+        return
+    
+    bot_username = (await event.bot.get_me()).username
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
 
     # Obtener progreso de referidos
@@ -15,15 +22,15 @@ async def referidos_handler(message: types.Message):
     activos = await contar_referidos_activos(user_id)
 
     mensaje = (
-        f"<b>👥 Referidos</b>\n"
-        f"<blockquote expandable>Invita a tus amigos y obtén recompensas exclusivas por cada uno que se una y participe.</blockquote>\n\n"
-        f"🎁 <b>Recompensas:</b>\n"
-        f"• Por cada 10 invitaciones: <b>1 Hada</b>\n"
-        f"• Por cada referido que invierta: <b>1 Elfo</b>\n\n"
-        f"📊 <b>Tu progreso:</b>\n"
-        f"• Referidos totales: <b>{total}</b>\n"
-        f"• Referidos activos: <b>{activos}</b>\n\n"
-        f"¡Sigue invitando para obtener más recompensas!"
+        "👥 Referidos\n\n"
+        "Invita a tus amigos y obtén recompensas exclusivas por cada uno que se una y participe.\n\n"
+        "Recompensas:\n"
+        "• Por cada 10 invitaciones: 1 Hada\n"
+        "• Por cada referido que invierta: 1 Elfo\n\n"
+        "Tu progreso:\n"
+        f"• Referidos totales: {total}\n"
+        f"• Referidos activos: {activos}\n\n"
+        "¡Sigue invitando para obtener más recompensas!"
     )
 
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -32,7 +39,21 @@ async def referidos_handler(message: types.Message):
                 text="Compartir",
                 url=f"https://t.me/share/url?url={ref_link}"
             )
-        ]
+        ],
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="start_volver")]
     ])
 
-    await message.answer(mensaje, parse_mode="HTML", reply_markup=share_keyboard)
+    # Enviar mensaje según el tipo de evento
+    if is_callback:
+        try:
+            await event.message.edit_text(mensaje, parse_mode="HTML", reply_markup=share_keyboard)
+        except Exception as e:
+            if "message is not modified" in str(e):
+                # El mensaje es el mismo, solo responder al callback
+                pass
+            else:
+                # Otro error, intentar enviar nuevo mensaje
+                await event.message.answer(mensaje, parse_mode="HTML", reply_markup=share_keyboard)
+        await event.answer()
+    else:
+        await event.answer(mensaje, parse_mode="HTML", reply_markup=share_keyboard)

@@ -1,12 +1,12 @@
-import logging
+from utils.logging_config import setup_logging, get_logger
 from modules.commands import register_commands
 from utils.database import init_db
 from config.config import BOT_TOKEN
 from modules.bot import bot, dp
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configurar logging centralizado
+setup_logging(level="INFO")
+logger = get_logger(__name__)
 
 # Configurar bot
 if not BOT_TOKEN:

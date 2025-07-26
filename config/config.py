@@ -12,8 +12,8 @@ def is_admin(user_id: int) -> bool:
 BOT_TOKEN = "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8"
 
 # --- Base de datos ---
-MONGO_URI = "mongodb://mongo:npMengYxzYkEtSATSPFyixaPDDBmZtGE@crossover.proxy.rlwy.net:24556"
-DB_NAME = "mundo_mitico"
+MONGO_URI = "mongodb://mongo:YquIbupRWhkCnSsNSIyNIIiVmTYpFGUZ@ballast.proxy.rlwy.net:24225"
+DB_NAME = "mundom"
 
 # --- Parámetros del sistema ---
 MIN_DEPOSITO = 0.5

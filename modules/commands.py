@@ -20,89 +20,48 @@ from utils.database import (
 # Handlers principales
 from modules.start import start_handler
 from modules.referidos import referidos_handler
+from modules.tareas import tareas_handler, register_tareas_handlers
 from modules.tienda import (
     tienda_handler,
     tienda_criaturas_handler,
     tienda_volver_handler,
     register_tienda_handlers
 )
-from modules.criaturas import (
-    mostrar_criatura_carrito,
-    carrito_cantidad_handler,
-    carrito_comprar_handler,
-    # Handlers individuales generados dinámicamente:
-    criatura_hada_handler,
-    criatura_mago_handler,
-    criatura_dragon_handler,
-    criatura_orco_handler,
-    criatura_gremnli_handler,
-    criatura_unicornio_handler,
-    criatura_genio_handler,
-    criatura_kraken_handler,
-    criatura_licantropo_handler
-)
+from modules.criaturas import register_criaturas_handlers
 from modules.wallet import (
     wallet_handler,
-    wallet_depositar_handler,
-    wallet_retirar_handler,
-    handle_deposit_network,
-    procesar_wallet_ton,
-    procesar_cantidad_retiro,
-    confirmar_retiro_handler,
-    cancelar_retiro_handler,
-    WalletStates,
-    procesar_hash_deposito,
-    procesar_cantidad_deposito,
-    cancelar_deposito_handler,
-    cancelar_retiro_total_handler,
     register_wallet_handlers,
+    procesar_hash_deposito,
+    WalletStates,
 )
-from modules.explorar import explorar_handler
-from modules.nfts import (
-    nfts_handler,
-    nft_moguri_handler,
-    nft_gargola_handler,
-    nft_ghost_handler,
-    comprar_nft_moguri_handler,
-    comprar_nft_gargola_handler,
-    comprar_nft_ghost_handler
-)
-from modules.admin import (
-    admin_handler,
-    procesar_user_id,
-    procesar_cantidad_admin,
-    procesar_razon_admin,
-    confirmar_credito_handler,
-    cancelar_credito_handler,
-    admin_estadisticas_handler,
-    admin_depositos_handler,
-    admin_importante_handler,
-    AdminStates,
-    info_handler,
-    admin_tareas_handler,
-    aceptar_deposito_handler,
-    admin_retiros_handler,
-    aceptar_retiro_handler,
-    admin_resumen_fondos_handler,
-    admin_buscar_handler,
-    BuscarStates,
-    procesar_busqueda_usuario,
-    paginacion_busqueda_handler,
-)
-from modules.inventario import mostrar_inventario_usuario
+from modules.explorar import explorar_handler, register_explorar_handlers
+from modules.nfts import register_nfts_handlers
+from modules.inventario import mostrar_inventario_usuario, register_inventario_handlers
 
 logger = logging.getLogger(__name__)
 
 # =========================
 # Handler de inventario
 # =========================
-async def inventario_handler(message):
+async def inventario_handler(event):
+    """Handler de inventario (funciona con mensajes y callbacks)"""
+    # Determinar si es un mensaje o callback
+    if hasattr(event, 'from_user'):
+        user_id = event.from_user.id
+        is_callback = hasattr(event, 'data')
+    else:
+        return
+    
     try:
-        await mostrar_inventario_usuario(message, message.from_user.id)
-        logger.info(f"Inventario mostrado correctamente para user_id={message.from_user.id}")
+        await mostrar_inventario_usuario(event, user_id)
+        logger.info(f"Inventario mostrado correctamente para user_id={user_id}")
     except Exception as e:
-        logger.error(f"Error mostrando inventario para user_id={message.from_user.id}: {e}")
-        await message.answer("⚠️ Ocurrió un error mostrando tu inventario. Intenta de nuevo más tarde.")
+        logger.error(f"Error mostrando inventario para user_id={user_id}: {e}")
+        mensaje_error = "⚠️ Ocurrió un error mostrando tu inventario. Intenta de nuevo más tarde."
+        if is_callback:
+            await event.answer(mensaje_error, show_alert=True)
+        else:
+            await event.answer(mensaje_error)
 
 # =========================
 # Registro de comandos y callbacks
@@ -115,78 +74,24 @@ def register_commands(dp: Dispatcher):
     # --- Comandos principales ---
     dp.message.register(start_handler, Command("start"))
     dp.message.register(inventario_handler, Command("inventario"))
-    dp.message.register(admin_handler, Command("admin"))
-    dp.message.register(info_handler, Command("info"))
 
-    # --- Callbacks de tienda ---
-    dp.callback_query.register(tienda_criaturas_handler, lambda c: c.data == "tienda_criaturas")
-    dp.callback_query.register(tienda_volver_handler, lambda c: c.data == "tienda_volver")
-    dp.callback_query.register(nfts_handler, lambda c: c.data == "tienda_nfts")
-
-    # --- Callbacks de criaturas ---
-    # Carrito
-    dp.callback_query.register(carrito_cantidad_handler, lambda c: c.data.startswith("carrito_") and ("_mas_" in c.data or "_menos_" in c.data))
-    dp.callback_query.register(carrito_comprar_handler, lambda c: c.data.startswith("carrito_") and "_comprar_" in c.data)
-    # Mostrar carrito de cada criatura
-    dp.callback_query.register(criatura_hada_handler, lambda c: c.data == "criatura_hada")
-    dp.callback_query.register(criatura_mago_handler, lambda c: c.data == "criatura_mago")
-    dp.callback_query.register(criatura_dragon_handler, lambda c: c.data == "criatura_dragon")
-    dp.callback_query.register(criatura_orco_handler, lambda c: c.data == "criatura_orco")
-    dp.callback_query.register(criatura_gremnli_handler, lambda c: c.data == "criatura_gremnli")
-    dp.callback_query.register(criatura_unicornio_handler, lambda c: c.data == "criatura_unicornio")
-    dp.callback_query.register(criatura_genio_handler, lambda c: c.data == "criatura_genio")
-    dp.callback_query.register(criatura_kraken_handler, lambda c: c.data == "criatura_kraken")
-    dp.callback_query.register(criatura_licantropo_handler, lambda c: c.data == "criatura_licantropo")
-
-    # --- Callbacks de NFTs ---
-    dp.callback_query.register(nfts_handler, lambda c: c.data == "tienda_nfts")
-    dp.callback_query.register(nft_moguri_handler, lambda c: c.data == "nft_moguri")
-    dp.callback_query.register(nft_gargola_handler, lambda c: c.data == "nft_gargola")
-    dp.callback_query.register(nft_ghost_handler, lambda c: c.data == "nft_ghost")
-    dp.callback_query.register(comprar_nft_moguri_handler, lambda c: c.data == "comprar_nft_moguri")
-    dp.callback_query.register(comprar_nft_gargola_handler, lambda c: c.data == "comprar_nft_gargola")
-    dp.callback_query.register(comprar_nft_ghost_handler, lambda c: c.data == "comprar_nft_ghost")
-
-    # --- Callbacks de wallet ---
-    dp.callback_query.register(wallet_depositar_handler, lambda c: c.data == "wallet_depositar")
-    dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
-    dp.callback_query.register(handle_deposit_network, lambda c: c.data.startswith("depositar_"))
-    dp.message.register(procesar_wallet_ton, WalletStates.esperando_wallet)
-    dp.message.register(procesar_cantidad_retiro, WalletStates.esperando_cantidad)
-    dp.message.register(procesar_cantidad_deposito, WalletStates.esperando_cantidad_deposito)
-    dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
-    dp.callback_query.register(cancelar_retiro_handler, lambda c: c.data == "cancelar_retiro")
-    dp.callback_query.register(cancelar_deposito_handler, lambda c: c.data == "cancelar_deposito")
-    dp.callback_query.register(cancelar_retiro_total_handler, lambda c: c.data == "cancelar_retiro_total")
-    register_wallet_handlers(dp)
-
-    # --- Callbacks de administración ---
-    dp.callback_query.register(admin_buscar_handler, lambda c: c.data == "admin_buscar")
-    dp.message.register(procesar_busqueda_usuario, BuscarStates.waiting_for_user)
-    dp.callback_query.register(admin_tareas_handler, lambda c: c.data == "admin_tareas")
-    dp.callback_query.register(confirmar_credito_handler, lambda c: c.data == "admin_confirmar_credito")
-    dp.callback_query.register(cancelar_credito_handler, lambda c: c.data == "admin_cancelar_credito")
-    dp.callback_query.register(admin_estadisticas_handler, lambda c: c.data == "admin_estadisticas")
-    dp.callback_query.register(admin_depositos_handler, lambda c: c.data == "admin_depositos")
-    dp.callback_query.register(aceptar_deposito_handler, lambda c: c.data.startswith("aceptar_deposito_"))
-    dp.callback_query.register(admin_importante_handler, lambda c: c.data == "admin_importante")
-    dp.callback_query.register(admin_retiros_handler, lambda c: c.data == "admin_retiros")
-    dp.callback_query.register(aceptar_retiro_handler, lambda c: c.data.startswith("aceptar_retiro_"))
-    dp.callback_query.register(admin_resumen_fondos_handler, lambda c: c.data == "admin_resumen_fondos")
-    dp.callback_query.register(paginacion_busqueda_handler, lambda c: c.data in ["dep_prev", "dep_next", "ret_prev", "ret_next"])
-
-    # --- Handlers de administración con FSM ---
-    dp.message.register(procesar_user_id, AdminStates.waiting_for_user_id)
-    dp.message.register(procesar_cantidad_admin, AdminStates.waiting_for_amount)
-    dp.message.register(procesar_razon_admin, AdminStates.waiting_for_reason)
-
-    # --- Botones de menú principales ---
-    dp.message.register(referidos_handler, lambda m: m.text and "Referidos" in m.text)
-    dp.message.register(tienda_handler, lambda m: m.text and "Tienda" in m.text)
-    dp.message.register(wallet_handler, lambda m: m.text and "Wallet" in m.text)
-    dp.message.register(explorar_handler, lambda m: m.text and "Explorar" in m.text)
-    dp.message.register(inventario_handler, lambda m: m.text and "Inventario" in m.text)
+    # --- Callbacks de menú principales (inline) ---
+    dp.callback_query.register(explorar_handler, lambda c: c.data == "explorar")
+    dp.callback_query.register(tienda_handler, lambda c: c.data == "tienda")
+    dp.callback_query.register(inventario_handler, lambda c: c.data == "inventario")
+    dp.callback_query.register(wallet_handler, lambda c: c.data == "wallet")
+    dp.callback_query.register(referidos_handler, lambda c: c.data == "referidos")
+    dp.callback_query.register(tareas_handler, lambda c: c.data == "tareas")
+    dp.callback_query.register(start_handler, lambda c: c.data == "start_volver")
+    
+    # --- Handlers de mensajes ---
     dp.message.register(procesar_hash_deposito, WalletStates.esperando_hash_deposito)
 
-    # --- Handlers adicionales de tienda ---
+    # --- Registro de handlers de módulos ---
     register_tienda_handlers(dp)
+    register_criaturas_handlers(dp)
+    register_nfts_handlers(dp)
+    register_wallet_handlers(dp)
+    register_tareas_handlers(dp)
+    register_explorar_handlers(dp)
+    register_inventario_handlers(dp)
