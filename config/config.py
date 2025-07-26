@@ -41,3 +41,8 @@ LOG_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 API_HOST: str = "0.0.0.0"
 API_PORT: int = 3000
 API_WORKERS: int = 1
+
+# =========================
+# CONFIGURACIÓN DE FLASK (PANEL)
+# =========================
+FLASK_PORT: int = 5001

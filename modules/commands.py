@@ -85,7 +85,7 @@ async def admin_handler(event):
         return
     
     # Obtener la URL del panel de administración desde variables de entorno
-    admin_url = os.environ.get('ADMIN_PANEL_URL', 'https://mundomitico-dashboard.up.railway.app')
+    admin_url = os.environ.get('ADMIN_PANEL_URL', '/admin')
     
     mensaje = (
         "🔐 Panel de Administración\n\n"
