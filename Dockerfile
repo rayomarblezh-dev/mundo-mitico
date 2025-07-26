@@ -36,7 +36,10 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r requirements.txt \
     && pip cache purge
 
-# Copiar el código de la aplicación
+# Copiar el script de inicio primero
+COPY start.sh ./
+
+# Copiar el resto del código de la aplicación
 COPY . .
 
 # Crear directorio para logs si no existe
@@ -54,10 +57,6 @@ EXPOSE 443
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:443/health || exit 1
-
-# Script de inicio que maneja la variable PORT correctamente
-COPY start.sh ./
-RUN chmod +x start.sh
 
 # Comando para ejecutar la aplicación
 CMD ["./start.sh"] 
