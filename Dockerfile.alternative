@@ -23,8 +23,12 @@ RUN pip install --upgrade pip && \
 # Copiar código
 COPY . .
 
+# Crear script de inicio
+RUN echo '#!/bin/bash\nPORT=${PORT:-8080}\necho "🚀 Iniciando en puerto $PORT"\nexec uvicorn main:app --host 0.0.0.0 --port $PORT' > start.sh && \
+    chmod +x start.sh
+
 # Exponer puerto
 EXPOSE 8080
 
 # Comando simple
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"] 
+CMD ["./start.sh"] 
