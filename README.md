@@ -1,46 +1,67 @@
 # Mundo Mítico Bot
 
-Bot de Telegram para el juego Mundo Mítico con panel de administración web integrado.
+Bot de Telegram para el juego Mundo Mítico con panel de administración web separado.
 
-## 🚀 Características
+## 🚀 Arquitectura
 
-- **Bot de Telegram**: Completamente funcional con Aiogram
-- **Panel de Administración**: Web integrado con Flask
-- **API REST**: FastAPI para endpoints del bot
-- **Base de Datos**: MongoDB Atlas
-- **Despliegue**: Railway con integración completa
+El proyecto está dividido en **2 servicios independientes** que comparten la misma base de datos MongoDB:
+
+### **Servicio 1: Bot de Telegram** 🤖
+- **Tecnología**: Python + Aiogram
+- **Repositorio**: `mundo-mitico` (este)
+- **Función**: Bot de Telegram con todos los comandos del juego
+- **Despliegue**: Railway
+
+### **Servicio 2: Panel de Administración** 🌐
+- **Tecnología**: Flask + Gunicorn
+- **Repositorio**: `mundomitico-admin` (separado)
+- **Función**: Panel web para administradores
+- **Despliegue**: Railway
+
+### **Base de Datos Compartida** 🗄️
+- **MongoDB Atlas**: Ambos servicios se conectan a la misma base de datos
+- **Sincronización**: Cambios en tiempo real entre bot y panel
 
 ## 🛠️ Tecnologías
 
-- **Backend**: FastAPI + Flask (integrados)
-- **Bot**: Aiogram 3.x
-- **Base de Datos**: MongoDB Atlas
-- **Frontend**: HTML + JavaScript + Tailwind CSS
+### **Bot de Telegram:**
+- **Backend**: Python + Aiogram 3.x
+- **Base de Datos**: MongoDB Atlas (Motor)
 - **Despliegue**: Railway
 
-## 📋 Estructura del Proyecto
+### **Panel de Administración:**
+- **Backend**: Flask + Gunicorn
+- **Frontend**: HTML + JavaScript + Tailwind CSS
+- **Base de Datos**: MongoDB Atlas (Motor)
+- **Despliegue**: Railway
+
+## 📋 Estructura del Proyecto (Bot)
 
 ```
 mundo-mitico/
-├── main.py              # FastAPI + Flask integrados
+├── main.py              # Entrada principal del bot
 ├── config/
 │   └── config.py        # Configuración centralizada
 ├── modules/
 │   ├── bot.py           # Configuración del bot
 │   ├── commands.py      # Comandos del bot
 │   ├── wallet.py        # Funciones de wallet
-│   └── ...              # Otros módulos
-├── templates/
-│   ├── login.html       # Panel de login
-│   └── dashboard.html   # Panel principal
+│   ├── tienda.py        # Sistema de tienda
+│   ├── inventario.py    # Sistema de inventario
+│   ├── explorar.py      # Sistema de exploración
+│   ├── tareas.py        # Sistema de tareas
+│   ├── referidos.py     # Sistema de referidos
+│   ├── criaturas.py     # Sistema de criaturas
+│   ├── nfts.py          # Sistema de NFTs
+│   └── recompensas.py   # Sistema de recompensas
 ├── utils/
 │   ├── database.py      # Conexión a MongoDB
 │   └── logging_config.py
-├── requirements.txt     # Dependencias
+├── requirements.txt     # Dependencias del bot
 └── railway.json        # Configuración de Railway
 ```
 
-## 🔧 Instalación Local
+## 🔧 Instalación Local (Bot)
 
 1. **Clonar el repositorio:**
 ```bash
@@ -60,11 +81,7 @@ BOT_TOKEN=tu_token_aqui
 MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority
 DB_NAME=mundomi
 ADMIN_IDS=7828962018
-ADMIN_SECRET_KEY=tu_secret_key
-API_HOST=0.0.0.0
-API_PORT=3000
-API_WORKERS=1
-ADMIN_PANEL_URL=/admin
+ADMIN_PANEL_URL=https://mundomitico-admin.up.railway.app
 ```
 
 4. **Ejecutar:**
@@ -72,36 +89,43 @@ ADMIN_PANEL_URL=/admin
 python main.py
 ```
 
-## 🌐 Despliegue en Railway
+## 🌐 Despliegue
 
-### **1. Crear Proyecto en Railway:**
-1. Ve a [Railway Dashboard](https://railway.app/dashboard)
-2. **"New Project"** → **"Deploy from GitHub repo"**
-3. Selecciona tu repositorio `mundo-mitico`
-4. **"Deploy"**
+### **1. Bot de Telegram en Railway:**
 
-### **2. Configurar Variables de Entorno:**
-En Railway, agrega estas variables:
+1. **Crear proyecto en Railway:**
+   - Ve a [Railway Dashboard](https://railway.app/dashboard)
+   - **"New Project"** → **"Deploy from GitHub repo"**
+   - Selecciona el repositorio `mundo-mitico`
+   - **"Deploy"**
 
+2. **Configurar variables de entorno:**
 ```env
 BOT_TOKEN=7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8
 MONGO_URI=mongodb+srv://rayomarblezh:tatico.10@telegram.yxpl0n0.mongodb.net/?retryWrites=true&w=majority&appName=Telegram&ssl=true&ssl_cert_reqs=CERT_NONE
 DB_NAME=mundomi
 ADMIN_IDS=7828962018
-ADMIN_SECRET_KEY=V7rX!p9Lq$3tZ@fM
-API_HOST=0.0.0.0
-API_PORT=3000
-API_WORKERS=1
-ADMIN_PANEL_URL=/admin
+ADMIN_PANEL_URL=https://mundomitico-admin.up.railway.app
 ```
 
-### **3. URLs del Servicio:**
-Una vez desplegado, tendrás acceso a:
+### **2. Panel de Administración en Railway:**
 
-- **Bot API**: `https://tu-bot-url.up.railway.app`
-- **Panel de Admin**: `https://tu-bot-url.up.railway.app/admin`
-- **Documentación API**: `https://tu-bot-url.up.railway.app/docs`
-- **Health Check**: `https://tu-bot-url.up.railway.app/health`
+1. **Crear proyecto separado:**
+   - Ve a [Railway Dashboard](https://railway.app/dashboard)
+   - **"New Project"** → **"Deploy from GitHub repo"**
+   - Selecciona el repositorio `mundomitico-admin`
+   - **"Deploy"**
+
+2. **Configurar variables de entorno:**
+```env
+MONGO_URI=mongodb+srv://rayomarblezh:tatico.10@telegram.yxpl0n0.mongodb.net/?retryWrites=true&w=majority&appName=Telegram&ssl=true&ssl_cert_reqs=CERT_NONE
+DATABASE_NAME=mundomi
+ADMIN_IDS=7828962018
+ADMIN_SECRET_KEY=V7rX!p9Lq$3tZ@fM
+HOST=0.0.0.0
+PORT=5000
+DEBUG=False
+```
 
 ## 📊 Funcionalidades
 
@@ -122,26 +146,25 @@ Una vez desplegado, tendrás acceso a:
 - **Retiros**: Procesar/cancelar retiros pendientes
 - **Logs**: Registro de acciones de administradores
 
-### **API Endpoints:**
-- `GET /` - Información del bot
-- `GET /health` - Health check
-- `GET /status` - Estado del bot
-- `GET /stats` - Estadísticas del sistema
-- `GET /info` - Información general
-- `POST /restart` - Reiniciar bot
-- `GET /admin-panel-url` - URL del panel
+## 🔗 Integración entre Servicios
 
-## 🔗 Integración FastAPI + Flask
+### **Base de Datos Compartida:**
+- **MongoDB Atlas**: `mundomi`
+- **Colecciones principales**:
+  - `users` - Usuarios del bot
+  - `deposits` - Depósitos (status: pending/completed/cancelled)
+  - `withdrawals` - Retiros (status: pending/completed/cancelled)
+  - `admin_actions` - Log de acciones de administradores
 
-### **Cómo funciona:**
-1. **FastAPI**: Maneja la API del bot y endpoints principales
-2. **Flask**: Maneja el panel de administración web
-3. **WSGIMiddleware**: Integra Flask dentro de FastAPI
-4. **Un solo puerto**: Todo funciona en el puerto de Railway
+### **Sincronización:**
+1. **Bot → Panel**: Los depósitos/retiros creados en el bot aparecen inmediatamente en el panel
+2. **Panel → Bot**: Los cambios procesados en el panel se reflejan inmediatamente en el bot
+3. **Tiempo real**: Ambos servicios leen/escriben en la misma base de datos
 
-### **Rutas:**
-- **FastAPI**: `/`, `/health`, `/status`, `/docs`, etc.
-- **Flask**: `/admin/*` (montado en FastAPI)
+### **Comunicación:**
+- **Directa**: A través de MongoDB (no hay API entre servicios)
+- **Eficiente**: Sin latencia adicional
+- **Confiable**: Transacciones atómicas de MongoDB
 
 ## 🎨 Diseño del Panel
 
@@ -183,22 +206,30 @@ El sistema registra todas las acciones en MongoDB:
 - Verificar que el `ADMIN_IDS` contenga el ID correcto
 - Limpiar cookies del navegador
 
-### **Error de puerto:**
-- Railway asigna automáticamente el puerto
-- Verificar que no haya conflictos
-
 ### **Bot no responde:**
 - Verificar `BOT_TOKEN`
 - Comprobar logs en Railway
 - Verificar que solo haya una instancia ejecutándose
 
+### **Panel no sincroniza:**
+- Verificar que ambos servicios usen la misma `MONGO_URI`
+- Comprobar que usen la misma `DATABASE_NAME`
+- Revisar logs de ambos servicios
+
 ## 📞 Soporte
 
 Para problemas o consultas:
-1. Revisar logs en Railway
+1. Revisar logs en Railway (ambos servicios)
 2. Verificar configuración de variables de entorno
 3. Comprobar conexión a MongoDB Atlas
-4. Verificar estado del bot en `/health`
+4. Verificar sincronización entre servicios
+
+## 🔄 Flujo de Trabajo
+
+1. **Usuario hace depósito** → Bot lo registra en MongoDB
+2. **Admin ve depósito** → Panel lee desde MongoDB
+3. **Admin procesa depósito** → Panel actualiza MongoDB
+4. **Usuario ve balance actualizado** → Bot lee desde MongoDB
 
 ---
 
