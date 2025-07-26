@@ -15,7 +15,15 @@ from config.config import API_HOST, API_PORT, API_WORKERS
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'admin_panel'))
-from app import app as flask_app
+
+# Importación condicional para evitar errores si no está instalado Flask
+try:
+    from app import app as flask_app
+    FLASK_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Flask no disponible: {e}")
+    FLASK_AVAILABLE = False
+    flask_app = None
 
 # Configurar logging
 setup_logging()
@@ -64,9 +72,12 @@ async def startup_event():
         bot_running = True
         
         # Iniciar Flask en un hilo separado
-        flask_thread = threading.Thread(target=run_flask, daemon=True)
-        flask_thread.start()
-        logger.info("✅ Panel de administración iniciado en http://localhost:5000")
+        if FLASK_AVAILABLE:
+            flask_thread = threading.Thread(target=run_flask, daemon=True)
+            flask_thread.start()
+            logger.info("✅ Panel de administración iniciado en http://localhost:5000")
+        else:
+            logger.warning("⚠️ Panel de administración no disponible (Flask no instalado)")
         
         logger.info("✅ Bot iniciado correctamente")
         
@@ -106,8 +117,14 @@ async def start_bot():
 
 def run_flask():
     """Función para ejecutar Flask en un hilo separado"""
-    from admin_panel.config import FLASK_HOST, FLASK_PORT, FLASK_DEBUG
-    flask_app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG, use_reloader=False)
+    if not FLASK_AVAILABLE:
+        print("❌ Flask no disponible, no se puede iniciar el panel de administración")
+        return
+    
+    try:
+        flask_app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    except Exception as e:
+        print(f"❌ Error iniciando Flask: {e}")
 
 @app.get("/")
 async def root():
@@ -118,7 +135,7 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "admin_panel": "http://localhost:5000"
+        "admin_panel": "http://localhost:5000" if FLASK_AVAILABLE else "no disponible"
     }
 
 @app.get("/health")

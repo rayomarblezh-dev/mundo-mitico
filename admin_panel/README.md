@@ -10,6 +10,7 @@ Panel web de administración integrado con el bot de Telegram Mundo Mítico.
 - **Diseño moderno** con Tailwind CSS y tema oscuro
 - **Autenticación segura** por ID de administrador
 - **Integración completa** con la base de datos del bot
+- **Despliegue independiente** o integrado con el bot
 
 ## 🛠️ Tecnologías
 
@@ -17,12 +18,13 @@ Panel web de administración integrado con el bot de Telegram Mundo Mítico.
 - **Frontend**: HTML + Tailwind CSS + JavaScript
 - **Base de datos**: MongoDB (misma que el bot)
 - **Autenticación**: Sesiones Flask
+- **Producción**: Gunicorn + Nginx
 
 ## 📋 Configuración
 
 ### Variables de Entorno
 
-Agrega estas variables a tu archivo `.env`:
+Crea un archivo `.env` en la carpeta `admin_panel`:
 
 ```env
 # Configuración del panel de administración
@@ -43,12 +45,31 @@ Los `ADMIN_IDS` son los IDs de Telegram de los usuarios que pueden acceder al pa
 
 ## 🚀 Uso
 
-### Inicio Automático
+### Opción 1: Integrado con el Bot
 
-El panel se inicia automáticamente junto con el bot cuando ejecutas:
+El panel se inicia automáticamente junto con el bot:
 
 ```bash
 python main.py
+```
+
+### Opción 2: Independiente
+
+Ejecutar solo el panel de administración:
+
+```bash
+cd admin_panel
+python app.py
+```
+
+### Opción 3: Script de Despliegue
+
+Usar el script automatizado:
+
+```bash
+cd admin_panel
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 ### Acceso
@@ -88,6 +109,7 @@ python main.py
 - **Sesiones**: Manejo seguro de sesiones con Flask
 - **Logs**: Todas las acciones se registran en la base de datos
 - **Validación**: Validación de datos en frontend y backend
+- **Health Check**: Endpoint `/health` para monitoreo
 
 ## 🎨 Personalización
 
@@ -97,11 +119,31 @@ El panel usa una paleta de colores oscura personalizable en `templates/dashboard
 ### Fuente
 Se usa la fuente Poppins de Google Fonts. Puedes cambiarla modificando el `fontFamily` en la configuración de Tailwind.
 
+## 🌐 Despliegue en Producción
+
+### Railway (Recomendado - Gratis)
+
+1. **Conectar repositorio** a Railway
+2. **Configurar variables** de entorno
+3. **Desplegar automáticamente**
+
+### Render (Alternativa - Gratis)
+
+1. **Crear Web Service**
+2. **Configurar build y start commands**
+3. **Configurar variables** de entorno
+
+### VPS (DigitalOcean, AWS, etc.)
+
+1. **Usar script de despliegue**: `./deploy.sh production`
+2. **Configurar Nginx** como proxy reverso
+3. **Configurar SSL** con Let's Encrypt
+
 ## 🐛 Solución de Problemas
 
 ### Panel no carga
 - Verifica que el puerto 5000 esté disponible
-- Revisa los logs del bot para errores de Flask
+- Revisa los logs para errores
 - Confirma que las variables de entorno estén configuradas
 
 ### Error de autenticación
@@ -112,6 +154,11 @@ Se usa la fuente Poppins de Google Fonts. Puedes cambiarla modificando el `fontF
 - Confirma que MongoDB esté ejecutándose
 - Verifica la conexión en `MONGO_URI`
 - Revisa que la base de datos exista
+
+### Health Check
+```bash
+curl http://localhost:5000/health
+```
 
 ## 📝 Logs
 
@@ -124,8 +171,30 @@ Todas las acciones administrativas se registran en la colección `logs` de Mongo
 
 ## 🔄 Actualizaciones
 
-Para actualizar el panel:
+### Integrado con Bot
 1. Detén el bot
 2. Actualiza los archivos del panel
 3. Reinicia el bot
-4. El panel se actualizará automáticamente 
+4. El panel se actualizará automáticamente
+
+### Independiente
+1. Actualiza los archivos
+2. Reinicia el servicio
+3. ¡Listo!
+
+## 📁 Estructura de Archivos
+
+```
+admin_panel/
+├── app.py              # Aplicación principal Flask
+├── wsgi.py             # Servidor WSGI para producción
+├── requirements.txt    # Dependencias Python
+├── Procfile           # Configuración para Railway/Heroku
+├── railway.json       # Configuración específica Railway
+├── runtime.txt        # Versión de Python
+├── deploy.sh          # Script de despliegue
+├── templates/         # Plantillas HTML
+│   ├── login.html     # Página de login
+│   └── dashboard.html # Dashboard principal
+└── README.md          # Esta documentación
+``` 

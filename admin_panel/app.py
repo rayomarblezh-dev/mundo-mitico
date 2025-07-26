@@ -8,15 +8,26 @@ import asyncio
 from bson import ObjectId
 import json
 
-from config import MONGO_URI, DATABASE_NAME, ADMIN_IDS, ADMIN_SECRET_KEY, FLASK_HOST, FLASK_PORT, FLASK_DEBUG
+# Configuración
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017')
+DATABASE_NAME = os.environ.get('DATABASE_NAME', 'mundo_mitico')
+ADMIN_IDS = [int(id.strip()) for id in os.environ.get('ADMIN_IDS', '7828962018').split(',')]
+ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your-secret-key-change-this-in-production')
+FLASK_HOST = os.environ.get('FLASK_HOST', '0.0.0.0')
+FLASK_PORT = int(os.environ.get('FLASK_PORT', '5000'))
+FLASK_DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 app = Flask(__name__)
 app.secret_key = ADMIN_SECRET_KEY
 CORS(app)
 
 # Configuración de MongoDB
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-db = client[DATABASE_NAME]
+try:
+    client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
+    db = client[DATABASE_NAME]
+except Exception as e:
+    print(f"Error conectando a MongoDB: {e}")
+    db = None
 
 def admin_required(f):
     @wraps(f)
@@ -31,6 +42,30 @@ def index():
     if 'admin_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
+
+@app.route('/health')
+def health_check():
+    """Endpoint de health check para monitoreo"""
+    try:
+        # Verificar conexión a MongoDB
+        if db:
+            # Intentar una operación simple
+            asyncio.run(db.admin.command('ping'))
+            db_status = "connected"
+        else:
+            db_status = "disconnected"
+        
+        return jsonify({
+            'status': 'healthy',
+            'database': db_status,
+            'timestamp': datetime.datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.datetime.now().isoformat()
+        }), 500
 
 @app.route('/login')
 def login():
@@ -156,6 +191,15 @@ def cancel_withdrawal():
 
 # Funciones asíncronas para interactuar con MongoDB
 async def get_statistics():
+    if not db:
+        return {
+            'total_users': 0,
+            'total_deposits': 0,
+            'total_withdrawals': 0,
+            'total_volume': 0,
+            'active_users': 0
+        }
+    
     try:
         total_users = await db.usuarios.count_documents({})
         total_deposits = await db.depositos.count_documents({})
@@ -184,9 +228,18 @@ async def get_statistics():
         }
     except Exception as e:
         print(f"Error getting statistics: {e}")
-        return {}
+        return {
+            'total_users': 0,
+            'total_deposits': 0,
+            'total_withdrawals': 0,
+            'total_volume': 0,
+            'active_users': 0
+        }
 
 async def get_pending_deposits():
+    if not db:
+        return []
+    
     try:
         deposits = await db.depositos.find({"estado": "pendiente"}).sort("fecha", -1).to_list(50)
         return [{
@@ -203,6 +256,9 @@ async def get_pending_deposits():
         return []
 
 async def get_pending_withdrawals():
+    if not db:
+        return []
+    
     try:
         withdrawals = await db.creditos.find({
             "tipo": "retiro",
@@ -221,6 +277,9 @@ async def get_pending_withdrawals():
         return []
 
 async def process_deposit_async(deposit_id, amount, admin_id):
+    if not db:
+        return {'success': False, 'message': 'Error de conexión a la base de datos'}
+    
     try:
         # Buscar el depósito
         deposit = await db.depositos.find_one({"_id": ObjectId(deposit_id)})
@@ -269,6 +328,9 @@ async def process_deposit_async(deposit_id, amount, admin_id):
         return {'success': False, 'message': 'Error interno del servidor'}
 
 async def process_withdrawal_async(withdrawal_id, admin_id):
+    if not db:
+        return {'success': False, 'message': 'Error de conexión a la base de datos'}
+    
     try:
         # Buscar el retiro
         withdrawal = await db.creditos.find_one({"_id": ObjectId(withdrawal_id)})
@@ -310,6 +372,9 @@ async def process_withdrawal_async(withdrawal_id, admin_id):
         return {'success': False, 'message': 'Error interno del servidor'}
 
 async def cancel_deposit_async(deposit_id, admin_id):
+    if not db:
+        return {'success': False, 'message': 'Error de conexión a la base de datos'}
+    
     try:
         # Actualizar depósito como cancelado
         await db.depositos.update_one(
@@ -337,6 +402,9 @@ async def cancel_deposit_async(deposit_id, admin_id):
         return {'success': False, 'message': 'Error interno del servidor'}
 
 async def cancel_withdrawal_async(withdrawal_id, admin_id):
+    if not db:
+        return {'success': False, 'message': 'Error de conexión a la base de datos'}
+    
     try:
         # Buscar el retiro
         withdrawal = await db.creditos.find_one({"_id": ObjectId(withdrawal_id)})
