@@ -18,7 +18,7 @@ BOT_TOKEN: str = "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8"
 # =========================
 # CONFIGURACIÓN DE BASE DE DATOS
 # =========================
-MONGO_URI: str = "mongodb://mongo:YquIbupRWhkCnSsNSIyNIIiVmTYpFGUZ@ballast.proxy.rlwy.net:24225"
+MONGO_URI: str = "mongodb+srv://rayomarblezh:tatico.10@telegram.yxpl0n0.mongodb.net/?retryWrites=true&w=majority&appName=Telegram&ssl=true&ssl_cert_reqs=CERT_NONE"
 DB_NAME: str = "mundomi"
 
 # =========================
@@ -39,5 +39,5 @@ LOG_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 # CONFIGURACIÓN DE API
 # =========================
 API_HOST: str = "0.0.0.0"
-API_PORT: int = 443
+API_PORT: int = 3000
 API_WORKERS: int = 1

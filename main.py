@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import threading
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -144,14 +145,26 @@ async def health_check():
 @app.get("/status")
 async def bot_status():
     """Endpoint para obtener el estado del bot"""
-    return {
-        "bot_running": bot_running,
-        "bot_info": {
-            "username": bot.username if bot.username else "Unknown",
-            "id": bot.id if bot.id else "Unknown"
-        },
-        "uptime": asyncio.get_event_loop().time() if bot_running else 0
-    }
+    try:
+        bot_info = await bot.get_me()
+        return {
+            "bot_running": bot_running,
+            "bot_info": {
+                "username": bot_info.username if bot_info.username else "Unknown",
+                "id": bot_info.id if bot_info.id else "Unknown"
+            },
+            "uptime": asyncio.get_event_loop().time() if bot_running else 0
+        }
+    except Exception as e:
+        return {
+            "bot_running": bot_running,
+            "bot_info": {
+                "username": "Unknown",
+                "id": "Unknown"
+            },
+            "uptime": 0,
+            "error": str(e)
+        }
 
 @app.get("/admin-panel-url")
 async def get_admin_panel_url():
