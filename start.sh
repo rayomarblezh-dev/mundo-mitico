@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Obtener el puerto de la variable de entorno o usar 8080 por defecto
-PORT=${PORT:-8080}
+# Obtener el puerto de la variable de entorno o usar 443 por defecto
+PORT=${PORT:-443}
 
 echo "🚀 Iniciando Mundo Mítico Bot en puerto $PORT"
 
