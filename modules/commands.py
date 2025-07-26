@@ -37,6 +37,7 @@ from modules.wallet import (
 from modules.explorar import explorar_handler, register_explorar_handlers
 from modules.nfts import register_nfts_handlers
 from modules.inventario import mostrar_inventario_usuario, register_inventario_handlers
+from modules.admin import register_admin_handlers
 
 logger = logging.getLogger(__name__)
 
@@ -95,3 +96,4 @@ def register_commands(dp: Dispatcher):
     register_tareas_handlers(dp)
     register_explorar_handlers(dp)
     register_inventario_handlers(dp)
+    register_admin_handlers(dp)

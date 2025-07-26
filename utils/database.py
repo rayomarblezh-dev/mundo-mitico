@@ -811,43 +811,83 @@ async def notificar_credito_agregado(bot, user_id: int, cantidad: float, razon: 
         logger.error(f"❌ Error notificando crédito a {user_id}: {e}")
 
 async def notificar_admins_nuevo_deposito(user_id, cantidad, red, deposito_id):
-    """Notificar a administradores sobre nuevo depósito"""
+    """Notificar a administradores sobre nuevo depósito con botones de acción"""
     try:
         from modules.bot import bot
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        
+        mensaje = (
+            f"🔔 Nuevo Depósito Pendiente\n\n"
+            f"🆔 ID: <code>{deposito_id}</code>\n"
+            f"👤 Usuario: <code>{user_id}</code>\n"
+            f"💰 Cantidad: <code>{cantidad}</code> {red}\n"
+            f"📅 Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            f"Selecciona una acción:"
+        )
+        
+        # Crear botones de acción
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Confirmar", callback_data=f"admin_deposito_confirmar_{deposito_id}"),
+                InlineKeyboardButton(text="❌ Cancelar", callback_data=f"admin_deposito_cancelar_{deposito_id}")
+            ],
+            [
+                InlineKeyboardButton(text="💬 Contactar", callback_data=f"admin_deposito_contactar_{deposito_id}")
+            ]
+        ])
+        
         for admin_id in ADMIN_IDS:
             try:
                 await bot.send_message(
                     admin_id,
-                    f"🔔 Nuevo depósito pendiente\n\n"
-                    f"ID: {deposito_id}\n"
-                    f"Usuario: {user_id}\n"
-                    f"Cantidad: {cantidad} {red}\n"
-                    f"Revisa el panel de administración para gestionarlo.",
-                    parse_mode="HTML"
+                    mensaje,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
                 )
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error notificando admin {admin_id}: {e}")
                 pass
         logger.info(f"✅ Admins notificados sobre depósito: {deposito_id}")
     except Exception as e:
         logger.error(f"❌ Error notificando admins sobre depósito: {e}")
 
 async def notificar_admins_nuevo_retiro(user_id, cantidad, wallet, retiro_id):
-    """Notificar a administradores sobre nuevo retiro"""
+    """Notificar a administradores sobre nuevo retiro con botones de acción"""
     try:
         from modules.bot import bot
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        
+        mensaje = (
+            f"🔔 Nuevo Retiro Pendiente\n\n"
+            f"🆔 ID: <code>{retiro_id}</code>\n"
+            f"👤 Usuario: <code>{user_id}</code>\n"
+            f"💰 Cantidad: <code>{cantidad}</code> TON\n"
+            f"👛 Wallet: <code>{wallet}</code>\n"
+            f"📅 Fecha: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            f"Selecciona una acción:"
+        )
+        
+        # Crear botones de acción
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Procesar", callback_data=f"admin_retiro_confirmar_{retiro_id}"),
+                InlineKeyboardButton(text="❌ Cancelar", callback_data=f"admin_retiro_cancelar_{retiro_id}")
+            ],
+            [
+                InlineKeyboardButton(text="💬 Contactar", callback_data=f"admin_retiro_contactar_{retiro_id}")
+            ]
+        ])
+        
         for admin_id in ADMIN_IDS:
             try:
                 await bot.send_message(
                     admin_id,
-                    f"🔔 Nuevo retiro pendiente\n\n"
-                    f"ID: {retiro_id}\n"
-                    f"Usuario: {user_id}\n"
-                    f"Cantidad: {cantidad} TON\n"
-                    f"Wallet: {wallet}\n"
-                    f"Revisa el panel de administración para gestionarlo.",
-                    parse_mode="HTML"
+                    mensaje,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
                 )
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error notificando admin {admin_id}: {e}")
                 pass
         logger.info(f"✅ Admins notificados sobre retiro: {retiro_id}")
     except Exception as e:

@@ -1,9 +1,7 @@
 import os
 
 # --- Seguridad y administración ---
-ADMIN_IDS = [
-    int(x) for x in "7828962018".split(",")
-]
+ADMIN_IDS = [7828962018]
 
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
