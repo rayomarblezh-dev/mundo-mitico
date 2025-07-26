@@ -79,14 +79,14 @@ chmod +x deploy.sh
 ### Acceso
 
 1. **Desde Telegram:** Usa el comando `/admin` (solo administradores)
-2. **Directo:** Abre tu navegador en: `http://localhost:5000`
+2. **Directo:** Abre tu navegador en: `http://localhost:5001`
 3. Ingresa tu ID de administrador de Telegram
 4. ¡Listo! Ya puedes gestionar depósitos y retiros
 
 ### Puertos
 
-- **Bot API**: Puerto configurado en `API_PORT` (por defecto 8000)
-- **Panel Admin**: Puerto 5000 (configurable con `FLASK_PORT`)
+- **Bot API**: Puerto configurado en `API_PORT` (por defecto 5000)
+- **Panel Admin**: Puerto 5001 (configurable con `FLASK_PORT`)
 
 ## 📊 Funcionalidades
 
@@ -129,8 +129,9 @@ Se usa la fuente Poppins de Google Fonts. Puedes cambiarla modificando el `fontF
 ### Railway (Recomendado - Gratis)
 
 1. **Conectar repositorio** a Railway
-2. **Configurar variables** de entorno
+2. **Configurar variables** de entorno (excepto URL del panel)
 3. **Desplegar automáticamente**
+4. **La URL se detecta automáticamente** usando `RAILWAY_PUBLIC_DOMAIN`
 
 ### Render (Alternativa - Gratis)
 

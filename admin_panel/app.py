@@ -451,5 +451,6 @@ async def cancel_withdrawal_async(withdrawal_id, admin_id):
 
 if __name__ == '__main__':
     import os
+    # En Railway, usar la variable PORT que asigna automáticamente
     port = int(os.environ.get('PORT', FLASK_PORT))
     app.run(debug=FLASK_DEBUG, host=FLASK_HOST, port=port) 

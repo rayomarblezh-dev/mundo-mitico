@@ -75,7 +75,7 @@ async def startup_event():
         if FLASK_AVAILABLE:
             flask_thread = threading.Thread(target=run_flask, daemon=True)
             flask_thread.start()
-            logger.info("✅ Panel de administración iniciado en http://localhost:5000")
+            logger.info("✅ Panel de administración iniciado en http://localhost:5001")
         else:
             logger.warning("⚠️ Panel de administración no disponible (Flask no instalado)")
         
@@ -122,7 +122,9 @@ def run_flask():
         return
     
     try:
-        flask_app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+        # En Railway, usar la variable PORT que asigna automáticamente
+        port = int(os.environ.get('PORT', 5001))
+        flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
     except Exception as e:
         print(f"❌ Error iniciando Flask: {e}")
 
@@ -135,8 +137,8 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "admin_panel": "http://localhost:5000" if FLASK_AVAILABLE else "no disponible",
-        "admin_panel_url": "http://localhost:5000" if FLASK_AVAILABLE else None
+        "admin_panel": "http://localhost:5001" if FLASK_AVAILABLE else "no disponible",
+        "admin_panel_url": "http://localhost:5001" if FLASK_AVAILABLE else None
     }
 
 @app.get("/health")
@@ -185,7 +187,7 @@ async def get_admin_panel_url():
         admin_url = PANEL_URL
     except ImportError:
         # Si no se puede importar, usar URL por defecto
-        admin_url = "http://localhost:5000"
+        admin_url = "http://localhost:5001"
     
     return {
         "admin_panel_url": admin_url,

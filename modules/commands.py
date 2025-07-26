@@ -85,7 +85,7 @@ async def admin_handler(event):
         return
     
     # Obtener la URL del panel de administración
-    admin_url = "http://localhost:5000"
+    admin_url = "http://localhost:5001"
     
     # Intentar obtener la URL desde la API del bot
     try:
@@ -93,7 +93,7 @@ async def admin_handler(event):
         import asyncio
         
         # URL base de la API del bot
-        api_base = "http://localhost:8000"
+        api_base = "http://localhost:5000"
         if os.environ.get('API_BASE_URL'):
             api_base = os.environ.get('API_BASE_URL')
         

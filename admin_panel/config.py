@@ -12,18 +12,23 @@ DATABASE_NAME = os.environ.get('DATABASE_NAME', 'mundo_mitico')
 ADMIN_IDS = [int(id.strip()) for id in os.environ.get('ADMIN_IDS', '7828962018').split(',')]
 
 # Configuración de seguridad
-ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your-secret-key-change-this-in-production')
+ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY')
 
 # Configuración del servidor
 FLASK_HOST = os.environ.get('FLASK_HOST', '0.0.0.0')
-FLASK_PORT = int(os.environ.get('FLASK_PORT', '5000'))
+# En Railway, usar la variable PORT que asigna automáticamente
+FLASK_PORT = int(os.environ.get('PORT', os.environ.get('FLASK_PORT', '5001')))
 FLASK_DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # URL del panel (para despliegue)
-PANEL_URL = os.environ.get('PANEL_URL', 'http://localhost:5000')
+PANEL_URL = os.environ.get('PANEL_URL', 'http://localhost:5001')
 
-# Si está desplegado en Railway
-if os.environ.get('RAILWAY_STATIC_URL'):
+# Si está desplegado en Railway (usar la URL pública automática)
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    PANEL_URL = f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}"
+
+# Si está desplegado en Railway (URL estática)
+elif os.environ.get('RAILWAY_STATIC_URL'):
     PANEL_URL = os.environ.get('RAILWAY_STATIC_URL')
 
 # Si está desplegado en Render
