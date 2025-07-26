@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     curl \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar mongosh para debugging (opcional)
@@ -30,9 +31,10 @@ WORKDIR /app
 # Copiar requirements.txt primero para aprovechar la caché de Docker
 COPY requirements.txt ./
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias de Python de forma más robusta
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip cache purge
 
 # Copiar el código de la aplicación
 COPY . .
