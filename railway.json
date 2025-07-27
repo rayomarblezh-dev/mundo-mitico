@@ -13,7 +13,7 @@
   },
   "variables": {
     "BOT_TOKEN": "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8",
-    "MONGO_URI": "mongodb+srv://rayomarblezh:tatico.10@mundomitico.xgncvdk.mongodb.net/?retryWrites=true&w=majority&appName=MundoMitico",
+    "MONGO_URI": "mongodb://mongo:wqlVIcpYLTFtTuOowUdUfJaOYWaUvDOG@centerbeam.proxy.rlwy.net:57491",
     "DB_NAME": "mundomitico",
     "ADMIN_IDS": "7828962018"
   }
