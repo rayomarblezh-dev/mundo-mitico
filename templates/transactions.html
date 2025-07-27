@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Transacciones - Panel Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">Gestión de Transacciones</h1>
+            <p class="page-subtitle">Administra depósitos y retiros</p>
+        </div>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary active" onclick="showTab('deposits')">Depósitos</button>
+            <button type="button" class="btn btn-outline-primary" onclick="showTab('withdrawals')">Retiros</button>
+        </div>
+    </div>
+</div>
+
+<!-- Depósitos -->
+<div id="deposits-tab" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h5>Depósitos Pendientes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Cantidad</th>
+                            <th>Hash</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in transactions.deposits %}
+                        <tr>
+                            <td>{{ deposit._id }}</td>
+                            <td>{{ deposit.user_id }}</td>
+                            <td>{{ format_balance(deposit.cantidad_real|default(0)) }}</td>
+                            <td>
+                                {% set hash_value = deposit.hash|default('Sin hash') %}
+                                <code>{{ hash_value[:20] if hash_value != 'Sin hash' else hash_value }}...</code>
+                            </td>
+                            <td>{{ format_date(deposit.fecha) }}</td>
+                            <td>{{ get_status_badge(deposit.estado|default('pendiente'))|safe }}</td>
+                            <td>
+                                {% if deposit.estado == 'pendiente' %}
+                                <button class="btn btn-sm btn-success" onclick="approveDeposit('{{ deposit._id }}')">
+                                    Aprobar
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectDeposit('{{ deposit._id }}')">
+                                    Rechazar
+                                </button>
+                                {% else %}
+                                <span class="text-muted">Procesado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No hay depósitos pendientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Retiros -->
+<div id="withdrawals-tab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h5>Retiros Solicitados</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Cantidad</th>
+                            <th>Wallet</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in transactions.withdrawals %}
+                        <tr>
+                            <td>{{ withdrawal._id }}</td>
+                            <td>{{ withdrawal.user_id }}</td>
+                            <td>{{ format_balance(withdrawal.cantidad|default(0)) }}</td>
+                            <td>
+                                {% set wallet_value = withdrawal.wallet_address|default('Sin dirección') %}
+                                <code>{{ wallet_value[:20] if wallet_value != 'Sin dirección' else wallet_value }}...</code>
+                            </td>
+                            <td>{{ format_date(withdrawal.fecha) }}</td>
+                            <td>{{ get_status_badge(withdrawal.estado|default('pendiente'))|safe }}</td>
+                            <td>
+                                {% if withdrawal.estado == 'pendiente' %}
+                                <button class="btn btn-sm btn-success" onclick="approveWithdrawal('{{ withdrawal._id }}')">
+                                    Aprobar
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('{{ withdrawal._id }}')">
+                                    Rechazar
+                                </button>
+                                {% else %}
+                                <span class="text-muted">Procesado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No hay retiros pendientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tabName) {
+    // Ocultar todas las tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Mostrar la tab seleccionada
+    document.getElementById(tabName + '-tab').style.display = 'block';
+    
+    // Actualizar botones
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+function approveDeposit(depositId) {
+    if (!confirm('¿Estás seguro de que quieres aprobar este depósito?')) {
+        return;
+    }
+    
+    fetch('/api/approve-deposit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            deposit_id: depositId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Depósito aprobado correctamente');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al aprobar depósito');
+    });
+}
+
+function rejectDeposit(depositId) {
+    if (!confirm('¿Estás seguro de que quieres rechazar este depósito?')) {
+        return;
+    }
+    
+    const reason = prompt('Motivo del rechazo (opcional):') || 'Rechazado por administrador';
+    
+    fetch('/api/reject-deposit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            deposit_id: depositId,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Depósito rechazado correctamente');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al rechazar depósito');
+    });
+}
+
+function approveWithdrawal(withdrawalId) {
+    if (!confirm('¿Estás seguro de que quieres aprobar este retiro?')) {
+        return;
+    }
+    
+    fetch('/api/approve-withdrawal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            withdrawal_id: withdrawalId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Retiro aprobado correctamente');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al aprobar retiro');
+    });
+}
+
+function rejectWithdrawal(withdrawalId) {
+    if (!confirm('¿Estás seguro de que quieres rechazar este retiro? El balance será devuelto al usuario.')) {
+        return;
+    }
+    
+    const reason = prompt('Motivo del rechazo (opcional):') || 'Rechazado por administrador';
+    
+    fetch('/api/reject-withdrawal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            withdrawal_id: withdrawalId,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Retiro rechazado correctamente');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al rechazar retiro');
+    });
+}
+</script>
+{% endblock %} 

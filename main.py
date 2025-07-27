@@ -1,6 +1,4 @@
 import asyncio
-import logging
-import os
 from utils.logging_config import setup_logging, get_logger
 from utils.database import init_db
 from modules.commands import register_commands

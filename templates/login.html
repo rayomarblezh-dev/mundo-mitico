@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Panel Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: var(--bg-primary);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .login-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 400px;
+        width: 100%;
+        position: relative;
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .login-header h1 {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+        letter-spacing: -0.025em;
+    }
+    
+    .login-header p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 400;
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+    }
+    
+    .form-control:focus {
+        background: var(--bg-tertiary);
+        border-color: var(--border-light);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .form-label {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .form-text {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-login {
+        background: var(--button-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        width: 100%;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .btn-login:hover {
+        background: var(--button-hover);
+        border-color: var(--border-light);
+    }
+    
+    .btn-login:active {
+        background: var(--button-active);
+    }
+    
+    .security-info {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .security-info small {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    /* Animación de entrada */
+    .login-card {
+        animation: slideInUp 0.2s ease-out;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 576px) {
+        .login-card {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .login-header h1 {
+            font-size: 1.25rem;
+        }
+        
+        .form-control {
+            padding: 0.625rem;
+        }
+        
+        .btn-login {
+            padding: 0.625rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block login_content %}
+<div class="login-card">
+    <div class="login-header">
+        <h1>Mundo Mítico</h1>
+        <p>Panel de Administración</p>
+    </div>
+    
+    <form method="post">
+        <div class="mb-3">
+            <label for="telegram_id" class="form-label">
+                ID de Telegram
+            </label>
+            <input type="number" class="form-control" id="telegram_id" name="telegram_id" 
+                   placeholder="Ingresa tu ID de Telegram" required>
+            <div class="form-text">
+                Solo administradores autorizados pueden acceder
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-login">
+            Iniciar Sesión
+        </button>
+    </form>
+    
+    <div class="security-info">
+        <small>
+            Acceso Seguro
+        </small>
+    </div>
+</div>
+{% endblock %} 

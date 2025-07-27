@@ -42,8 +42,8 @@ BOT_TOKEN: str = os.getenv("BOT_TOKEN", "7878980636:AAHtshLbf-qkbwY7pVIBapuEfzcR
 # =========================
 # CONFIGURACIÓN DE BASE DE DATOS
 # =========================
-MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://mongo:wqlVIcpYLTFtTuOowUdUfJaOYWaUvDOG@centerbeam.proxy.rlwy.net:57491")
-DB_NAME: str = os.getenv("DB_NAME", "mundo_mitico")
+MONGO_URI: str = os.getenv("MONGO_URI", "localhost:27017")
+DB_NAME: str = os.getenv("DB_NAME", "mundomi")
 
 # =========================
 # PARÁMETROS DEL SISTEMA

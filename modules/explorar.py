@@ -152,7 +152,8 @@ async def caja_sorpresa_handler(callback: types.CallbackQuery):
     
     # Verificar balance
     usuario = await usuarios_col.find_one({"user_id": user_id})
-    if not usuario or usuario.get("balance", 0) < 0.05:
+    balance = float(usuario.get("balance", 0)) if usuario else 0.0
+    if not usuario or balance < 0.05:
         await callback.answer("❌ No tienes suficiente TON (necesitas 0.05 TON)", show_alert=True)
         return
     

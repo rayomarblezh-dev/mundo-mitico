@@ -44,7 +44,7 @@ async def tareas_handler(event) -> None:
     """Handler principal de tareas (funciona con mensajes y callbacks)"""
     if not hasattr(event, 'from_user'):
         return
-
+    
     user_id = event.from_user.id
     is_callback = hasattr(event, 'data')
 
@@ -53,7 +53,7 @@ async def tareas_handler(event) -> None:
         if not usuario:
             await event.answer("❌ Usuario no encontrado")
             return
-
+        
         mensaje = await generar_mensaje_tareas(user_id, usuario)
         keyboard = crear_teclado_tareas()
 
@@ -66,7 +66,7 @@ async def tareas_handler(event) -> None:
             await event.answer()
         else:
             await event.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
-
+            
     except Exception as e:
         logger.error(f"Error en tareas_handler para user_id={user_id}: {e}")
         await event.answer("❌ Error al cargar tareas", show_alert=True)
@@ -74,13 +74,13 @@ async def tareas_handler(event) -> None:
 async def verificar_tareas_handler(callback: types.CallbackQuery) -> None:
     """Handler para actualizar tareas manualmente"""
     user_id = callback.from_user.id
-
+    
     try:
         usuario = await usuarios_col.find_one({"user_id": user_id})
         if not usuario:
             await callback.answer("❌ Usuario no encontrado", show_alert=True)
             return
-
+        
         cambios = await check_tareas_usuario(
             callback.bot,
             user_id,
@@ -98,12 +98,12 @@ async def verificar_tareas_handler(callback: types.CallbackQuery) -> None:
         except Exception as e:
             if "message is not modified" not in str(e):
                 await callback.message.answer(mensaje_actualizado, parse_mode="HTML", reply_markup=keyboard)
-
+        
         if cambios:
             await callback.answer("✅ ¡Recompensas obtenidas!", show_alert=True)
         else:
             await callback.answer("ℹ️ No hay cambios en tus tareas.\n\nAsegúrate de:\n• Tener tu enlace de referido en la bio\n• Tener 'Mundo Mitico' en tu nombre", show_alert=True)
-
+            
     except Exception as e:
         logger.error(f"Error en verificar_tareas_handler para user_id={user_id}: {e}")
         await callback.answer("❌ Error al actualizar tareas", show_alert=True)
@@ -111,7 +111,7 @@ async def verificar_tareas_handler(callback: types.CallbackQuery) -> None:
 async def generar_mensaje_tareas(user_id: int, usuario: Dict) -> str:
     """Genera el mensaje principal de tareas"""
     tareas = usuario.get("tareas", {})
-
+        
     mensaje = (
         "📋 Tareas Diarias\n\n"
         "Completa estas tareas para obtener recompensas exclusivas:\n\n"
@@ -201,16 +201,16 @@ class MundoMiticoNombreMiddleware(BaseMiddleware):
         """Procesa cuando se detecta 'Mundo Mitico' en el nombre."""
         logger.info(f"[MUNDO_MITICO] Usuario {user.id} tiene 'Mundo Mitico' en su nombre: {nombre_usuario}")
 
-        # Guardar registro en la base de datos
+                # Guardar registro en la base de datos
         await usuarios_col.update_one(
-            {"user_id": user.id},
-            {"$set": {
-                "detectado_mundo_mitico": True,
-                "nombre_detectado": nombre_usuario,
-                "fecha_detectado": datetime.datetime.now()
-            }},
-            upsert=True
-        )
+                    {"user_id": user.id},
+                    {"$set": {
+                        "detectado_mundo_mitico": True,
+                        "nombre_detectado": nombre_usuario,
+                        "fecha_detectado": datetime.datetime.now()
+                    }},
+                    upsert=True
+                )
 
         # Ya no notificamos al usuario para evitar spam
 
@@ -222,12 +222,12 @@ class MundoMiticoNombreMiddleware(BaseMiddleware):
     async def _verificar_tareas_automaticas(self, event, user) -> None:
         """Verifica tareas automáticamente."""
         try:
-            await check_tareas_usuario(
-                event.bot,
-                user.id,
-                getattr(user, 'username', ''),
-                getattr(user, 'first_name', '')
-            )
+                await check_tareas_usuario(
+                    event.bot,
+                    user.id,
+                    getattr(user, 'username', ''),
+                    getattr(user, 'first_name', '')
+                )
         except Exception as e:
             logger.warning(f"Error en check_tareas_usuario para user_id={user.id}: {e}")
 
@@ -430,13 +430,13 @@ async def _guardar_cambios_tareas(user_id: int, tareas: Dict, inventario: Dict) 
         inventario: Inventario actualizado
     """
     try:
-        await usuarios_col.update_one(
-            {"user_id": user_id},
-            {"$set": {"tareas": tareas, "inventario": inventario}}
-        )
+            await usuarios_col.update_one(
+                {"user_id": user_id},
+                {"$set": {"tareas": tareas, "inventario": inventario}}
+            )
     except Exception as e:
-        logger.error(f"Error al actualizar usuario {user_id} en la base de datos: {e}")
-
+            logger.error(f"Error al actualizar usuario {user_id} en la base de datos: {e}")
+    
 # =========================
 # REGISTRO DE HANDLERS
 # =========================

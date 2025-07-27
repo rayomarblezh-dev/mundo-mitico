@@ -21,7 +21,7 @@ from utils.database import (
 from modules.constants import PAQUETE_PRECIO
 
 # Handlers principales
-from modules.start import start_handler, verificar_suscripcion_handler
+from modules.start import start_handler
 from modules.referidos import referidos_handler
 from modules.tareas import tareas_handler, register_tareas_handlers
 
@@ -114,7 +114,8 @@ def register_commands(dp: Dispatcher):
     # Handlers principales (funcionan con mensajes y callbacks)
     dp.message.register(start_handler, lambda m: m.text == "/start")
     dp.callback_query.register(start_handler, lambda c: c.data == "start_volver")
-    dp.callback_query.register(verificar_suscripcion_handler, lambda c: c.data == "verificar_suscripcion")
+    # VERIFICACIÓN DE CANALES COMENTADA - NO ES OBLIGATORIA
+    # dp.callback_query.register(verificar_suscripcion_handler, lambda c: c.data == "verificar_suscripcion")
     
     dp.message.register(wallet_handler, lambda m: m.text == "/wallet")
     dp.callback_query.register(wallet_handler, lambda c: c.data == "wallet")
