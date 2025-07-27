@@ -139,11 +139,11 @@ async def start_handler(event):
     welcome_text = (
         "🌍 <b>¡Bienvenido a Mundo Mítico!</b>\n\n"
         "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
-        "<blockquote expandable>Cazar Criaturas - Encuentra y captura bestias míticas\n"
+        "<blockquote expandable>— Cazar Criaturas - Encuentra y captura bestias míticas\n"
         "— Expediciones - Explora territorios desconocidos\n"
         "— Combates Épicos - Enfréntate a desafíos legendarios\n"
         "— Invertir TON - Gestiona tu economía en el mundo mítico\n"
-        "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n\n"
+        "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n"
         "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.\n\n"
         "Accesos rápidos:"
     )
