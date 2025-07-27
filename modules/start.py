@@ -56,7 +56,7 @@ def crear_teclado_verificacion_canales(canales_faltantes: list) -> InlineKeyboar
     for canal in canales_faltantes:
         builder.button(text=f"Unirse a {canal['nombre']}", url=canal['url'])
     
-    builder.button(text="✅ Verificar", callback_data="verificar_suscripcion")
+    builder.button(text="✅ Verificar union", callback_data="verificar_suscripcion")
     builder.adjust(1)
     
     return builder.as_markup()
@@ -96,10 +96,9 @@ async def start_handler(event):
         
         if not esta_suscrito:
             mensaje_verificacion = (
-                "Debes unirte a todos nuestros canales para usar este bot.\n"
-                "Una vez te hayas unido, haz clic en 'Verificar' para continuar."
+                "<b>Debes unirte a todos nuestros canales.\n\n"
+                "Una vez te hayas unido, haz clic en 'Verificar union' para continuar.</b>\n\n"
             )
-            
             keyboard = crear_teclado_verificacion_canales(canales_faltantes)
             
             await event.answer(mensaje_verificacion, parse_mode="HTML", reply_markup=keyboard)
@@ -137,7 +136,7 @@ async def start_handler(event):
                 print(f"Error al procesar referido: {e}")
 
     welcome_text = (
-        "🌍 <b>¡Bienvenido a Mundo Mítico!</b>\n\n"
+        "🌍 <b>¡Bienvenido a Mundo Mítico!\n\n"
         "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
         "<blockquote expandable>— Cazar Criaturas - Encuentra y captura bestias míticas\n"
         "— Expediciones - Explora territorios desconocidos\n"
@@ -145,7 +144,7 @@ async def start_handler(event):
         "— Invertir TON - Gestiona tu economía en el mundo mítico\n"
         "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n"
         "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.\n\n"
-        "Accesos rápidos:"
+        "Accesos rápidos:</b>"
     )
 
     # Crear teclado inline con todos los botones (incluyendo Tareas)

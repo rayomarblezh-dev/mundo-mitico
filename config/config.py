@@ -18,27 +18,32 @@ def is_admin(user_id: int) -> bool:
 # CONFIGURACIÓN DE CANALES
 # =========================
 # IDs de canales donde el bot debe ser administrador
-CHANNEL_IDS: List[str] = os.getenv("CHANNEL_IDS", "@tzinno_dev").split(",")
+CHANNEL_IDS: List[str] = os.getenv("CHANNEL_IDS").split(",")
 
 # Canales requeridos para suscripción de usuarios
 REQUIRED_CHANNELS: List[dict] = [
     {
-        "id": "@tzinno_dev",
-        "nombre": "Tzinño", 
-        "url": "https://t.me/tzinno_dev"
+        "id": "@mundomitico",
+        "nombre": "Mundo Mítico", 
+        "url": "https://t.me/mundomitico"
+    },
+    {
+        "id": "@mundomiticopagos",
+        "nombre": "Mundo Mítico Pagos", 
+        "url": "https://t.me/mundomiticopagos"
     }
 ]
 
 # =========================
 # CONFIGURACIÓN DE TOKENS
 # =========================
-BOT_TOKEN: str = os.getenv("BOT_TOKEN", "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8")
+BOT_TOKEN: str = os.getenv("BOT_TOKEN", "7878980636:AAHtshLbf-qkbwY7pVIBapuEfzcRlXaiuqo")
 
 # =========================
 # CONFIGURACIÓN DE BASE DE DATOS
 # =========================
-MONGO_URI: str = os.getenv("MONGO_URI", "localhost:27017")
-DB_NAME: str = os.getenv("DB_NAME", "mundomi")
+MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://mongo:wqlVIcpYLTFtTuOowUdUfJaOYWaUvDOG@centerbeam.proxy.rlwy.net:57491")
+DB_NAME: str = os.getenv("DB_NAME", "mundo_mitico")
 
 # =========================
 # PARÁMETROS DEL SISTEMA

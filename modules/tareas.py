@@ -212,21 +212,12 @@ class MundoMiticoNombreMiddleware(BaseMiddleware):
             upsert=True
         )
 
-        # Notificar al usuario
-        await self._notificar_deteccion(event, user)
+        # Ya no notificamos al usuario para evitar spam
 
     async def _notificar_deteccion(self, event, user) -> None:
-        """Notifica al usuario sobre la detección."""
-        try:
-            if hasattr(event, 'message'):
-                # Enviar emoji en un mensaje separado
-                await event.message.answer("🎉")
-                # Enviar texto en otro mensaje
-                await event.message.answer("¡Tarea iniciada! Tienes 'Mundo Mitico' en tu nombre.")
-            elif hasattr(event, 'answer'):
-                await event.answer("¡Tarea iniciada! Tienes 'Mundo Mitico' en tu nombre.", show_alert=True)
-        except Exception as e:
-            logger.warning(f"Error al enviar notificación a usuario {user.id}: {e}")
+        """Notifica al usuario sobre la detección (ya no se usa)."""
+        # Esta función ya no se usa para evitar spam
+        pass
 
     async def _verificar_tareas_automaticas(self, event, user) -> None:
         """Verifica tareas automáticamente."""
