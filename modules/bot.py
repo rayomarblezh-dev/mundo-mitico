@@ -16,4 +16,8 @@ bot = Bot(
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
+# Registrar middleware para tareas
+from modules.tareas import MundoMiticoNombreMiddleware
+dp.message.middleware(MundoMiticoNombreMiddleware())
+
 logger.info("🤖 Bot y Dispatcher configurados correctamente")

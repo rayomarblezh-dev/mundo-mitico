@@ -3,6 +3,63 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from utils.database import procesar_nuevo_referido, obtener_usuario_por_username
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Importar configuración de canales
+from config.config import REQUIRED_CHANNELS
+
+# Configuración de canales requeridos
+CANALES_REQUERIDOS = REQUIRED_CHANNELS
+
+async def verificar_suscripcion_canales(bot, user_id: int) -> tuple[bool, list]:
+    """
+    Verifica si el usuario está suscrito a los canales requeridos.
+    
+    Args:
+        bot: Instancia del bot
+        user_id: ID del usuario
+        
+    Returns:
+        Tuple con (está_suscrito, canales_faltantes)
+    """
+    canales_faltantes = []
+    
+    for canal in CANALES_REQUERIDOS:
+        try:
+            # Intentar obtener el estado del usuario en el canal
+            chat_member = await bot.get_chat_member(canal["id"], user_id)
+            
+            # Verificar si el usuario está suscrito
+            if chat_member.status in ["left", "kicked"]:
+                canales_faltantes.append(canal)
+                
+        except Exception as e:
+            logger.warning(f"Error verificando suscripción a {canal['id']} para user_id={user_id}: {e}")
+            canales_faltantes.append(canal)
+    
+    return len(canales_faltantes) == 0, canales_faltantes
+
+def crear_teclado_verificacion_canales(canales_faltantes: list) -> InlineKeyboardMarkup:
+    """
+    Crea el teclado para la verificación de canales con estilo similar a la imagen.
+    
+    Args:
+        canales_faltantes: Lista de canales a los que el usuario debe suscribirse
+        
+    Returns:
+        Teclado inline con botones de verificación
+    """
+    builder = InlineKeyboardBuilder()
+    
+    for canal in canales_faltantes:
+        builder.button(text=f"Unirse a {canal['nombre']}", url=canal['url'])
+    
+    builder.button(text="✅ Verificar", callback_data="verificar_suscripcion")
+    builder.adjust(1)
+    
+    return builder.as_markup()
 
 async def start_handler(event):
     """Handler de start (funciona con mensajes y callbacks)"""
@@ -17,9 +74,12 @@ async def start_handler(event):
     
     # Importación local para evitar import circular
     from utils.database import usuarios_col
-    # Crear usuario si no existe y asegurar campo captcha
+    
+    # Verificar si el usuario ya existe
     usuario = await usuarios_col.find_one({"user_id": user_id})
+    
     if not usuario:
+        # Usuario nuevo - crear usuario
         await usuarios_col.insert_one({
             "user_id": user_id,
             "username": username,
@@ -29,6 +89,23 @@ async def start_handler(event):
             "activo": True
         })
         usuario = await usuarios_col.find_one({"user_id": user_id})
+    
+    # Usuario existe - verificar canales
+    if not is_callback:  # Solo verificar en mensajes directos, no en callbacks
+        esta_suscrito, canales_faltantes = await verificar_suscripcion_canales(event.bot, user_id)
+        
+        if not esta_suscrito:
+            mensaje_verificacion = (
+                "Debes unirte a todos nuestros canales para usar este bot.\n"
+                "Una vez te hayas unido, haz clic en 'Verificar' para continuar."
+            )
+            
+            keyboard = crear_teclado_verificacion_canales(canales_faltantes)
+            
+            await event.answer(mensaje_verificacion, parse_mode="HTML", reply_markup=keyboard)
+            return
+    
+    # Usuario existe y está suscrito a canales - ir directamente al menú
 
     # Manejo de referidos mejorado
     args = None
@@ -60,7 +137,7 @@ async def start_handler(event):
                 print(f"Error al procesar referido: {e}")
 
     welcome_text = (
-        "🌍 ¡Bienvenido a Mundo Mítico!\n\n"
+        "🌍 <b>¡Bienvenido a Mundo Mítico!</b>\n\n"
         "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
         "<blockquote expandable>Cazar Criaturas - Encuentra y captura bestias míticas\n"
         "— Expediciones - Explora territorios desconocidos\n"
@@ -79,9 +156,8 @@ async def start_handler(event):
     builder.button(text="👛 Wallet", callback_data="wallet")
     builder.button(text="👥 Referidos", callback_data="referidos")
     builder.button(text="📋 Tareas", callback_data="tareas")
-    builder.button(text="📣 Canal", url="https://t.me/MundoMitico")
     builder.button(text="📮 Soporte", url="http://t.me/wolfpromot")
-    builder.adjust(1, 2, 1, 2, 2)
+    builder.adjust(1, 2, 1, 2, 1)
     keyboard = builder.as_markup()
 
     # Enviar mensaje según el tipo de evento
@@ -99,4 +175,27 @@ async def start_handler(event):
     else:
         await event.answer(welcome_text, parse_mode="HTML", reply_markup=keyboard)
     
+async def verificar_suscripcion_handler(callback: types.CallbackQuery):
+    """Handler para verificar la suscripción a canales"""
+    user_id = callback.from_user.id
     
+    try:
+        # Verificar suscripción nuevamente
+        esta_suscrito, canales_faltantes = await verificar_suscripcion_canales(callback.bot, user_id)
+        
+        if esta_suscrito:
+            # Usuario está suscrito, ir directamente al menú
+            await callback.answer("✅ ¡Bienvenido a Mundo Mítico!", show_alert=True)
+            
+            # Llamar al start_handler para mostrar el menú principal
+            await start_handler(callback)
+            
+        else:
+            # Usuario aún no está suscrito
+            await callback.answer("❌ Aún no estás suscrito a todos los canales requeridos.", show_alert=True)
+            
+    except Exception as e:
+        logger.error(f"Error en verificar_suscripcion_handler para user_id={user_id}: {e}")
+        await callback.answer("❌ Error al verificar suscripción. Intenta de nuevo.", show_alert=True)
+    
+    await callback.answer()

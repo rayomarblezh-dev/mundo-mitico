@@ -14,8 +14,18 @@ MIN_RETIRO = SISTEMA_CONFIG["min_retiro"]
 COMISION_RETIRO = SISTEMA_CONFIG["comision_retiro"]
 
 # Cliente de MongoDB
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-db = client[DB_NAME]
+try:
+    client = motor.motor_asyncio.AsyncIOMotorClient(
+        MONGO_URI,
+        serverSelectionTimeoutMS=60000,  # 60 segundos
+        connectTimeoutMS=60000,
+        socketTimeoutMS=60000
+    )
+    db = client[DB_NAME]
+    logger.info("✅ Cliente de MongoDB configurado correctamente")
+except Exception as e:
+    logger.error(f"❌ Error configurando cliente de MongoDB: {e}")
+    raise
 
 # Colecciones
 usuarios_col = db.usuarios
@@ -29,20 +39,26 @@ promos_col = db.promos
 async def init_db():
     """Inicializa la base de datos y crea índices necesarios"""
     try:
-        # Crear índices para optimizar consultas
-        await usuarios_col.create_index("user_id", unique=True)
-        await usuarios_col.create_index("username")
-        await inventarios_col.create_index("user_id", unique=True)
-        await depositos_col.create_index("user_id")
-        await depositos_col.create_index("estado")
-        await depositos_col.create_index("fecha")
-        await creditos_col.create_index("user_id")
-        await creditos_col.create_index("estado")
-        await creditos_col.create_index("fecha")
-        await referidos_col.create_index([("referidor_id", 1), ("referido_id", 1)], unique=True)
-        await logs_col.create_index("fecha")
-        await logs_col.create_index("actor_id")
-        await promos_col.create_index("user_id", unique=True)
+        # Intentar crear índices para optimizar consultas
+        try:
+            await usuarios_col.create_index("user_id", unique=True)
+            await usuarios_col.create_index("username")
+            await inventarios_col.create_index("user_id", unique=True)
+            await depositos_col.create_index("user_id")
+            await depositos_col.create_index("estado")
+            await depositos_col.create_index("fecha")
+            await creditos_col.create_index("user_id")
+            await creditos_col.create_index("estado")
+            await creditos_col.create_index("fecha")
+            await referidos_col.create_index([("referidor_id", 1), ("referido_id", 1)], unique=True)
+            await logs_col.create_index("fecha")
+            await logs_col.create_index("actor_id")
+            await promos_col.create_index("user_id", unique=True)
+            logger.info("✅ Índices de base de datos creados correctamente")
+        except Exception as index_error:
+            # Si no se pueden crear índices (permisos X509), continuar sin ellos
+            logger.warning(f"⚠️ No se pudieron crear índices (permisos limitados): {index_error}")
+            logger.info("ℹ️ Continuando sin índices (funcionalidad básica disponible)")
         
         logger.info("✅ Base de datos inicializada correctamente")
     except Exception as e:

@@ -165,14 +165,14 @@ async def caja_sorpresa_handler(callback: types.CallbackQuery):
     recompensa = await obtener_recompensa_aleatoria(RECOMPENSAS_CAJA_SORPRESA)
     
     # Procesar recompensa
-    mensaje = f"🎁 Caja Sorpresa\n\n{recompensa['mensaje']}"
-    
     if "item" in recompensa:
         await agregar_item_inventario(user_id, recompensa["item"], recompensa["cantidad"])
-        mensaje += f"\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
     elif "ton" in recompensa:
         await agregar_ton_usuario(user_id, recompensa["ton"])
-        mensaje += f"\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+    else:
+        mensaje = recompensa['mensaje']
     
     # Log de la acción
     await log_action(user_id, "caja_sorpresa", details={
@@ -186,7 +186,10 @@ async def caja_sorpresa_handler(callback: types.CallbackQuery):
     ])
     
     try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
+        # Enviar emoji en un mensaje separado
+        await callback.message.answer("🎁")
+        # Enviar texto en otro mensaje
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     except Exception:
         await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     
@@ -225,11 +228,11 @@ async def pelea_handler(callback: types.CallbackQuery):
     # Obtener resultado de la pelea
     recompensa = await obtener_recompensa_aleatoria(RECOMPENSAS_PELEA)
     
-    mensaje = f"⚔️ Pelea Épica\n\n{recompensa['mensaje']}"
-    
     if "ton" in recompensa:
         await agregar_ton_usuario(user_id, recompensa["ton"])
-        mensaje += f"\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+    else:
+        mensaje = recompensa['mensaje']
     
     # Log de la acción
     await log_action(user_id, "pelea", details={
@@ -243,7 +246,10 @@ async def pelea_handler(callback: types.CallbackQuery):
     ])
     
     try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
+        # Enviar emoji en un mensaje separado
+        await callback.message.answer("⚔️")
+        # Enviar texto en otro mensaje
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     except Exception:
         await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     
@@ -285,14 +291,14 @@ async def expedicion_handler(callback: types.CallbackQuery):
     # Obtener resultado de la expedición
     recompensa = await obtener_recompensa_aleatoria(RECOMPENSAS_EXPEDICION)
     
-    mensaje = f"🗺️ Expedición\n\n{recompensa['mensaje']}"
-    
     if "item" in recompensa:
         await agregar_item_inventario(user_id, recompensa["item"], recompensa["cantidad"])
-        mensaje += f"\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
     elif "ton" in recompensa:
         await agregar_ton_usuario(user_id, recompensa["ton"])
-        mensaje += f"\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['ton']} TON agregado(s) a tu balance"
+    else:
+        mensaje = recompensa['mensaje']
     
     # Log de la acción
     await log_action(user_id, "expedicion", details={
@@ -306,7 +312,10 @@ async def expedicion_handler(callback: types.CallbackQuery):
     ])
     
     try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
+        # Enviar emoji en un mensaje separado
+        await callback.message.answer("🗺️")
+        # Enviar texto en otro mensaje
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     except Exception:
         await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     
@@ -347,11 +356,11 @@ async def capturar_handler(callback: types.CallbackQuery):
     # Obtener resultado de la captura
     recompensa = await obtener_recompensa_aleatoria(RECOMPENSAS_CAPTURAR)
     
-    mensaje = f"⚔️ Capturar Criatura Mística\n\n{recompensa['mensaje']}"
-    
     if "item" in recompensa:
         await agregar_item_inventario(user_id, recompensa["item"], recompensa["cantidad"])
-        mensaje += f"\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
+        mensaje = f"{recompensa['mensaje']}\n\n✅ {recompensa['cantidad']} {recompensa['item'].title()} agregado(s) a tu inventario"
+    else:
+        mensaje = recompensa['mensaje']
     
     # Log de la acción
     await log_action(user_id, "capturar_criatura", details={
@@ -365,7 +374,10 @@ async def capturar_handler(callback: types.CallbackQuery):
     ])
     
     try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
+        # Enviar emoji en un mensaje separado
+        await callback.message.answer("🏹")
+        # Enviar texto en otro mensaje
+        await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     except Exception:
         await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     

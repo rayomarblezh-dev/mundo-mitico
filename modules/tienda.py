@@ -117,9 +117,9 @@ async def tienda_volver_handler(callback: types.CallbackQuery):
             "¡Bienvenido a la tienda más mágica del universo!\n\n"
             f"Balance: {balance:.3f} TON\n\n"
             "Categorías disponibles:\n"
-            "• 🐾 Criaturas - Seres mágicos para explorar y combatir\n"
-            "• 🎨 NFTs - Colecciones únicas que generan ganancias\n"
-            "• 🔥 Promociones - Ofertas especiales y paquetes\n\n"
+            "• Criaturas - Seres mágicos para explorar y combatir\n"
+            "• NFTs - Colecciones únicas que generan ganancias\n"
+            "• Promociones - Ofertas especiales y paquetes\n\n"
             "Consejo: Las criaturas te ayudan en exploraciones y los NFTs generan TON diariamente."
         )
         
@@ -169,7 +169,7 @@ async def tienda_promos_handler(callback: types.CallbackQuery):
                 "• 7 🧚‍♀️ Hadas\n"
                 "• 3 🧙‍♂️ Magos\n"
                 "• 1 🐺 Licántropo\n"
-                "• Precio: 1.5 TON (¡50% de descuento!)\n"
+                "• Precio: 1.5 TON\n"
                 "• Válido: Solo por 15 días desde tu registro\n\n"
                 "¡Perfecto para comenzar tu aventura!"
             )
@@ -224,8 +224,8 @@ async def comprar_paquete_bienvenida_handler(callback: types.CallbackQuery):
         if resultado.get("ok"):
             mensaje = (
                 "✅ ¡Compra Exitosa!\n\n"
-                "🎉 ¡Has adquirido el Paquete de Bienvenida!\n\n"
-                "📦 Contenido del paquete:\n"
+                "¡Has adquirido el Paquete de Bienvenida!\n\n"
+                "Contenido del paquete:\n"
                 "• 7 🧚‍♀️ Hadas\n"
                 "• 3 🧙‍♂️ Magos\n"
                 "• 1 🐺 Licántropo\n\n"

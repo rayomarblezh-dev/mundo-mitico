@@ -67,6 +67,7 @@ async def wallet_handler(event):
     builder = InlineKeyboardBuilder()
     builder.button(text="📥 Depositar", callback_data="wallet_depositar")
     builder.button(text="📤 Retirar", callback_data="wallet_retirar")
+    builder.button(text="🔙 Volver", callback_data="start_volver")
     builder.adjust(2)
     keyboard = builder.as_markup()
     
@@ -101,7 +102,9 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
     builder.button(text="USDT TON", callback_data="depositar_usdt_ton")
     builder.button(text="USDT TRC20", callback_data="depositar_usdt_trc20")
     builder.button(text="TON", callback_data="depositar_ton")
-    builder.adjust(2)
+    builder.button(text="🔙 Volver", callback_data="wallet")
+    builder.button(text="🏠 Menú Principal", callback_data="start_volver")
+    builder.adjust(2, 1, 1, 1)
     keyboard = builder.as_markup()
     
     try:
@@ -149,7 +152,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     
     callback_data = callback.data
     if callback_data not in network_map:
-        await callback.answer("❌ Red no válida")
+        await callback.answer("Red no válida")
         return
 
     network_name, network_key = network_map[callback_data]
@@ -160,7 +163,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     
     if precio_ton is None or precio_usdt is None:
         await callback.message.answer(
-            "⚠️ No se pudieron obtener los precios actuales.\n"
+            "No se pudieron obtener los precios actuales.\n"
             "Intenta de nuevo más tarde."
         )
         await callback.answer()
@@ -213,7 +216,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
 
     if balance_ton == 0:
         mensaje = (
-            "❌ Retiro no disponible\n\n"
+            "Retiro no disponible\n\n"
             f"Balance: {balance_ton:.3f} TON\n"
             f"Mínimo de retiro: {min_retiro:.3f} TON\n\n"
             "No tienes fondos disponibles para retirar.\n\n"
@@ -221,7 +224,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
         )
     elif balance_ton < min_retiro:
         mensaje = (
-            "❌ Retiro no disponible\n\n"
+            "Retiro no disponible\n\n"
             f"Balance: {balance_ton:.3f} TON\n"
             f"Mínimo de retiro: {min_retiro:.3f} TON\n\n"
             "Tu balance es insuficiente para realizar un retiro.\n\n"
@@ -265,7 +268,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     
     if current_state != WalletStates.esperando_wallet.state:
         await message.answer(
-            "<b>❌ Comando no disponible</b>\n\n"
+            "<b>Comando no disponible</b>\n\n"
             "Para agregar tu wallet TON, ve a <b>Wallet → Retirar</b>.",
             parse_mode="HTML"
         )
@@ -274,7 +277,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     # Validar formato de dirección TON
     if not wallet_address.startswith("UQ") or len(wallet_address) < 48:
         await message.answer(
-            "❌ Dirección inválida\n\n"
+            "Dirección inválida\n\n"
             "La dirección de wallet TON debe comenzar con 'UQ' y tener al menos 48 caracteres.\n"
             "Asegúrate de copiar la dirección completa de tu wallet TON."
         )
@@ -317,7 +320,7 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
             raise ValueError
     except Exception:
         await message.answer(
-            "❌ Cantidad inválida\n\nPor favor, ingresa un número válido mayor a 0."
+            "Cantidad inválida\n\nPor favor, ingresa un número válido mayor a 0."
         )
         return
 
@@ -328,7 +331,7 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
 
     if cantidad < min_retiro:
         await message.answer(
-            f"❌ Cantidad insuficiente\n\n"
+            f"Cantidad insuficiente\n\n"
             f"La cantidad mínima de retiro es {min_retiro:.3f} TON.\n"
             f"Tu solicitud: {cantidad:.3f} TON"
         )
@@ -336,7 +339,7 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
 
     if cantidad > balance:
         await message.answer(
-            f"❌ Balance insuficiente\n\n"
+            f"Balance insuficiente\n\n"
             f"Tu balance disponible es {balance:.3f} TON.\n"
             f"Tu solicitud: {cantidad:.3f} TON"
         )
@@ -368,13 +371,13 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     wallet_address = data.get('wallet_address')
 
     if not cantidad or not wallet_address:
-        await callback.answer("❌ Datos incompletos para el retiro.", show_alert=True)
+        await callback.answer("Datos incompletos para el retiro.", show_alert=True)
         return
 
     # Descontar balance de forma atómica
     ok = await descontar_balance_usuario(user_id, cantidad)
     if not ok:
-        await callback.answer("❌ Balance insuficiente para procesar el retiro.", show_alert=True)
+        await callback.answer("Balance insuficiente para procesar el retiro.", show_alert=True)
         return
 
     # Registrar retiro en la base de datos
@@ -398,7 +401,7 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     })
 
     mensaje = (
-        "✅ Retiro solicitado\n\n"
+        "Retiro solicitado\n\n"
         f"ID de Retiro: {retiro_id}\n"
         f"Cantidad: {cantidad:.3f} TON\n"
         f"Wallet: {wallet_address}\n\n"
@@ -441,7 +444,7 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
             raise ValueError
     except Exception:
         await message.answer(
-            "❌ Cantidad inválida\n\nPor favor, ingresa un número válido mayor a 0."
+            "Cantidad inválida\n\nPor favor, ingresa un número válido mayor a 0."
         )
         return
     
@@ -497,7 +500,7 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     
     if cantidad is None:
         await message.answer(
-            "<b>❌ Error</b>\n\n<i>Primero debes ingresar la cantidad a depositar antes de enviar el hash.</i>",
+            "<b>Error</b>\n\n<i>Primero debes ingresar la cantidad a depositar antes de enviar el hash.</i>",
             parse_mode="HTML"
         )
         return
@@ -526,14 +529,14 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     })
     
     mensaje_confirmacion = (
-        "<b>✅ Depósito registrado</b>\n\n"
-        f"<b>🆔 ID de Depósito:</b> <code>{deposito_id}</code>\n"
-        f"<b>🌐 Red:</b> {network_name}\n"
-        f"<b>📍 Dirección:</b> <code>{address}</code>\n"
-        f"<b>💰 Cantidad:</b> <code>{cantidad:.3f}</code> {network_name.split()[-1]}\n"
-        f"<b>🔗 Hash:</b> <code>{hash_text}</code>\n"
-        "<b>📊 Estado:</b> <b>Pendiente de revisión</b>\n"
-        "<b>⏰ Tiempo estimado:</b> 24-48 horas\n\n"
+        "<b>Depósito registrado</b>\n\n"
+        f"<b>ID de Depósito:</b> <code>{deposito_id}</code>\n"
+        f"<b>Red:</b> {network_name}\n"
+        f"<b>Dirección:</b> <code>{address}</code>\n"
+        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> {network_name.split()[-1]}\n"
+        f"<b>Hash:</b>\n<code>{hash_text}</code>\n\n"
+        "<b>Estado:</b> <b>Pendiente de revisión</b>\n"
+        "<b>Tiempo estimado:</b> 24-48 horas\n\n"
         "Guarda este ID para cualquier reporte o consulta."
     )
     
@@ -545,7 +548,7 @@ async def cancelar_deposito_handler(callback: types.CallbackQuery, state: FSMCon
     """Cancela el proceso de depósito"""
     await state.clear()
     mensaje = (
-        "❌ Depósito cancelado\n\n"
+        "Depósito cancelado\n\n"
         "El proceso de depósito ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Depositar."
     )
     
@@ -569,7 +572,7 @@ async def cancelar_deposito_handler(callback: types.CallbackQuery, state: FSMCon
 async def cancelar_retiro_handler(callback: types.CallbackQuery):
     """Cancela el proceso de retiro"""
     mensaje = (
-        "❌ Retiro cancelado\n\n"
+        "Retiro cancelado\n\n"
         "Tu solicitud de retiro ha sido cancelada.\n"
         "Puedes iniciar un nuevo retiro desde Wallet → Retirar."
     )
@@ -594,7 +597,7 @@ async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FS
     """Cancela completamente el proceso de retiro"""
     await state.clear()
     mensaje = (
-        "❌ Retiro cancelado\n\n"
+        "Retiro cancelado\n\n"
         "El proceso de retiro ha sido cancelado. Puedes iniciar uno nuevo desde Wallet → Retirar."
     )
     

@@ -194,9 +194,9 @@ NFTS_CONFIG = {
     "moguri": {
         "nombre": "Moguri-NFT",
         "emoji": "💀",
-        "precio": 5.0,
-        "ganancia_diaria": 0.1,
-        "duracion": 30,
+        "precio": 1.0,
+        "ganancia_diaria": 0.01,
+        "duracion": 100,
         "rareza": "Común",
         "descripcion": "Un NFT misterioso con poderes ancestrales que genera ganancias diarias.",
         "imagen": "moguri.jpg"
@@ -204,9 +204,9 @@ NFTS_CONFIG = {
     "gargola": {
         "nombre": "Gargola-NFT", 
         "emoji": "🦇",
-        "precio": 10.0,
-        "ganancia_diaria": 0.25,
-        "duracion": 30,
+        "precio": 1.0,
+        "ganancia_diaria": 0.025,
+        "duracion": 365,
         "rareza": "Común",
         "descripcion": "Un NFT protector con energía mágica que ofrece ganancias superiores.",
         "imagen": "gargola.jpg"
@@ -214,8 +214,8 @@ NFTS_CONFIG = {
     "ghost": {
         "nombre": "Ghost-NFT",
         "emoji": "👻", 
-        "precio": 25.0,
-        "ganancia_diaria": 0.75,
+        "precio": 3.5,
+        "ganancia_diaria": 0.2,
         "duracion": 30,
         "rareza": "Raro",
         "descripcion": "Un NFT etéreo de rareza superior con poderes sobrenaturales.",
@@ -232,9 +232,9 @@ NFT_INVENTARIO_MAP = {
 
 # Tabla de ganancias diarias por NFT (para inventario)
 GANANCIAS_DIARIAS_NFTS = {
-    "moguri-nft": 0.1,
-    "gargola-nft": 0.25,
-    "ghost-nft": 0.75,
+    "moguri-nft": 0.01,
+    "gargola-nft": 0.025,
+    "ghost-nft": 0.2,
 }
 
 # Configuración de paquete de bienvenida

@@ -37,9 +37,9 @@ async def mostrar_criatura_carrito(callback: types.CallbackQuery, criatura_key: 
         )
         
         builder = InlineKeyboardBuilder()
-        builder.button(text="➖", callback_data=f"carrito_{criatura_key}_menos_{cantidad}")
+        builder.button(text="-", callback_data=f"carrito_{criatura_key}_menos_{cantidad}")
         builder.button(text=f"{cantidad}", callback_data="noop")
-        builder.button(text="➕", callback_data=f"carrito_{criatura_key}_mas_{cantidad}")
+        builder.button(text="+", callback_data=f"carrito_{criatura_key}_mas_{cantidad}")
         builder.button(text=f"💎 Comprar {cantidad} por {precio_total:.2f} TON", callback_data=f"carrito_{criatura_key}_comprar_{cantidad}")
         builder.button(text="🔙 Volver", callback_data="tienda_criaturas")
         builder.adjust(3, 1, 1)

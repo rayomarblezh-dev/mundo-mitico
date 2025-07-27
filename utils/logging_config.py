@@ -7,7 +7,7 @@ import sys
 from typing import Optional
 
 def setup_logging(
-    level: str = "INFO",
+    level: Optional[str] = None,
     log_file: Optional[str] = None,
     format_string: Optional[str] = None
 ) -> None:
@@ -20,9 +20,14 @@ def setup_logging(
         format_string: Formato personalizado para los logs (opcional)
     """
     
-    # Formato por defecto
+    # Importar configuración
+    from config.config import LOG_LEVEL, LOG_FORMAT
+    
+    # Usar valores por defecto si no se proporcionan
+    if level is None:
+        level = LOG_LEVEL
     if format_string is None:
-        format_string = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        format_string = LOG_FORMAT
     
     # Configurar el nivel de logging
     numeric_level = getattr(logging, level.upper(), logging.INFO)

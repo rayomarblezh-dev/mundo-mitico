@@ -37,9 +37,9 @@ async def nfts_handler(callback: types.CallbackQuery):
         )
         
         builder = InlineKeyboardBuilder()
-        builder.button(text="💀 Moguri-NFT (5.0 TON)", callback_data="nft_moguri")
-        builder.button(text="🦇 Gargola-NFT (10.0 TON)", callback_data="nft_gargola")
-        builder.button(text="👻 Ghost-NFT (25.0 TON)", callback_data="nft_ghost")
+        builder.button(text="💀 Moguri-NFT", callback_data="nft_moguri")
+        builder.button(text="🦇 Gargola-NFT", callback_data="nft_gargola")
+        builder.button(text="👻 Ghost-NFT", callback_data="nft_ghost")
         builder.button(text="🔙 Volver", callback_data="tienda_volver")
         builder.adjust(1)
         keyboard = builder.as_markup()

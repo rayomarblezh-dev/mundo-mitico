@@ -1,36 +1,55 @@
 import os
 from typing import List
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv("config.env")
 
 # =========================
 # CONFIGURACIÓN DE ADMINISTRADORES
 # =========================
-ADMIN_IDS: List[int] = [7828962018]
+ADMIN_IDS: List[int] = [int(x) for x in os.getenv("ADMIN_IDS", "7828962018").split(",")]
 
 def is_admin(user_id: int) -> bool:
     """Verifica si un usuario es administrador"""
     return user_id in ADMIN_IDS
 
 # =========================
+# CONFIGURACIÓN DE CANALES
+# =========================
+# IDs de canales donde el bot debe ser administrador
+CHANNEL_IDS: List[str] = os.getenv("CHANNEL_IDS", "@tzinno_dev").split(",")
+
+# Canales requeridos para suscripción de usuarios
+REQUIRED_CHANNELS: List[dict] = [
+    {
+        "id": "@tzinno_dev",
+        "nombre": "Tzinño", 
+        "url": "https://t.me/tzinno_dev"
+    }
+]
+
+# =========================
 # CONFIGURACIÓN DE TOKENS
 # =========================
-BOT_TOKEN: str = "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8"
+BOT_TOKEN: str = os.getenv("BOT_TOKEN", "7878980636:AAFnvq7emNzPXNqj2eliCE4P7O5bhW4fZX8")
 
 # =========================
 # CONFIGURACIÓN DE BASE DE DATOS
 # =========================
-MONGO_URI: str = "mongodb+srv://rayomarblezh:tatico.10@telegram.yxpl0n0.mongodb.net/?retryWrites=true&w=majority&appName=Telegram&ssl=true&ssl_cert_reqs=CERT_NONE"
-DB_NAME: str = "mundomi"
+MONGO_URI: str = os.getenv("MONGO_URI", "localhost:27017")
+DB_NAME: str = os.getenv("DB_NAME", "mundomi")
 
 # =========================
 # PARÁMETROS DEL SISTEMA
 # =========================
-MIN_DEPOSITO: float = 0.5
-MIN_RETIRO: float = 1.1
-COMISION_RETIRO: float = 0.1
-TIEMPO_PROCESAMIENTO: str = "24-48h"
+MIN_DEPOSITO: float = float(os.getenv("MIN_DEPOSITO", "0.5"))
+MIN_RETIRO: float = float(os.getenv("MIN_RETIRO", "1.1"))
+COMISION_RETIRO: float = float(os.getenv("COMISION_RETIRO", "0.1"))
+TIEMPO_PROCESAMIENTO: str = os.getenv("TIEMPO_PROCESAMIENTO", "24-48h")
 
 # =========================
 # CONFIGURACIÓN DE LOGGING
 # =========================
-LOG_LEVEL: str = "INFO"
-LOG_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+LOG_FORMAT: str = os.getenv("LOG_FORMAT", "%(asctime)s [%(levelname)s] %(name)s: %(message)s")
