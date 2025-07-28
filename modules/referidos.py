@@ -22,21 +22,22 @@ async def referidos_handler(event):
     activos = await contar_referidos_activos(user_id)
 
     mensaje = (
-        "👥 Referidos\n\n"
-        "Invita a tus amigos y obtén recompensas exclusivas por cada uno que se una y participe.\n\n"
-        "Recompensas:\n"
-        "• Por cada 10 invitaciones: 1 Hada\n"
-        "• Por cada referido que invierta: 1 Elfo\n\n"
-        "Tu progreso:\n"
-        f"• Referidos totales: {total}\n"
-        f"• Referidos activos: {activos}\n\n"
-        "¡Sigue invitando para obtener más recompensas!"
+        "<b>👥 REFERIDOS</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Invita a tus amigos y obtén recompensas exclusivas por cada uno que se una y participe.</b>\n\n"
+        "<b>🎁 Recompensas:</b>\n"
+        "  • Por cada 10 invitaciones: <b>1 Hada 🧚‍♀️</b>\n"
+        "  • Por cada referido que invierta: <b>1 Elfo 🧝‍♀️</b>\n\n"
+        "<b>📊 Tu progreso:</b>\n"
+        f"  • Referidos totales: <b>{total}</b>\n"
+        f"  • Referidos activos: <b>{activos}</b>\n\n"
+        "<b>💡 Consejo:</b> ¡Sigue invitando para obtener más recompensas!"
     )
 
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="Compartir Enlace",
+                text="📤 Compartir Enlace",
                 url=f"https://t.me/share/url?url={ref_link}"
             )
         ],
@@ -49,10 +50,8 @@ async def referidos_handler(event):
             await event.message.edit_text(mensaje, parse_mode="HTML", reply_markup=share_keyboard)
         except Exception as e:
             if "message is not modified" in str(e):
-                # El mensaje es el mismo, solo responder al callback
                 pass
             else:
-                # Otro error, intentar enviar nuevo mensaje
                 await event.message.answer(mensaje, parse_mode="HTML", reply_markup=share_keyboard)
         await event.answer()
     else:

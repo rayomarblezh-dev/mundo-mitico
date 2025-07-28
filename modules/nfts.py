@@ -23,17 +23,18 @@ async def nfts_handler(callback: types.CallbackQuery):
         balance = await obtener_balance_usuario(user_id)
         
         mensaje = (
-            "<b>🎨 NFTs\n\n"
-            "Colecciones únicas y limitadas de arte digital con poderes especiales.\n\n"
-            f"Balance: {balance:.3f} TON\n\n"
-            "Características de los NFTs:\n"
-            "• Generan ganancias diarias en TON\n"
-            "• Duración limitada de 30 días\n"
-            "• Rareza única - Solo puedes tener 1 de cada tipo\n\n"
-            "Restricciones:\n"
-            "• Solo 1 NFT común (Moguri o Gárgola)\n"
-            "• Solo 1 NFT Ghost\n\n"
-            "Consejo: Los NFTs son la mejor inversión para generar TON pasivamente.</b>"
+            "<b>🎨 NFTs</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "<b>Colecciones únicas y limitadas de arte digital con poderes especiales.</b>\n\n"
+            f"<b>💰 Balance:</b> <code>{balance:.3f} TON</code>\n\n"
+            "<b>Características de los NFTs:</b>\n"
+            "  • 💸 Generan ganancias diarias en TON\n"
+            "  • ⏳ Duración limitada de 30 días\n"
+            "  • 🦄 Rareza única - Solo puedes tener 1 de cada tipo\n\n"
+            "<b>Restricciones:</b>\n"
+            "  • Solo 1 NFT común (Moguri o Gárgola)\n"
+            "  • Solo 1 NFT Ghost\n\n"
+            "<b>💡 Consejo:</b> Los NFTs son la mejor inversión para generar TON pasivamente."
         )
         
         builder = InlineKeyboardBuilder()
@@ -45,7 +46,6 @@ async def nfts_handler(callback: types.CallbackQuery):
         keyboard = builder.as_markup()
         
         try:
-            # Eliminar mensaje anterior y enviar nuevo
             await callback.message.delete()
             await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
         except Exception:
@@ -53,7 +53,7 @@ async def nfts_handler(callback: types.CallbackQuery):
             
     except Exception as e:
         logger.error(f"Error en nfts_handler para user_id={user_id}: {e}")
-        await callback.answer("❌ Error al cargar NFTs", show_alert=True)
+        await callback.answer("<b>❌ Error al cargar NFTs.</b>", show_alert=True)
     
     await callback.answer()
 
@@ -64,7 +64,7 @@ async def mostrar_nft_detallado(callback: types.CallbackQuery, nft_key: str):
     try:
         nft_config = NFTS_CONFIG.get(nft_key)
         if not nft_config:
-            await callback.answer("❌ NFT no encontrado", show_alert=True)
+            await callback.answer("<b>❌ NFT no encontrado.</b>", show_alert=True)
             return
         
         balance = await obtener_balance_usuario(user_id)
@@ -81,23 +81,24 @@ async def mostrar_nft_detallado(callback: types.CallbackQuery, nft_key: str):
         roi_porcentaje = ((ganancia_total - nft_config["precio"]) / nft_config["precio"]) * 100
         
         mensaje = (
-            f"{nft_config['emoji']} {nft_config['nombre']} ({nft_config['rareza']})\n\n"
-            f"{nft_config['descripcion']}\n\n"
-            f"Información de Inversión:\n"
-            f"• Precio: {nft_config['precio']} TON\n"
-            f"• Ganancia diaria: {nft_config['ganancia_diaria']} TON\n"
-            f"• Duración: {nft_config['duracion']} días\n"
-            f"• Ganancia total: {ganancia_total} TON\n"
-            f"• ROI: {roi_porcentaje:.1f}%\n\n"
-            f"Características:\n"
-            f"• NFT de rareza {nft_config['rareza'].lower()}\n"
-            f"• Generación automática de ganancias\n"
-            f"• Duración de {nft_config['duracion']} días\n\n"
-            f"Tu balance: {balance:.3f} TON"
+            f"<b>{nft_config['emoji']} {nft_config['nombre']} ({nft_config['rareza']})</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"<b>{nft_config['descripcion']}</b>\n\n"
+            f"<b>Información de Inversión:</b>\n"
+            f"  • <b>Precio:</b> {nft_config['precio']} TON\n"
+            f"  • <b>Ganancia diaria:</b> {nft_config['ganancia_diaria']} TON\n"
+            f"  • <b>Duración:</b> {nft_config['duracion']} días\n"
+            f"  • <b>Ganancia total:</b> {ganancia_total} TON\n"
+            f"  • <b>ROI:</b> {roi_porcentaje:.1f}%\n\n"
+            f"<b>Características:</b>\n"
+            f"  • NFT de rareza {nft_config['rareza'].lower()}\n"
+            f"  • Generación automática de ganancias\n"
+            f"  • Duración de {nft_config['duracion']} días\n\n"
+            f"<b>Tu balance:</b> <code>{balance:.3f} TON</code>"
         )
         
         if tiene_nft:
-            mensaje += "\n\n⚠️ Ya tienes un NFT de este tipo"
+            mensaje += "\n\n⚠️ <b>Ya tienes un NFT de este tipo</b>"
             builder = InlineKeyboardBuilder()
             builder.button(text="🔙 Volver", callback_data="tienda_nfts")
             keyboard = builder.as_markup()
@@ -111,7 +112,6 @@ async def mostrar_nft_detallado(callback: types.CallbackQuery, nft_key: str):
         photo = obtener_imagen_nft_para_telegram(nft_key)
         if photo:
             try:
-                # Eliminar mensaje anterior y enviar nuevo con imagen
                 await callback.message.delete()
                 await callback.message.answer_photo(
                     photo, 
@@ -126,7 +126,7 @@ async def mostrar_nft_detallado(callback: types.CallbackQuery, nft_key: str):
             
     except Exception as e:
         logger.error(f"Error en mostrar_nft_detallado para user_id={user_id}, nft={nft_key}: {e}")
-        await callback.answer("❌ Error al mostrar NFT", show_alert=True)
+        await callback.answer("<b>❌ Error al mostrar NFT.</b>", show_alert=True)
     
     await callback.answer()
 
@@ -153,7 +153,7 @@ async def comprar_nft_handler(callback: types.CallbackQuery, nft_key: str):
     try:
         nft_config = NFTS_CONFIG.get(nft_key)
         if not nft_config:
-            await callback.answer("❌ NFT no encontrado", show_alert=True)
+            await callback.answer("<b>❌ NFT no encontrado.</b>", show_alert=True)
             return
         
         # Verificar si ya tiene el NFT
@@ -164,7 +164,7 @@ async def comprar_nft_handler(callback: types.CallbackQuery, nft_key: str):
             tiene_nft = await usuario_tiene_nft_ghost(user_id)
         
         if tiene_nft:
-            await callback.answer("❌ Ya tienes un NFT de este tipo", show_alert=True)
+            await callback.answer("<b>❌ Ya tienes un NFT de este tipo.</b>", show_alert=True)
             return
         
         # Procesar compra
@@ -181,35 +181,35 @@ async def comprar_nft_handler(callback: types.CallbackQuery, nft_key: str):
             roi_porcentaje = ((ganancia_total - nft_config["precio"]) / nft_config["precio"]) * 100
             
             mensaje = (
-                "✅ ¡Compra Exitosa!\n\n"
-                f"🎉 ¡Has adquirido el {nft_config['emoji']} {nft_config['nombre']}!\n\n"
-                f"Información de tu inversión:\n"
-                f"• Precio pagado: {nft_config['precio']} TON\n"
-                f"• Ganancia diaria: {nft_config['ganancia_diaria']} TON\n"
-                f"• Duración: {nft_config['duracion']} días\n"
-                f"• Ganancia total: {ganancia_total} TON\n"
-                f"• ROI: {roi_porcentaje:.1f}%\n\n"
-                f"Tu NFT comenzará a generar ganancias automáticamente desde hoy.\n"
-                f"¡Disfruta de tus ganancias diarias!"
+                "<b>✅ ¡COMPRA EXITOSA!</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"<b>🎉 ¡Has adquirido el {nft_config['emoji']} {nft_config['nombre']}!</b>\n\n"
+                f"<b>Información de tu inversión:</b>\n"
+                f"  • <b>Precio pagado:</b> {nft_config['precio']} TON\n"
+                f"  • <b>Ganancia diaria:</b> {nft_config['ganancia_diaria']} TON\n"
+                f"  • <b>Duración:</b> {nft_config['duracion']} días\n"
+                f"  • <b>Ganancia total:</b> {ganancia_total} TON\n"
+                f"  • <b>ROI:</b> {roi_porcentaje:.1f}%\n\n"
+                f"<b>Tu NFT comenzará a generar ganancias automáticamente desde hoy.</b>\n"
+                f"<b>¡Disfruta de tus ganancias diarias!</b>"
             )
         else:
             mensaje = (
-                "❌ Error en la Compra\n\n"
-                f"{resultado.get('msg', 'Ha ocurrido un error inesperado.')}\n\n"
-                "Posibles causas:\n"
-                "• Balance insuficiente\n"
-                "• Ya tienes un NFT de este tipo\n"
-                "• Error en el sistema"
+                "<b>❌ Error en la Compra</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"<b>{resultado.get('msg', 'Ha ocurrido un error inesperado.')}</b>\n\n"
+                "<b>Posibles causas:</b>\n"
+                "  • Balance insuficiente\n"
+                "  • Ya tienes un NFT de este tipo\n"
+                "  • Error en el sistema"
             )
         
-        # Botones para volver
         volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 Volver", callback_data="tienda_nfts")],
             [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
         ])
         
         try:
-            # Eliminar mensaje anterior y enviar nuevo
             await callback.message.delete()
             await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
         except Exception:
@@ -217,7 +217,7 @@ async def comprar_nft_handler(callback: types.CallbackQuery, nft_key: str):
             
     except Exception as e:
         logger.error(f"Error en comprar_nft_handler para user_id={user_id}, nft={nft_key}: {e}")
-        await callback.answer("❌ Error al procesar la compra", show_alert=True)
+        await callback.answer("<b>❌ Error al procesar la compra.</b>", show_alert=True)
     
     await callback.answer()
 

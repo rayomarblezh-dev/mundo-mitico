@@ -17,22 +17,23 @@ async def mostrar_criatura_carrito(callback: types.CallbackQuery, criatura_key: 
     try:
         criatura = CRIATURAS.get(criatura_key)
         if not criatura:
-            await callback.answer("<b>❌ Criatura no encontrada</b>", show_alert=True)
+            await callback.answer("<b>❌ Criatura no encontrada.</b>", show_alert=True)
             return
         
         balance = await obtener_balance_usuario(user_id)
         precio_total = criatura["precio"] * cantidad
         
         mensaje = (
-            f"<b>{criatura['emoji']} {criatura['nombre']}</b>\n\n"
+            f"<b>{criatura['emoji']} {criatura['nombre']}</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
             f"<b>{criatura['desc']}</b>\n\n"
             f"<b>Información:</b>\n"
-            f"<b>• Categoría:</b> {criatura['categoria']}\n"
-            f"<b>• Uso:</b> {criatura['uso']}\n"
-            f"<b>• Precio unitario:</b> {criatura['precio']:.2f} TON\n"
-            f"<b>• Cantidad:</b> {cantidad}\n"
-            f"<b>• Total:</b> {precio_total:.2f} TON\n\n"
-            f"<b>Tu balance:</b> {balance:.3f} TON\n\n"
+            f"  • <b>Categoría:</b> {criatura['categoria']}\n"
+            f"  • <b>Uso:</b> {criatura['uso']}\n"
+            f"  • <b>Precio unitario:</b> {criatura['precio']:.2f} TON\n"
+            f"  • <b>Cantidad:</b> {cantidad}\n"
+            f"  • <b>Total:</b> {precio_total:.2f} TON\n\n"
+            f"<b>💰 Tu balance:</b> <code>{balance:.3f} TON</code>\n\n"
             "<b>Ajusta la cantidad y confirma tu compra.</b>"
         )
         
@@ -52,7 +53,7 @@ async def mostrar_criatura_carrito(callback: types.CallbackQuery, criatura_key: 
             
     except Exception as e:
         logger.error(f"Error en mostrar_criatura_carrito para user_id={user_id}, criatura={criatura_key}: {e}")
-        await callback.answer("<b>❌ Error al mostrar criatura</b>", show_alert=True)
+        await callback.answer("<b>❌ Error al mostrar criatura.</b>", show_alert=True)
     
     await callback.answer()
 
@@ -87,7 +88,7 @@ async def carrito_cantidad_handler(callback: types.CallbackQuery):
         criatura_key, accion, cantidad_actual = get_carrito_callback_data(callback.data)
         
         if not criatura_key or not accion:
-            await callback.answer("<b>❌ Datos inválidos</b>", show_alert=True)
+            await callback.answer("<b>❌ Datos inválidos.</b>", show_alert=True)
             return
         
         if accion == "mas":
@@ -95,14 +96,14 @@ async def carrito_cantidad_handler(callback: types.CallbackQuery):
         elif accion == "menos":
             nueva_cantidad = max(1, cantidad_actual - 1)
         else:
-            await callback.answer("<b>❌ Acción no válida</b>", show_alert=True)
+            await callback.answer("<b>❌ Acción no válida.</b>", show_alert=True)
             return
         
         await mostrar_criatura_carrito(callback, criatura_key, nueva_cantidad)
         
     except Exception as e:
         logger.error(f"Error en carrito_cantidad_handler para user_id={user_id}: {e}")
-        await callback.answer("<b>❌ Error al ajustar cantidad</b>", show_alert=True)
+        await callback.answer("<b>❌ Error al ajustar cantidad.</b>", show_alert=True)
 
 def get_item_criatura(criatura_key):
     """Obtiene la configuración de item para una criatura"""
@@ -124,18 +125,18 @@ async def carrito_comprar_handler(callback: types.CallbackQuery):
         criatura_key, accion, cantidad = get_carrito_callback_data(callback.data)
         
         if not criatura_key or accion != "comprar":
-            await callback.answer("<b>❌ Datos inválidos</b>", show_alert=True)
+            await callback.answer("<b>❌ Datos inválidos.</b>", show_alert=True)
             return
         
         criatura = CRIATURAS.get(criatura_key)
         if not criatura:
-            await callback.answer("<b>❌ Criatura no encontrada</b>", show_alert=True)
+            await callback.answer("<b>❌ Criatura no encontrada.</b>", show_alert=True)
             return
         
         # Procesar compra
         item = get_item_criatura(criatura_key)
         if not item:
-            await callback.answer("<b>❌ Error en configuración de criatura</b>", show_alert=True)
+            await callback.answer("<b>❌ Error en configuración de criatura.</b>", show_alert=True)
             return
         
         # Ajustar precio por cantidad
@@ -145,28 +146,29 @@ async def carrito_comprar_handler(callback: types.CallbackQuery):
         
         if resultado.get("ok"):
             mensaje = (
-                f"<b>✅ ¡Compra Exitosa!</b>\n\n"
+                f"<b>✅ ¡COMPRA EXITOSA!</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"<b>🎉 ¡Has adquirido {cantidad} {criatura['emoji']} {criatura['nombre']}!</b>\n\n"
                 f"<b>💰 Información de la compra:</b>\n"
-                f"<b>• Cantidad:</b> {cantidad}\n"
-                f"<b>• Precio unitario:</b> {criatura['precio']:.2f} TON\n"
-                f"<b>• Total pagado:</b> {item['precio']:.2f} TON\n"
-                f"<b>• Categoría:</b> {criatura['categoria']}\n"
-                f"<b>• Uso:</b> {criatura['uso']}\n\n"
+                f"  • <b>Cantidad:</b> {cantidad}\n"
+                f"  • <b>Precio unitario:</b> {criatura['precio']:.2f} TON\n"
+                f"  • <b>Total pagado:</b> {item['precio']:.2f} TON\n"
+                f"  • <b>Categoría:</b> {criatura['categoria']}\n"
+                f"  • <b>Uso:</b> {criatura['uso']}\n\n"
                 f"<b>Todas las criaturas han sido añadidas a tu inventario.</b>\n"
                 f"<b>¡Ahora puedes usarlas en las actividades de Explorar!</b>"
             )
         else:
             mensaje = (
-                f"<b>❌ Error en la Compra</b>\n\n"
+                f"<b>❌ Error en la Compra</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"<b>{resultado.get('msg', 'Ha ocurrido un error inesperado.')}</b>\n\n"
                 f"<b>💡 Posibles causas:</b>\n"
-                f"<b>• Balance insuficiente</b>\n"
-                f"<b>• Error en el sistema</b>\n"
-                f"<b>• Cantidad inválida</b>"
+                f"  • Balance insuficiente\n"
+                f"  • Error en el sistema\n"
+                f"  • Cantidad inválida"
             )
         
-        # Botones para volver
         volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 Volver", callback_data="tienda_criaturas")],
             [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
@@ -179,7 +181,7 @@ async def carrito_comprar_handler(callback: types.CallbackQuery):
             
     except Exception as e:
         logger.error(f"Error en carrito_comprar_handler para user_id={user_id}: {e}")
-        await callback.answer("<b>❌ Error al procesar la compra</b>", show_alert=True)
+        await callback.answer("<b>❌ Error al procesar la compra.</b>", show_alert=True)
     
     await callback.answer()
 
