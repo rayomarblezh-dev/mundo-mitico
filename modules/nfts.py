@@ -23,7 +23,7 @@ async def nfts_handler(callback: types.CallbackQuery):
         balance = await obtener_balance_usuario(user_id)
         
         mensaje = (
-            "🎨 NFTs\n\n"
+            "<b>🎨 NFTs\n\n"
             "Colecciones únicas y limitadas de arte digital con poderes especiales.\n\n"
             f"Balance: {balance:.3f} TON\n\n"
             "Características de los NFTs:\n"
@@ -33,7 +33,7 @@ async def nfts_handler(callback: types.CallbackQuery):
             "Restricciones:\n"
             "• Solo 1 NFT común (Moguri o Gárgola)\n"
             "• Solo 1 NFT Ghost\n\n"
-            "Consejo: Los NFTs son la mejor inversión para generar TON pasivamente."
+            "Consejo: Los NFTs son la mejor inversión para generar TON pasivamente.</b>"
         )
         
         builder = InlineKeyboardBuilder()
@@ -41,7 +41,7 @@ async def nfts_handler(callback: types.CallbackQuery):
         builder.button(text="🦇 Gargola-NFT", callback_data="nft_gargola")
         builder.button(text="👻 Ghost-NFT", callback_data="nft_ghost")
         builder.button(text="🔙 Volver", callback_data="tienda_volver")
-        builder.adjust(1)
+        builder.adjust(2, 1, 1)
         keyboard = builder.as_markup()
         
         try:

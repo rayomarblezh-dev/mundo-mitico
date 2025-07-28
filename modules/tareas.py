@@ -4,7 +4,7 @@ import logging
 import unicodedata
 from typing import Dict, List, Optional, Tuple
 from aiogram import types, Bot, BaseMiddleware
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from utils.database import usuarios_col
 
@@ -36,7 +36,7 @@ def contiene_mundo_mitico(nombre: str) -> bool:
 def crear_teclado_tareas() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="🔄 Actualizar", callback_data="actualizar_tareas")
-    builder.button(text="🔙 Volver", callback_data="start_volver")
+    builder.button(text="🔙 Volver", callback_data="perfil")
     builder.adjust(1, 1)
     return builder.as_markup()
 

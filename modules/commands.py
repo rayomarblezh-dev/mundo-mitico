@@ -21,7 +21,7 @@ from utils.database import (
 from modules.constants import PAQUETE_PRECIO
 
 # Handlers principales
-from modules.start import start_handler
+from modules.start import start_handler, verificar_suscripcion_handler, perfil_handler
 from modules.referidos import referidos_handler
 from modules.tareas import tareas_handler, register_tareas_handlers
 
@@ -115,7 +115,7 @@ def register_commands(dp: Dispatcher):
     dp.message.register(start_handler, lambda m: m.text == "/start")
     dp.callback_query.register(start_handler, lambda c: c.data == "start_volver")
     # VERIFICACIÓN DE CANALES COMENTADA - NO ES OBLIGATORIA
-    # dp.callback_query.register(verificar_suscripcion_handler, lambda c: c.data == "verificar_suscripcion")
+    dp.callback_query.register(verificar_suscripcion_handler, lambda c: c.data == "verificar_suscripcion")
     
     dp.message.register(wallet_handler, lambda m: m.text == "/wallet")
     dp.callback_query.register(wallet_handler, lambda c: c.data == "wallet")
@@ -135,6 +135,10 @@ def register_commands(dp: Dispatcher):
     
     dp.message.register(referidos_handler, lambda m: m.text == "/referidos")
     dp.callback_query.register(referidos_handler, lambda c: c.data == "referidos")
+    
+    # Handler de perfil
+    dp.message.register(perfil_handler, lambda m: m.text == "/perfil")
+    dp.callback_query.register(perfil_handler, lambda c: c.data == "perfil")
     
     # Comando para calcular ganancias manualmente
     dp.message.register(ganancias_handler, lambda m: m.text == "/ganancias")

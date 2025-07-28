@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def formatear_inventario(inventario: dict) -> tuple[str, float]:
     """Genera el texto del inventario y calcula la ganancia total usando configuración centralizada."""
-    texto = "<b>🧳 Tu Inventario</b>\n\n"
+    texto = "<b>🧳 Inventario</b>\n\n"
     total_ganancia = 0.0
     items_con_ganancia = []
     items_sin_ganancia = []
@@ -61,12 +61,10 @@ async def mostrar_inventario_usuario(event, user_id: int):
     try:
         # Obtener inventario y balance
         inventario = await obtener_inventario_usuario(user_id)
-        balance = await obtener_balance_usuario(user_id)
         
         # Crear mensaje principal
         mensaje = (
-            "🧳 Inventario\n\n"
-            f"Balance actual: {balance:.3f} TON\n\n"
+            "<b>🧳 Inventario</b>\n\n"
         )
         
         if not inventario or all(cantidad == 0 for cantidad in inventario.values()):
@@ -84,7 +82,7 @@ async def mostrar_inventario_usuario(event, user_id: int):
         
         # Crear teclado con botón de volver
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Volver", callback_data="start_volver")
+        builder.button(text="🔙 Volver", callback_data="perfil")
         keyboard = builder.as_markup()
         
         # Enviar mensaje según el tipo de evento

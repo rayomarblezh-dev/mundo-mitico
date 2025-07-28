@@ -67,8 +67,9 @@ async def explorar_handler(event):
     builder.button(text="⚔️ Pelea", callback_data="explorar_pelea")
     builder.button(text="🗺️ Expedición", callback_data="explorar_expedicion")
     builder.button(text="🏹 Capturar", callback_data="explorar_capturar")
-    builder.button(text="⏰ Ver Cooldowns", callback_data="explorar_cooldowns")
-    builder.adjust(2)
+    builder.button(text="⏰ Cooldowns", callback_data="explorar_cooldowns")
+    builder.button(text="🔙 Volver", callback_data="start_volver")
+    builder.adjust(1, 2, 1, 1, 1)
     
     keyboard = builder.as_markup()
     
@@ -154,7 +155,7 @@ async def caja_sorpresa_handler(callback: types.CallbackQuery):
     usuario = await usuarios_col.find_one({"user_id": user_id})
     balance = float(usuario.get("balance", 0)) if usuario else 0.0
     if not usuario or balance < 0.05:
-        await callback.answer("❌ No tienes suficiente TON (necesitas 0.05 TON)", show_alert=True)
+        await callback.answer("❌ Necesitas: 0.05 TON", show_alert=True)
         return
     
     # Descontar TON
@@ -183,7 +184,8 @@ async def caja_sorpresa_handler(callback: types.CallbackQuery):
     
     # Botón para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")],
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
@@ -206,7 +208,7 @@ async def pelea_handler(callback: types.CallbackQuery):
     
     if licantropos < 3:
         await callback.answer(
-            f"❌ Necesitas 3 Licántropos para pelear. Tienes: {licantropos}", 
+            f"❌ Necesitas 3 Licántropos\n🧳 Tienes: {licantropos}", 
             show_alert=True
         )
         return
@@ -243,7 +245,8 @@ async def pelea_handler(callback: types.CallbackQuery):
     
     # Botón para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")],
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
@@ -268,8 +271,8 @@ async def expedicion_handler(callback: types.CallbackQuery):
     
     if elfos < 1 or genios < 1 or orcos < 1:
         await callback.answer(
-            f"❌ Necesitas 1 Elfo, 1 Genio y 1 Orco para la expedición.\n"
-            f"Tienes: {elfos} Elfos, {genios} Genios, {orcos} Orcos", 
+            f"❌ Necesitas: 1 Elfo, 1 Genio y 1 Orco\n"
+            f"🧳 Tienes: {elfos} Elfos, {genios} Genios, {orcos} Orcos", 
             show_alert=True
         )
         return
@@ -309,7 +312,8 @@ async def expedicion_handler(callback: types.CallbackQuery):
     
     # Botón para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")],
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
@@ -333,8 +337,8 @@ async def capturar_handler(callback: types.CallbackQuery):
     
     if licantropos < 1 or orcos < 2:
         await callback.answer(
-            f"❌ Necesitas 1 Licántropo y 2 Orcos para capturar.\n"
-            f"Tienes: {licantropos} Licántropos, {orcos} Orcos", 
+            f"❌ Necesitas: 1 Licántropo y 2 Orcos\n"
+            f"🧳 Tienes: {licantropos} Licántropos, {orcos} Orcos", 
             show_alert=True
         )
         return
@@ -371,7 +375,8 @@ async def capturar_handler(callback: types.CallbackQuery):
     
     # Botón para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")],
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
@@ -420,7 +425,8 @@ async def mostrar_cooldowns_handler(callback: types.CallbackQuery):
     
     # Botón para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="explorar")],
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:

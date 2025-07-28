@@ -34,7 +34,8 @@ async def tienda_handler(event):
         builder.button(text="🐾 Criaturas", callback_data="tienda_criaturas")
         builder.button(text="🎨 NFTs", callback_data="tienda_nfts")
         builder.button(text="🔥 Promociones", callback_data="tienda_promos")
-        builder.adjust(2)
+        builder.button(text="🔙 Volver", callback_data="start_volver")
+        builder.adjust(2, 1, 1)
         keyboard = builder.as_markup()
         
         # Enviar mensaje según el tipo de evento
@@ -86,6 +87,7 @@ async def tienda_criaturas_handler(callback: types.CallbackQuery):
             builder.button(text=f"{emoji} {nombre}", callback_data=f"criatura_{criatura_key}")
         
         builder.button(text="🔙 Volver", callback_data="tienda_volver")
+        builder.button(text="🏠 Menú Principal", callback_data="start_volver")
         builder.adjust(2)
         keyboard = builder.as_markup()
         
@@ -128,7 +130,7 @@ async def tienda_volver_handler(callback: types.CallbackQuery):
         builder.button(text="🎨 NFTs", callback_data="tienda_nfts")
         builder.button(text="🔥 Promociones", callback_data="tienda_promos")
         builder.button(text="🔙 Volver", callback_data="start_volver")
-        builder.adjust(2)
+        builder.adjust(2, 1, 1)
         keyboard = builder.as_markup()
         
         try:
@@ -182,6 +184,7 @@ async def tienda_promos_handler(callback: types.CallbackQuery):
             )
         
         builder.button(text="🔙 Volver", callback_data="tienda_volver")
+        builder.button(text="🏠 Menú Principal", callback_data="start_volver")
         builder.adjust(1)
         keyboard = builder.as_markup()
         

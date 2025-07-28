@@ -67,7 +67,7 @@ async def wallet_handler(event):
     builder = InlineKeyboardBuilder()
     builder.button(text="📥 Depositar", callback_data="wallet_depositar")
     builder.button(text="📤 Retirar", callback_data="wallet_retirar")
-    builder.button(text="🔙 Volver", callback_data="start_volver")
+    builder.button(text="🔙 Volver", callback_data="perfil")
     builder.adjust(2)
     keyboard = builder.as_markup()
     
@@ -102,9 +102,8 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
     builder.button(text="USDT TON", callback_data="depositar_usdt_ton")
     builder.button(text="USDT TRC20", callback_data="depositar_usdt_trc20")
     builder.button(text="TON", callback_data="depositar_ton")
-    builder.button(text="🔙 Volver", callback_data="wallet")
-    builder.button(text="🏠 Menú Principal", callback_data="start_volver")
-    builder.adjust(2, 1, 1, 1)
+    builder.button(text="🔙 Volver", callback_data="perfil")
+    builder.adjust(2, 1, 1)
     keyboard = builder.as_markup()
     
     try:
@@ -246,7 +245,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     # Botones para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
     ])
     
     try:
@@ -413,7 +412,7 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     # Botones para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
     ])
     
     try:
@@ -604,7 +603,7 @@ async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FS
     # Botones para volver
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
     ])
     
     await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)

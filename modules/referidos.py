@@ -36,11 +36,11 @@ async def referidos_handler(event):
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="Compartir",
+                text="Compartir Enlace",
                 url=f"https://t.me/share/url?url={ref_link}"
             )
         ],
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="start_volver")]
+        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
     ])
 
     # Enviar mensaje según el tipo de evento
