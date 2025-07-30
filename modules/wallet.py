@@ -407,7 +407,7 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
