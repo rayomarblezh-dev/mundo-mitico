@@ -246,7 +246,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     try:
@@ -591,7 +591,7 @@ async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FS
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
+        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
     ])
     
     await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
