@@ -58,7 +58,7 @@ async def wallet_handler(event):
     balance_ton = await obtener_balance_usuario(user_id)
     
     mensaje = (
-        "<b>Wallet</b>\n\n"
+        "<b>👛 Wallet</b>\n\n"
         f"Balance: {balance_ton:.3f} TON\n\n"
         "<b>Manage your funds in Mundo Mágico.</b>\n\n"
         "<b>Select an option to continue:</b>"

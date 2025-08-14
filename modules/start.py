@@ -212,9 +212,10 @@ async def perfil_handler(event):
     
     # Crear mensaje del perfil
     perfil_text = (
-        f"Profile\n\n"
+        f"👤 Profile\n\n"
         f"<b>User id:</b> <code>{user_id}</code>\n"
         f"<b>Name:</b> {nombre_completo}\n"
+        f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
     )
     
     # Crear teclado con opciones del perfil

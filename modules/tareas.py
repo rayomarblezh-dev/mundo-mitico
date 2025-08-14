@@ -124,7 +124,7 @@ async def generar_mensaje_tareas(user_id: int, usuario: Dict) -> str:
 
     return mensaje
 
-async def generar_info_tarea_ref_bio(tareas: Dict) -> str:
+async def generar_info_tarea_ref_bio(tareas: Dict, usuario: Dict) -> str:
     """Genera información de la tarea de enlace de referido en bio"""
     tarea_ref = tareas.get("ref_bio", {})
 
@@ -145,14 +145,15 @@ async def generar_info_tarea_ref_bio(tareas: Dict) -> str:
     else:
         texto = (
             "<b>1️⃣ Referral Link</b>\n"
-            f"Bio: {tarea_ref.get('bio', 'No bio found')}\n"
+            f"Bio: {usuario.get('bio', 'No bio found')}\n"
+            f"Name: {usuario.get('first_name', 'No name found')}\n"
             "Status: Not started\n"
             "Rewards: 1 Fairy (3 days) / 3 Fairies (7 days)\n\n"
         )
 
     return texto
 
-async def generar_info_tarea_mundo_nombre(tareas: Dict) -> str:
+async def generar_info_tarea_mundo_nombre(tareas: Dict, usuario: Dict) -> str:
     """Genera información de la tarea de 'Mundo Mitico' en nombre"""
     tarea_nombre = tareas.get("mundo_nombre", {})
 
@@ -169,7 +170,8 @@ async def generar_info_tarea_mundo_nombre(tareas: Dict) -> str:
     else:
         texto = (
             "<b>2️⃣ 'Mundo Mitico' in Name</b>\n"
-            f"Name: {tarea_nombre.get('name', 'No name found')}\n"
+            f"Name: {usuario.get('first_name', 'No name found')}\n"
+            f"Bio: {usuario.get('bio', 'No bio found')}\n"
             "Status: Not started\n"
             "Rewards: 5 Fairies (10 days)\n\n"
         )
