@@ -59,7 +59,7 @@ async def wallet_handler(event):
     
     mensaje = (
         "<b>👛 Wallet</b>\n\n"
-        f"Balance: <code>{balance_ton:.3f} TON</code>\n\n"
+        f"Balance: {balance_ton:.3f} TON\n\n"
         "<b>Gestiona tus fondos en Mundo Mítico.</b>\n\n"
         "<b>Selecciona una opción para continuar:</b>"
     )
@@ -148,7 +148,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     
     callback_data = callback.data
     if callback_data not in network_map:
-        await callback.answer("<b>❌ Red no válida.</b>", show_alert=True)
+        await callback.answer("❌ Red no válida.", show_alert=True)
         return
 
     network_name, network_key = network_map[callback_data]
@@ -158,11 +158,10 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     precio_ton, precio_usdt = await obtener_precios()
     
     if precio_ton is None or precio_usdt is None:
-        await callback.message.answer(
-            "<b>❌ No se pudieron obtener los precios actuales.</b>\nIntenta de nuevo más tarde.",
-            parse_mode="HTML"
+        await callback.answer(
+            "❌ No se pudieron obtener los precios actuales. Intenta de nuevo más tarde.",
+            show_alert=True
         )
-        await callback.answer()
         return
 
     # Calcular mínimo equivalente
@@ -209,26 +208,28 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
     min_retiro = 1.1
 
     if balance_ton == 0:
-        mensaje = (
-            "<b>❌ Retiro no disponible</b>"
+        await callback.answer(
+            "<b>❌ Retiro no disponible</b>", show_alert=True
         )
+        return
     elif balance_ton < min_retiro:
-        mensaje = (
-            "<b>❌ Retiro no disponible</b>"
+        await callback.answer(
+            "<b>❌ Retiro no disponible</b>", show_alert=True
         )
-    else:
-        mensaje = (
-            "<b>Retirar/b>\n\n"
-            "<b>Paso 1 de 2</b>\n\n"
-            f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
-            f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
-            "<b>Instrucciones:</b>\n"
-            "1. Envía tu dirección de wallet TON.\n"
-            "2. Ingresa la cantidad a retirar.\n\n"
-            "Puedes cancelar el proceso en cualquier momento."
-        )
-        await state.update_data(balance=balance_ton, min_retiro=min_retiro)
-        await state.set_state(WalletStates.esperando_wallet)
+        return
+
+    mensaje = (
+        "<b>Retirar</b>\n\n"
+        "<b>Paso 1 de 2</b>\n\n"
+        f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
+        f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
+        "<b>Instrucciones:</b>\n"
+        "1. Envía tu dirección de wallet TON.\n"
+        "2. Ingresa la cantidad a retirar.\n\n"
+        "Puedes cancelar el proceso en cualquier momento."
+    )
+    await state.update_data(balance=balance_ton, min_retiro=min_retiro)
+    await state.set_state(WalletStates.esperando_wallet)
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="« Back to Wallet", callback_data="wallet")],
@@ -435,9 +436,9 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
     await state.set_state(WalletStates.esperando_hash_deposito)
     
     resumen = (
-        "<b>Depósito</b>\n"
+        "<b>Depósito</b>\+3n"
         f"<b>Red:</b> {network_name}\n"
-        f"<b>Dirección:</b> <code>{address}</code>\n"
+        f"<b>Dirección:</b>\n <blockquote><code>{address}</code></blockquote>\n"
         f"<b>Cantidad:</b> <code>{cantidad:.3f} {network_name.split()[-1]}</code>\n"
         f"<b>Equivalente:</b> <code>{equivalente_ton:.3f} TON</code>\n\n"
         "Ahora responde a este mensaje con el hash de tu transacción.\n\n"
@@ -527,13 +528,8 @@ def register_wallet_handlers(dp):
     """Registra todos los handlers del módulo wallet"""
     dp.callback_query.register(wallet_depositar_handler, lambda c: c.data == "wallet_depositar")
     dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
-    dp.callback_query.register(handle_deposit_network, lambda c: c.data.startswith("depositar_"))
 
     dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
-    
-    # Register wallet back and menu handlers
-    dp.callback_query.register(wallet_back_handler, lambda c: c.data == "wallet_volver")
-    dp.callback_query.register(wallet_back_to_menu, lambda c: c.data == "start_volver")
     
     # Register state handlers
     dp.message.register(procesar_wallet_ton, WalletStates.esperando_wallet)
