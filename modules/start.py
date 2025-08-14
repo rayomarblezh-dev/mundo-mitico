@@ -217,9 +217,6 @@ async def perfil_handler(event):
         f"<b>Name:</b> {nombre_completo}\n"
     )
     
-    if username:
-        perfil_text += f"<b>User:</b> @{username}\n"
-    
     # Crear teclado con opciones del perfil
     builder = InlineKeyboardBuilder()
     builder.button(text="Inventory", callback_data="inventario")
