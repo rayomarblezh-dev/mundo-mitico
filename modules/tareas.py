@@ -117,8 +117,8 @@ async def generar_mensaje_tareas(user_id: int, usuario: Dict) -> str:
         "Complete these tasks to earn rewards:\n\n"
     )
 
-    mensaje += await generar_info_tarea_ref_bio(tareas)
-    mensaje += await generar_info_tarea_mundo_nombre(tareas)
+    mensaje += await generar_info_tarea_ref_bio(tareas, usuario)
+    mensaje += await generar_info_tarea_mundo_nombre(tareas, usuario)
 
     mensaje += "💡 Press 'Update' to check your progress."
 
