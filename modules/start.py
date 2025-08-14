@@ -56,7 +56,7 @@ def crear_teclado_verificacion_canales(canales_faltantes: list) -> InlineKeyboar
     for canal in canales_faltantes:
         builder.button(text=f"Unirse a {canal['nombre']}", url=canal['url'])
     
-    builder.button(text="✅ Verificar union", callback_data="verificar_suscripcion")
+    builder.button(text="✅ Verify" , callback_data="verificar_suscripcion")
     builder.adjust(1)
     
     return builder.as_markup()
@@ -137,15 +137,10 @@ async def start_handler(event):
                 print(f"Error al procesar referido: {e}")
 
     welcome_text = (
-        "🌍 <b>¡Bienvenido a Mundo Mítico!\n\n"
-        "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas. En este mundo de aventuras, podrás:\n"
-        "<blockquote expandable>— Cazar Criaturas - Encuentra y captura bestias míticas\n"
-        "— Expediciones - Explora territorios desconocidos\n"
-        "— Combates Épicos - Enfréntate a desafíos legendarios\n"
-        "— Invertir TON - Gestiona tu economía en el mundo mítico\n"
-        "— Generar Ganancias - Atrapa criaturas y compra héroes que producen diariamente</blockquote>\n"
-        "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.\n\n"
-        "Accesos rápidos:</b>"
+        "👋 <b>¡Bienvenido a Mundo Mítico!\n\n"
+        "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas.\n"
+        "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
+        "<i>Owner: @wolfpromot</i>\n"
     )
 
     # Crear teclado inline con todos los botones (incluyendo Tareas)
@@ -153,7 +148,7 @@ async def start_handler(event):
     builder.button(text="🌍 Explorar", callback_data="explorar")
     builder.button(text="🛍 Tienda", callback_data="tienda")
     builder.button(text="👤 Perfil", callback_data="perfil")
-    builder.button(text="📮 Soporte", url="http://t.me/wolfpromot")
+    builder.button(text="📮 Canal", url="http://t.me/MundoMitico")
     builder.adjust(1, 2, 1, 1)
     keyboard = builder.as_markup()
 
@@ -183,7 +178,7 @@ async def verificar_suscripcion_handler(callback: types.CallbackQuery):
         
         if esta_suscrito:
             # Usuario está suscrito, ir directamente al menú
-            await callback.answer("✅ ¡Bienvenido a Mundo Mítico!", show_alert=True)
+            await callback.answer("🆕 ¡Bienvenido a Mundo Mítico!", show_alert=True)
             
             # Llamar al start_handler para mostrar el menú principal
             await start_handler(callback)
@@ -217,13 +212,13 @@ async def perfil_handler(event):
     
     # Crear mensaje del perfil
     perfil_text = (
-        f"👤 <b>Perfil de Usuario en Mundo Mitico</b>\n\n"
-        f"🆔 <b>ID:</b> <code>{user_id}</code>\n"
-        f"📝 <b>Nombre:</b> {nombre_completo}\n"
+        f"👤 <b>Perfil</b>\n\n"
+        f"<b>User id:</b> <code>{user_id}</code>\n"
+        f"<b>Name:</b> {nombre_completo}\n"
     )
     
     if username:
-        perfil_text += f"🔗 <b>Username:</b> @{username}\n"
+        perfil_text += f"<b>User:</b> @{username}\n"
     
     perfil_text += "\n💡 <i>Tu información de perfil en Mundo Mítico</i>"
     
@@ -233,7 +228,7 @@ async def perfil_handler(event):
     builder.button(text="👛 Wallet", callback_data="wallet")
     builder.button(text="👥 Referidos", callback_data="referidos")
     builder.button(text="📋 Tareas", callback_data="tareas")
-    builder.button(text="🔙 Volver", callback_data="start_volver")
+    builder.button(text="« Back", callback_data="start_volver")
     builder.adjust(2, 2, 1)
     keyboard = builder.as_markup()
     
