@@ -209,12 +209,12 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
 
     if balance_ton == 0:
         await callback.answer(
-            "<b>❌ Withdrawal not available</b>", show_alert=True
+            "❌ Withdrawal not available", show_alert=True
         )
         return
     elif balance_ton < min_retiro:
         await callback.answer(
-            "<b>❌ Withdrawal not available</b>", show_alert=True
+            "❌ Withdrawal not available", show_alert=True
         )
         return
 
