@@ -504,8 +504,6 @@ def register_wallet_handlers(dp):
     dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
 
     # Register state handlers
-    dp.message.register(procesar_wallet_ton, WalletStates.esperando_wallet)
-    dp.message.register(procesar_cantidad_retiro, WalletStates.esperando_cantidad)
     dp.message.register(procesar_cantidad_deposito, WalletStates.esperando_cantidad_deposito)
     dp.message.register(procesar_hash_deposito, WalletStates.esperando_hash_deposito)
     

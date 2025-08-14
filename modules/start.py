@@ -96,13 +96,13 @@ async def start_handler(event):
          esta_suscrito, canales_faltantes = await verificar_suscripcion_canales(event.bot, user_id)
          
          if not esta_suscrito:
-             mensaje_verificacion = (
-                 "<b>Debes unirte a todos nuestros canales.\n\n"
-                 "Una vez te hayas unido, haz clic en 'Verificar union' para continuar.</b>\n\n"
+             verification_message = (
+                 "<b>You must join all our channels.\n\n"
+                 "Once you've joined, click 'Verify join' to continue.</b>\n\n"
              )
              keyboard = crear_teclado_verificacion_canales(canales_faltantes)
              
-             await event.answer(mensaje_verificacion, parse_mode="HTML", reply_markup=keyboard)
+             await event.answer(verification_message, parse_mode="HTML", reply_markup=keyboard)
              return
     
     # Usuario existe - ir directamente al menú (sin verificación de canales)
@@ -120,8 +120,8 @@ async def start_handler(event):
                 if referidor_id != user_id:
                     # Obtener nombres para las notificaciones
                     referidor = await obtener_usuario_por_username(username) or await usuarios_col.find_one({"user_id": referidor_id})
-                    referidor_name = referidor.get("first_name", "Usuario") if referidor else "Usuario"
-                    referido_name = first_name or username or "Usuario"
+                    referidor_name = referidor.get("first_name", "User") if referidor else "User"
+                    referido_name = first_name or username or "User"
                     
                     # Procesar referido con notificaciones
                     await procesar_nuevo_referido(
@@ -137,18 +137,18 @@ async def start_handler(event):
                 print(f"Error al procesar referido: {e}")
 
     welcome_text = (
-        "👋 <b>¡Bienvenido a Mundo Mítico!\n\n"
-        "Sumérgete en un universo épico donde las criaturas legendarias aguardan ser descubiertas.\n"
-        "¡Tu aventura comienza ahora! Elige tu camino y forja tu leyenda en este mundo.</b>\n\n"
+        "👋 <b>Welcome to Mystic World!\n\n"
+        "Immerse yourself in an epic universe where legendary creatures await discovery.\n"
+        "Your adventure begins now! Choose your path and forge your legend in this world.</b>\n\n"
         "<i>Owner: @wolfpromot</i>\n"
     )
 
     # Crear teclado inline con todos los botones (incluyendo Tareas)
     builder = InlineKeyboardBuilder()
-    builder.button(text="🌍 Explorar", callback_data="explorar")
-    builder.button(text="🛍 Tienda", callback_data="tienda")
-    builder.button(text="👤 Perfil", callback_data="perfil")
-    builder.button(text="📮 Canal", url="http://t.me/MundoMitico")
+    builder.button(text="🌍 Explore", callback_data="explorar")
+    builder.button(text="🛍 Store", callback_data="tienda")
+    builder.button(text="👤 Profile", callback_data="perfil")
+    builder.button(text="📮 Channel", url="http://t.me/MundoMitico")
     builder.adjust(1, 2, 1, 1)
     keyboard = builder.as_markup()
 
@@ -178,18 +178,18 @@ async def verificar_suscripcion_handler(callback: types.CallbackQuery):
         
         if esta_suscrito:
             # Usuario está suscrito, ir directamente al menú
-            await callback.answer("🆕 ¡Bienvenido a Mundo Mítico!", show_alert=True)
+            await callback.answer("Welcome to Mystic World!", show_alert=True)
             
             # Llamar al start_handler para mostrar el menú principal
             await start_handler(callback)
             
         else:
             # Usuario aún no está suscrito
-            await callback.answer("❌ Aún no estás suscrito a todos los canales requeridos.", show_alert=True)
+            await callback.answer("You haven't subscribed to all the required channels yet.", show_alert=True)
             
     except Exception as e:
         logger.error(f"Error en verificar_suscripcion_handler para user_id={user_id}: {e}")
-        await callback.answer("❌ Error al verificar suscripción. Intenta de nuevo.", show_alert=True)
+        await callback.answer("Error verifying subscription. Try again.", show_alert=True)
     
     await callback.answer()
 
@@ -212,7 +212,7 @@ async def perfil_handler(event):
     
     # Crear mensaje del perfil
     perfil_text = (
-        f"👤 <b>Perfil</b>\n\n"
+        f"Profile\n\n"
         f"<b>User id:</b> <code>{user_id}</code>\n"
         f"<b>Name:</b> {nombre_completo}\n"
     )
@@ -222,10 +222,10 @@ async def perfil_handler(event):
     
     # Crear teclado con opciones del perfil
     builder = InlineKeyboardBuilder()
-    builder.button(text="Inventario", callback_data="inventario")
+    builder.button(text="Inventory", callback_data="inventario")
     builder.button(text="Wallet", callback_data="wallet")
-    builder.button(text="Referidos", callback_data="referidos")
-    builder.button(text="Tareas", callback_data="tareas")
+    builder.button(text="Referrals", callback_data="referidos")
+    builder.button(text="Tasks", callback_data="tareas")
     builder.button(text="« Back", callback_data="start_volver")
     builder.adjust(2, 2, 1)
     keyboard = builder.as_markup()
