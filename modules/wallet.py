@@ -281,7 +281,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="« Back", callback_data="cancelar_retiro_total")
+    cancelar_keyboard.button(text="« Back", callback_data="wallet")
     keyboard = cancelar_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
@@ -510,61 +510,18 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     
     await state.clear()
 
-async def cancelar_deposito_handler(callback: types.CallbackQuery, state: FSMContext):
-    """Cancela el proceso de depósito"""
-    await state.clear()
-    mensaje = (
-        "<b>❌ Depósito cancelado</b>\n"
-    )
-    
-    volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
-    ])
-    
-    try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
-    except Exception as e:
-        if "message is not modified" in str(e):
-            pass
-        else:
-            await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
-    await callback.answer()
+async def wallet_back_handler(callback: types.CallbackQuery, state: FSMContext):
+    """Maneja el botón de volver al menú de wallet con limpieza de FSM"""
+    current_state = await state.get_state()
+    if current_state:
+        await state.clear()
+    await wallet_handler(callback)
 
-async def cancelar_retiro_handler(callback: types.CallbackQuery):
-    """Cancela el proceso de retiro"""
-    mensaje = (
-        "<b>❌ Retiro cancelado</b>\n"
-    )
-    
-    volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="wallet_volver")],
-        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
-    ])
-    
-    try:
-        await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
-    except Exception as e:
-        if "message is not modified" in str(e):
-            pass
-        else:
-            await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
-    await callback.answer()
-
-async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FSMContext):
-    """Cancela completamente el proceso de retiro"""
+async def wallet_back_to_menu(callback: types.CallbackQuery, state: FSMContext):
+    """Vuelve al menú principal con limpieza de FSM"""
     await state.clear()
-    mensaje = (
-        "<b>❌ Retiro cancelado</b>\n"
-    )
-    
-    volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
-    ])
-    
-    await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
-    await callback.answer()
+    from modules.start import start_handler
+    await start_handler(callback)
 
 
 def register_wallet_handlers(dp):
@@ -574,12 +531,22 @@ def register_wallet_handlers(dp):
     dp.callback_query.register(handle_deposit_network, lambda c: c.data.startswith("depositar_"))
 
     dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
-    dp.callback_query.register(cancelar_retiro_handler, lambda c: c.data == "cancelar_retiro")
-    dp.callback_query.register(cancelar_deposito_handler, lambda c: c.data == "cancelar_deposito")
-    dp.callback_query.register(cancelar_retiro_total_handler, lambda c: c.data == "cancelar_retiro_total")
-
+    
+    # Register wallet back and menu handlers
+    dp.callback_query.register(wallet_back_handler, lambda c: c.data == "wallet_volver")
+    dp.callback_query.register(wallet_back_to_menu, lambda c: c.data == "start_volver")
+    
+    # Register state handlers
     dp.message.register(procesar_wallet_ton, WalletStates.esperando_wallet)
     dp.message.register(procesar_cantidad_retiro, WalletStates.esperando_cantidad)
     dp.message.register(procesar_cantidad_deposito, WalletStates.esperando_cantidad_deposito)
     dp.message.register(procesar_hash_deposito, WalletStates.esperando_hash_deposito)
+    
+    # Register cancel handlers that use the back handler
+    dp.callback_query.register(wallet_back_handler, lambda c: c.data in [
+        "cancelar_retiro", 
+        "cancelar_deposito", 
+        "cancelar_retiro_total",
+        "wallet"  # Handle direct wallet callback
+    ])
     
