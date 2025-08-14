@@ -198,7 +198,7 @@ async def perfil_handler(event):
     # Determinar si es un mensaje o callback
     if hasattr(event, 'from_user'):
         user_id = event.from_user.id
-        username = event.from_user.username
+        #username = event.from_user.username
         first_name = event.from_user.first_name
         last_name = event.from_user.last_name
         is_callback = hasattr(event, 'data')
