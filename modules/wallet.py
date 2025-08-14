@@ -58,7 +58,8 @@ async def wallet_handler(event):
     balance_ton = await obtener_balance_usuario(user_id)
     
     mensaje = (
-        "<b>👛 Wallet</b>\n"
+        "<b>👛 Wallet</b>\n\n"
+        f"Balance: <code>{balance_ton:.3f} TON</code>\n\n"
         "<b>Gestiona tus fondos en Mundo Mítico.</b>\n\n"
         "<b>Selecciona una opción para continuar:</b>"
     )
@@ -66,7 +67,7 @@ async def wallet_handler(event):
     builder = InlineKeyboardBuilder()
     builder.button(text="Depositar", callback_data="wallet_depositar")
     builder.button(text="Retirar", callback_data="wallet_retirar")
-    builder.button(text="« Back", callback_data="perfil")
+    builder.button(text="« Back to Profile" , callback_data="perfil")
     builder.adjust(2)
     keyboard = builder.as_markup()
     
@@ -86,7 +87,7 @@ async def wallet_handler(event):
 async def wallet_depositar_handler(callback: types.CallbackQuery):
     """Handler para mostrar opciones de depósito"""
     mensaje = (
-        "<b>Depositar</b>\n"
+        "<b>Depositar</b>\n\n"
         "<b>Paso 1 de 2</b>\n\n"
         "<b>Redes disponibles:</b>\n"
         "  • USDT TON\n"
@@ -100,7 +101,7 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
     builder.button(text="USDT TON", callback_data="depositar_usdt_ton")
     builder.button(text="USDT TRC20", callback_data="depositar_usdt_trc20")
     builder.button(text="TON", callback_data="depositar_ton")
-    builder.button(text="« Back", callback_data="perfil")
+    builder.button(text="« Back to Wallet", callback_data="wallet")
     builder.adjust(2, 1, 1)
     keyboard = builder.as_markup()
     
@@ -174,7 +175,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
         minimo = f"{min_ton:.3f} TON"
 
     mensaje = (
-        f"<b>Depositar</b>\n"
+        f"<b>Depositar</b>\n\n"
         f"<b>Red:</b> {network_name}\n"
         f"<b>Dirección:</b> <code>{address}</code>\n"
         f"<b>Mínimo:</b> {minimo}\n\n"
@@ -188,7 +189,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     await state.set_state(WalletStates.esperando_cantidad_deposito)
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="« Back", callback_data="cancelar_deposito")
+    cancelar_keyboard.button(text="« Back to Wallet", callback_data="wallet")
     keyboard = cancelar_keyboard.as_markup()
     
     try:
@@ -217,7 +218,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
         )
     else:
         mensaje = (
-            "<b>Retirar/b>\n"
+            "<b>Retirar/b>\n\n"
             "<b>Paso 1 de 2</b>\n\n"
             f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
             f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
@@ -230,8 +231,7 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
         await state.set_state(WalletStates.esperando_wallet)
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back to Wallet", callback_data="wallet")],
     ])
     
     try:
@@ -281,7 +281,7 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="« Back", callback_data="wallet")
+    cancelar_keyboard.button(text="« Back to Wallet", callback_data="wallet")
     keyboard = cancelar_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
@@ -338,7 +338,7 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
     
     confirm_keyboard = InlineKeyboardBuilder()
     confirm_keyboard.button(text="✅", callback_data="confirmar_retiro")
-    confirm_keyboard.button(text="❌", callback_data="cancelar_retiro_total")
+    confirm_keyboard.button(text="❌", callback_data="wallet")
     keyboard = confirm_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
@@ -385,8 +385,7 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back to Wallet", callback_data="wallet")],
     ])
     
     try:
@@ -446,7 +445,7 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="« Back", callback_data="cancelar_deposito")
+    cancelar_keyboard.button(text="« Back to Wallet", callback_data="wallet")
     keyboard = cancelar_keyboard.as_markup()
     
     try:
@@ -544,9 +543,6 @@ def register_wallet_handlers(dp):
     
     # Register cancel handlers that use the back handler
     dp.callback_query.register(wallet_back_handler, lambda c: c.data in [
-        "cancelar_retiro", 
-        "cancelar_deposito", 
-        "cancelar_retiro_total",
         "wallet"  # Handle direct wallet callback
     ])
     

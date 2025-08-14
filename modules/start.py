@@ -220,14 +220,12 @@ async def perfil_handler(event):
     if username:
         perfil_text += f"<b>User:</b> @{username}\n"
     
-    perfil_text += "\n💡 <i>Tu información de perfil en Mundo Mítico</i>"
-    
     # Crear teclado con opciones del perfil
     builder = InlineKeyboardBuilder()
-    builder.button(text="🧳 Inventario", callback_data="inventario")
-    builder.button(text="👛 Wallet", callback_data="wallet")
-    builder.button(text="👥 Referidos", callback_data="referidos")
-    builder.button(text="📋 Tareas", callback_data="tareas")
+    builder.button(text="Inventario", callback_data="inventario")
+    builder.button(text="Wallet", callback_data="wallet")
+    builder.button(text="Referidos", callback_data="referidos")
+    builder.button(text="Tareas", callback_data="tareas")
     builder.button(text="« Back", callback_data="start_volver")
     builder.adjust(2, 2, 1)
     keyboard = builder.as_markup()

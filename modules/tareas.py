@@ -35,9 +35,9 @@ def contiene_mundo_mitico(nombre: str) -> bool:
 
 def crear_teclado_tareas() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🔄 Actualizar", callback_data="actualizar_tareas")
-    builder.button(text="🔙 Volver", callback_data="perfil")
-    builder.adjust(1, 1)
+    builder.button(text="🔄 Update", callback_data="actualizar_tareas")
+    builder.button(text="« Back", callback_data="perfil")
+    builder.adjust(2)
     return builder.as_markup()
 
 async def tareas_handler(event) -> None:
@@ -51,7 +51,7 @@ async def tareas_handler(event) -> None:
     try:
         usuario = await usuarios_col.find_one({"user_id": user_id})
         if not usuario:
-            await event.answer("❌ Usuario no encontrado")
+            await event.answer("❌ User not found")
             return
         
         mensaje = await generar_mensaje_tareas(user_id, usuario)
@@ -69,7 +69,7 @@ async def tareas_handler(event) -> None:
             
     except Exception as e:
         logger.error(f"Error en tareas_handler para user_id={user_id}: {e}")
-        await event.answer("❌ Error al cargar tareas", show_alert=True)
+        await event.answer("❌ Error loading tasks", show_alert=True)
 
 async def verificar_tareas_handler(callback: types.CallbackQuery) -> None:
     """Handler para actualizar tareas manualmente"""
@@ -100,27 +100,27 @@ async def verificar_tareas_handler(callback: types.CallbackQuery) -> None:
                 await callback.message.answer(mensaje_actualizado, parse_mode="HTML", reply_markup=keyboard)
         
         if cambios:
-            await callback.answer("✅ ¡Recompensas obtenidas!", show_alert=True)
+            await callback.answer("✅ Rewards claimed!", show_alert=True)
         else:
-            await callback.answer("ℹ️ No hay cambios en tus tareas.\n\nAsegúrate de:\n• Tener tu enlace de referido en la bio\n• Tener 'Mundo Mitico' en tu nombre", show_alert=True)
+            await callback.answer("ℹ️ No changes in your tasks.\n\nMake sure to:\n• Add referral link to your bio\n• Add 'Mundo Mitico' to your name", show_alert=True)
             
     except Exception as e:
         logger.error(f"Error en verificar_tareas_handler para user_id={user_id}: {e}")
-        await callback.answer("❌ Error al actualizar tareas", show_alert=True)
+        await callback.answer("❌ Error updating tasks", show_alert=True)
 
 async def generar_mensaje_tareas(user_id: int, usuario: Dict) -> str:
     """Genera el mensaje principal de tareas"""
     tareas = usuario.get("tareas", {})
         
     mensaje = (
-        "📋 Tareas Diarias\n\n"
-        "Completa estas tareas para obtener recompensas exclusivas:\n\n"
+        "<b>📋 Tasks</b>\n\n"
+        "Complete these tasks to earn rewards:\n\n"
     )
 
     mensaje += await generar_info_tarea_ref_bio(tareas)
     mensaje += await generar_info_tarea_mundo_nombre(tareas)
 
-    mensaje += "💡 Presiona 'Actualizar' para verificar tus tareas."
+    mensaje += "💡 Press 'Update' to check your progress."
 
     return mensaje
 
@@ -131,22 +131,22 @@ async def generar_info_tarea_ref_bio(tareas: Dict) -> str:
     if tarea_ref.get("inicio"):
         dias_ref = (datetime.datetime.now() - tarea_ref["inicio"]).days
         recompensas_ref = tarea_ref.get("recompensas", [])
-        texto = "1️⃣ Enlace de referido en bio:\n"
-        texto += f"   Progreso: {dias_ref} días\n"
-        texto += "   Recompensas:\n"
-        texto += "   • 3 días: 1 Hada"
+        texto = "<b>1️⃣ Referral Link</b>\n"
+        texto += f"Progress: {dias_ref} days\n"
+        texto += "Rewards:\n"
+        texto += "• 3 days: 1 Fairy"
         if 1 in recompensas_ref:
             texto += " ✅"
         texto += "\n"
-        texto += "   • 7 días: 3 Hadas"
+        texto += "• 7 days: 3 Fairies"
         if 3 in recompensas_ref:
             texto += " ✅"
         texto += "\n\n"
     else:
         texto = (
-            "1️⃣ Enlace de referido en bio:\n"
-            "   Estado: No iniciado\n"
-            "   Recompensas: 1 Hada (3 días) / 3 Hadas (7 días)\n\n"
+            "<b>1️⃣ Referral Link</b>\n"
+            "Status: Not started\n"
+            "Rewards: 1 Fairy (3 days) / 3 Fairies (7 days)\n\n"
         )
 
     return texto
@@ -158,18 +158,18 @@ async def generar_info_tarea_mundo_nombre(tareas: Dict) -> str:
     if tarea_nombre.get("inicio"):
         dias_nombre = (datetime.datetime.now() - tarea_nombre["inicio"]).days
         recompensas_nombre = tarea_nombre.get("recompensas", [])
-        texto = "2️⃣ 'Mundo Mitico' en tu nombre:\n"
-        texto += f"   Progreso: {dias_nombre} días\n"
-        texto += "   Recompensas:\n"
-        texto += "   • 10 días: 5 Hadas"
+        texto = "<b>2️⃣ 'Mundo Mitico' in Name</b>\n"
+        texto += f"Progress: {dias_nombre} days\n"
+        texto += "Rewards:\n"
+        texto += "• 10 days: 5 Fairies"
         if 5 in recompensas_nombre:
             texto += " ✅"
         texto += "\n\n"
     else:
         texto = (
-            "2️⃣ 'Mundo Mitico' en tu nombre:\n"
-            "   Estado: No iniciado\n"
-            "   Recompensas: 5 Hadas (10 días)\n\n"
+            "<b>2️⃣ 'Mundo Mitico' in Name</b>\n"
+            "Status: Not started\n"
+            "Rewards: 5 Fairies (10 days)\n\n"
         )
 
     return texto
