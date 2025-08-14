@@ -10,14 +10,17 @@ from utils.database import (
     descontar_balance_usuario,
     log_action
 )
-from modules.constants import COOLDOWNS_EXPLORAR, RECOMPENSAS_CAJA_SORPRESA
-
 logger = logging.getLogger(__name__)
 
-# Configuración de cooldowns (en horas) - usando constantes centralizadas
-COOLDOWNS = COOLDOWNS_EXPLORAR
+# Configuración de cooldowns (en horas)
+COOLDOWNS = {
+    'caja_sorpresa': 24,  # 24 horas de cooldown
+    'pelea': 6,           # 6 horas de cooldown
+    'expedicion': 12,     # 12 horas de cooldown
+    'capturar': 8         # 8 horas de cooldown
+}
 
-# Configuración de recompensas - usando constantes centralizadas
+# Configuración de recompensas
 RECOMPENSAS_PELEA = {
     "nada": {"probabilidad": 30, "mensaje": "💥 Perdiste la pelea. Mejora tu estrategia."},
     "ganar": {"probabilidad": 70, "mensaje": "🏆 ¡Victoria! Ganaste 0.1 TON", "ton": 0.1}

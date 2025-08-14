@@ -145,10 +145,10 @@ async def start_handler(event):
 
     # Crear teclado inline con todos los botones (incluyendo Tareas)
     builder = InlineKeyboardBuilder()
-    builder.button(text="🌍 Explore", callback_data="explorar")
-    builder.button(text="🛍 Store", callback_data="tienda")
-    builder.button(text="👤 Profile", callback_data="perfil")
-    builder.button(text="📮 Channel", url="http://t.me/MundoMitico")
+    builder.button(text="Explore", callback_data="explorar")
+    builder.button(text="Store", callback_data="tienda")
+    builder.button(text="Profile", callback_data="perfil")
+    builder.button(text="Channel", url="http://t.me/MundoMitico")
     builder.adjust(1, 2, 1, 1)
     keyboard = builder.as_markup()
 

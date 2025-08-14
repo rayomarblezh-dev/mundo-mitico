@@ -3,15 +3,11 @@ import datetime
 import logging
 from typing import Optional, Dict, Any, List
 from config.config import MONGO_URI, DB_NAME
-from modules.constants import SISTEMA_CONFIG
 from utils.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 # Configuración de la base de datos
-MIN_DEPOSITO = SISTEMA_CONFIG["min_deposito"]
-MIN_RETIRO = SISTEMA_CONFIG["min_retiro"]
-COMISION_RETIRO = SISTEMA_CONFIG["comision_retiro"]
 
 # Cliente de MongoDB
 try:

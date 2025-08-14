@@ -131,7 +131,7 @@ async def generar_info_tarea_ref_bio(tareas: Dict, usuario: Dict) -> str:
     if tarea_ref.get("inicio"):
         dias_ref = (datetime.datetime.now() - tarea_ref["inicio"]).days
         recompensas_ref = tarea_ref.get("recompensas", [])
-        texto = "<b>1️⃣ Referral Link</b>\n"
+        texto = "<b>1️⃣ Referral Link in bio:</b>\n"
         texto += f"Progress: {dias_ref} days\n"
         texto += "Rewards:\n"
         texto += "• 3 days: 1 Fairy"
@@ -143,13 +143,15 @@ async def generar_info_tarea_ref_bio(tareas: Dict, usuario: Dict) -> str:
             texto += " ✅"
         texto += "\n\n"
     else:
-        texto = (
-            "<b>1️⃣ Referral Link</b>\n"
-            f"Bio: {usuario.get('bio', 'No bio found')}\n"
-            f"Name: {usuario.get('first_name', 'No name found')}\n"
-            "Status: Not started\n"
-            "Rewards: 1 Fairy (3 days) / 3 Fairies (7 days)\n\n"
-        )
+        bio = usuario.get('bio', '').strip()
+        has_link = 't.me/' in bio  # Check if there's a Telegram link in the bio
+
+        texto = f"<b>1️⃣ Referral Link in bio:</b>\n\n"  # Show current bio
+        
+        if not has_link:
+            texto += "Please add your referral link to your bio to complete the task.\n\n"
+            
+        texto += "Rewards: 1 Fairy (3 days) / 3 Fairies (7 days)\n\n"
 
     return texto
 
@@ -171,7 +173,6 @@ async def generar_info_tarea_mundo_nombre(tareas: Dict, usuario: Dict) -> str:
         texto = (
             "<b>2️⃣ 'Mundo Mitico' in Name</b>\n"
             f"Name: {usuario.get('first_name', 'No name found')}\n"
-            f"Bio: {usuario.get('bio', 'No bio found')}\n"
             "Status: Not started\n"
             "Rewards: 5 Fairies (10 days)\n\n"
         )

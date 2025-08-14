@@ -101,7 +101,7 @@ class ProjectValidator:
         
         try:
             from config.config import BOT_TOKEN, MONGO_URI, DB_NAME
-            from modules.constants import CRIATURAS_CONFIG, NFTS_CONFIG, SISTEMA_CONFIG
+            from config.config import MIN_DEPOSIT, MIN_WITHDRAWAL, WITHDRAWAL_FEE
             
             # Validar BOT_TOKEN
             if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN":

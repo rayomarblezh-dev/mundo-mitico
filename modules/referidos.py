@@ -22,26 +22,25 @@ async def referidos_handler(event):
     activos = await contar_referidos_activos(user_id)
 
     mensaje = (
-        "<b>👥 REFERIDOS</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<b>Invita a tus amigos y obtén recompensas exclusivas por cada uno que se una y participe.</b>\n\n"
-        "<b>🎁 Recompensas:</b>\n"
-        "  • Por cada 10 invitaciones: <b>1 Hada 🧚‍♀️</b>\n"
-        "  • Por cada referido que invierta: <b>1 Elfo 🧝‍♀️</b>\n\n"
-        "<b>📊 Tu progreso:</b>\n"
-        f"  • Referidos totales: <b>{total}</b>\n"
-        f"  • Referidos activos: <b>{activos}</b>\n\n"
-        "<b>💡 Consejo:</b> ¡Sigue invitando para obtener más recompensas!"
+        "<b>👥 Referrals</b>\n\n"
+        "<b>Invite your friends and get exclusive rewards for each one who joins and participates.</b>\n\n"
+        "<b>🎁 Rewards:</b>\n"
+        "  • For every 10 invitations: <b>1 Fairy 🧚‍♀️</b>\n"
+        "  • For each referral who invests: <b>1 Elf 🧝‍♀️</b>\n\n"
+        "<b>📊 Your progress:</b>\n"
+        f"  • Total referrals: <b>{total}</b>\n"
+        f"  • Active referrals: <b>{activos}</b>\n\n"
+        "<b>💡 Tip:</b> Keep inviting to get more rewards!"
     )
 
     share_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="📤 Compartir Enlace",
+                text="Share Link",
                 url=f"https://t.me/share/url?url={ref_link}"
             )
         ],
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="perfil")]
+        [InlineKeyboardButton(text="« Back", callback_data="perfil")]
     ])
 
     # Enviar mensaje según el tipo de evento
