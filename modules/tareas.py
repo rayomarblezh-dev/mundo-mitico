@@ -145,6 +145,7 @@ async def generar_info_tarea_ref_bio(tareas: Dict) -> str:
     else:
         texto = (
             "<b>1️⃣ Referral Link</b>\n"
+            f"Bio: {tarea_ref.get('bio', 'No bio found')}\n"
             "Status: Not started\n"
             "Rewards: 1 Fairy (3 days) / 3 Fairies (7 days)\n\n"
         )
@@ -168,6 +169,7 @@ async def generar_info_tarea_mundo_nombre(tareas: Dict) -> str:
     else:
         texto = (
             "<b>2️⃣ 'Mundo Mitico' in Name</b>\n"
+            f"Name: {tarea_nombre.get('name', 'No name found')}\n"
             "Status: Not started\n"
             "Rewards: 5 Fairies (10 days)\n\n"
         )
