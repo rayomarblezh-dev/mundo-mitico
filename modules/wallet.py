@@ -454,11 +454,42 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     
     await state.clear()
 
+async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMContext):
+    """Confirma y procesa el retiro"""
+    try:
+        data = await state.get_data()
+        user_id = callback.from_user.id
+        cantidad = data.get('cantidad')
+        wallet = data.get('wallet')
+        moneda = data.get('moneda', 'TON')
+        
+        # Aquí iría la lógica para procesar el retiro
+        # Por ejemplo, verificar fondos, registrar la transacción, etc.
+        
+        await callback.message.edit_text(
+            f"Withdrawal of {cantidad} {moneda} processed successfully.\n"
+            f"Sending to: {wallet}",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="« Back to Wallet", callback_data="wallet")]
+            ])
+        )
+        
+        # Limpiar el estado
+        await state.clear()
+        
+    except Exception as e:
+        logging.error(f"Error in confirmar_retiro_handler: {str(e)}")
+        await callback.message.edit_text(
+            "❌ An error occurred while processing the withdrawal. Please try again.",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="« Back to Wallet", callback_data="wallet")]
+            ])
+        )
+        await state.clear()
+
 async def wallet_back_handler(callback: types.CallbackQuery, state: FSMContext):
     """Maneja el botón de volver al menú de wallet con limpieza de FSM"""
-    current_state = await state.get_state()
-    if current_state:
-        await state.clear()
+    await state.clear()
     await wallet_handler(callback)
 
 async def wallet_back_to_menu(callback: types.CallbackQuery, state: FSMContext):
@@ -467,19 +498,19 @@ async def wallet_back_to_menu(callback: types.CallbackQuery, state: FSMContext):
     from modules.start import start_handler
     await start_handler(callback)
 
-
 def register_wallet_handlers(dp):
     """Registra todos los handlers del módulo wallet"""
     dp.callback_query.register(wallet_depositar_handler, lambda c: c.data == "wallet_depositar")
     dp.callback_query.register(wallet_retirar_handler, lambda c: c.data == "wallet_retirar")
 
-    dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
-    
     # Register state handlers
     dp.message.register(procesar_wallet_ton, WalletStates.esperando_wallet)
     dp.message.register(procesar_cantidad_retiro, WalletStates.esperando_cantidad)
     dp.message.register(procesar_cantidad_deposito, WalletStates.esperando_cantidad_deposito)
     dp.message.register(procesar_hash_deposito, WalletStates.esperando_hash_deposito)
+    
+    # Register the withdrawal confirmation handler
+    dp.callback_query.register(confirmar_retiro_handler, lambda c: c.data == "confirmar_retiro")
     
     # Register cancel handlers that use the back handler
     dp.callback_query.register(wallet_back_handler, lambda c: c.data in [
