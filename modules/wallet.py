@@ -58,17 +58,15 @@ async def wallet_handler(event):
     balance_ton = await obtener_balance_usuario(user_id)
     
     mensaje = (
-        "<b>👛 WALLET</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>👛 Wallet</b>\n"
         "<b>Gestiona tus fondos en Mundo Mítico.</b>\n\n"
-        f"<b>💰 Balance:</b> <code>{balance_ton:.3f} TON</code>\n\n"
         "<b>Selecciona una opción para continuar:</b>"
     )
     
     builder = InlineKeyboardBuilder()
-    builder.button(text="📥 Depositar", callback_data="wallet_depositar")
-    builder.button(text="📤 Retirar", callback_data="wallet_retirar")
-    builder.button(text="🔙 Volver", callback_data="perfil")
+    builder.button(text="Depositar", callback_data="wallet_depositar")
+    builder.button(text="Retirar", callback_data="wallet_retirar")
+    builder.button(text="« Back", callback_data="perfil")
     builder.adjust(2)
     keyboard = builder.as_markup()
     
@@ -88,13 +86,12 @@ async def wallet_handler(event):
 async def wallet_depositar_handler(callback: types.CallbackQuery):
     """Handler para mostrar opciones de depósito"""
     mensaje = (
-        "<b>📥 DEPÓSITO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Depositar</b>\n"
         "<b>Paso 1 de 2</b>\n\n"
         "<b>Redes disponibles:</b>\n"
-        "  • 💎 USDT TON\n"
-        "  • 💵 USDT TRC20\n"
-        "  • 🪙 TON\n\n"
+        "  • USDT TON\n"
+        "  • USDT TRC20\n"
+        "  • TON\n\n"
         "<b>Mínimo:</b> 0.5 TON (o equivalente en USD)\n\n"
         "Selecciona la red para obtener la dirección de depósito."
     )
@@ -103,7 +100,7 @@ async def wallet_depositar_handler(callback: types.CallbackQuery):
     builder.button(text="USDT TON", callback_data="depositar_usdt_ton")
     builder.button(text="USDT TRC20", callback_data="depositar_usdt_trc20")
     builder.button(text="TON", callback_data="depositar_ton")
-    builder.button(text="🔙 Volver", callback_data="perfil")
+    builder.button(text="« Back", callback_data="perfil")
     builder.adjust(2, 1, 1)
     keyboard = builder.as_markup()
     
@@ -177,14 +174,13 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
         minimo = f"{min_ton:.3f} TON"
 
     mensaje = (
-        f"<b>📥 DEPÓSITO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>Red seleccionada:</b> {network_name}\n"
+        f"<b>Depositar</b>\n"
+        f"<b>Red:</b> {network_name}\n"
         f"<b>Dirección:</b> <code>{address}</code>\n"
         f"<b>Mínimo:</b> {minimo}\n\n"
         "<b>Instrucciones:</b>\n"
-        "1️⃣ Envía fondos a la dirección mostrada.\n"
-        "2️⃣ Ingresa la cantidad exacta que enviaste.\n\n"
+        "1. Envía fondos a la dirección mostrada.\n"
+        "2. Ingresa la cantidad exacta que enviaste.\n\n"
         "Puedes cancelar el proceso en cualquier momento."
     )
     
@@ -192,7 +188,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     await state.set_state(WalletStates.esperando_cantidad_deposito)
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_deposito")
+    cancelar_keyboard.button(text="« Back", callback_data="cancelar_deposito")
     keyboard = cancelar_keyboard.as_markup()
     
     try:
@@ -213,40 +209,29 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
 
     if balance_ton == 0:
         mensaje = (
-            "<b>❌ Retiro no disponible</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"<b>💰 Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
-            f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
-            "No tienes fondos disponibles para retirar.\n\n"
-            "<b>Consejo:</b> Primero debes depositar fondos o comprar criaturas para generar ganancias."
+            "<b>❌ Retiro no disponible</b>"
         )
     elif balance_ton < min_retiro:
         mensaje = (
-            "<b>❌ Retiro no disponible</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"<b>💰 Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
-            f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
-            "Tu balance es insuficiente para realizar un retiro.\n\n"
-            "<b>Consejo:</b> Deposita más fondos o espera a que tus criaturas generen más ganancias."
+            "<b>❌ Retiro no disponible</b>"
         )
     else:
         mensaje = (
-            "<b>📤 RETIRO</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "<b>Retirar/b>\n"
             "<b>Paso 1 de 2</b>\n\n"
-            f"<b>💰 Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
+            f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
             f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
             "<b>Instrucciones:</b>\n"
-            "1️⃣ Envía tu dirección de wallet TON.\n"
-            "2️⃣ Ingresa la cantidad a retirar.\n\n"
+            "1. Envía tu dirección de wallet TON.\n"
+            "2. Ingresa la cantidad a retirar.\n\n"
             "Puedes cancelar el proceso en cualquier momento."
         )
         await state.update_data(balance=balance_ton, min_retiro=min_retiro)
         await state.set_state(WalletStates.esperando_wallet)
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
+        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
     ])
     
     try:
@@ -286,18 +271,17 @@ async def procesar_wallet_ton(message: types.Message, state: FSMContext):
     min_retiro = data.get('min_retiro', 1.1)
     
     mensaje = (
-        "<b>📤 RETIRO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Retirar/b>\n"
         "<b>Paso 2 de 2</b>\n\n"
         f"<b>Wallet TON registrada:</b> <code>{wallet_address}</code>\n"
-        f"<b>💰 Balance disponible:</b> <code>{balance:.3f} TON</code>\n"
+        f"<b>Balance:</b> <code>{balance:.3f} TON</code>\n"
         f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
         "Ahora ingresa la cantidad que deseas retirar (en TON).\n\n"
         "Puedes cancelar el proceso en cualquier momento."
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_retiro_total")
+    cancelar_keyboard.button(text="« Back", callback_data="cancelar_retiro_total")
     keyboard = cancelar_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
@@ -344,18 +328,17 @@ async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
     await state.update_data(cantidad=cantidad)
     
     mensaje = (
-        "<b>📤 CONFIRMAR RETIRO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Retirar</b>\n"
         f"<b>Cantidad:</b> <code>{cantidad:.3f} TON</code>\n"
         f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
-        "¿Deseas confirmar este retiro?\n\n"
-        "<b>⏳ Tiempo estimado:</b> 24-48 horas\n\n"
-        "Puedes cancelar el proceso si lo deseas."
+        "¿Deseas confirmar el retiro?\n\n"
+        "<b>Tiempo estimado:</b> 24-48 horas\n\n"
+        "Puedes cancelar el proceso en cualquier momento."
     )
     
     confirm_keyboard = InlineKeyboardBuilder()
-    confirm_keyboard.button(text="✅ Confirmar", callback_data="confirmar_retiro")
-    confirm_keyboard.button(text="❌ Cancelar", callback_data="cancelar_retiro_total")
+    confirm_keyboard.button(text="✅", callback_data="confirmar_retiro")
+    confirm_keyboard.button(text="❌", callback_data="cancelar_retiro_total")
     keyboard = confirm_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
@@ -395,19 +378,15 @@ async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMCont
     })
 
     mensaje = (
-        "<b>📤 RETIRO SOLICITADO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>ID de Retiro:</b> <code>{retiro_id}</code>\n"
+        "<b>Retiro</b>\n"
         f"<b>Cantidad:</b> <code>{cantidad:.3f} TON</code>\n"
         f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
         "Tu solicitud está pendiente de revisión.\n\n"
-        "<b>⏳ Tiempo estimado:</b> 24-48 horas\n\n"
-        "Guarda este ID para cualquier reporte o consulta."
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
+        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
     ])
     
     try:
@@ -457,18 +436,17 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
     await state.set_state(WalletStates.esperando_hash_deposito)
     
     resumen = (
-        "<b>📥 DEPÓSITO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Depósito</b>\n"
         f"<b>Red:</b> {network_name}\n"
         f"<b>Dirección:</b> <code>{address}</code>\n"
-        f"<b>Cantidad enviada:</b> <code>{cantidad:.3f} {network_name.split()[-1]}</code>\n"
-        f"<b>Equivalente estimado:</b> <code>{equivalente_ton:.3f} TON</code>\n\n"
-        "Ahora responde a este mensaje con el hash de tu transacción para acreditar tu depósito.\n\n"
+        f"<b>Cantidad:</b> <code>{cantidad:.3f} {network_name.split()[-1]}</code>\n"
+        f"<b>Equivalente:</b> <code>{equivalente_ton:.3f} TON</code>\n\n"
+        "Ahora responde a este mensaje con el hash de tu transacción.\n\n"
         "Si deseas cancelar el proceso, pulsa el botón abajo."
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="❌ Cancelar", callback_data="cancelar_deposito")
+    cancelar_keyboard.button(text="« Back", callback_data="cancelar_deposito")
     keyboard = cancelar_keyboard.as_markup()
     
     try:
@@ -520,16 +498,12 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     })
     
     mensaje_confirmacion = (
-        "<b>📥 DEPÓSITO REGISTRADO</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>ID de Depósito:</b> <code>{deposito_id}</code>\n"
+        "<b>Deposito</b>\n"
         f"<b>Red:</b> {network_name}\n"
         f"<b>Dirección:</b> <code>{address}</code>\n"
         f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> {network_name.split()[-1]}\n"
         f"<b>Hash:</b>\n<code>{hash_text}</code>\n\n"
-        "<b>Estado:</b> <b>Pendiente de revisión</b>\n"
-        "<b>⏳ Tiempo estimado:</b> 24-48 horas\n\n"
-        "Guarda este ID para cualquier reporte o consulta."
+        "<b>Estado:</b> <b>Pendiente</b>\n"
     )
     
     await message.answer(mensaje_confirmacion, parse_mode="HTML")
@@ -541,13 +515,11 @@ async def cancelar_deposito_handler(callback: types.CallbackQuery, state: FSMCon
     await state.clear()
     mensaje = (
         "<b>❌ Depósito cancelado</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "El proceso de depósito ha sido cancelado. Puedes iniciar uno nuevo desde <b>Wallet → Depositar</b>."
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
+        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
     ])
     
     try:
@@ -563,12 +535,11 @@ async def cancelar_retiro_handler(callback: types.CallbackQuery):
     """Cancela el proceso de retiro"""
     mensaje = (
         "<b>❌ Retiro cancelado</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "Tu solicitud de retiro ha sido cancelada.\nPuedes iniciar un nuevo retiro desde <b>Wallet → Retirar</b>."
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet_volver")]
+        [InlineKeyboardButton(text="« Back", callback_data="wallet_volver")],
+        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
     ])
     
     try:
@@ -585,13 +556,11 @@ async def cancelar_retiro_total_handler(callback: types.CallbackQuery, state: FS
     await state.clear()
     mensaje = (
         "<b>❌ Retiro cancelado</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "El proceso de retiro ha sido cancelado. Puedes iniciar uno nuevo desde <b>Wallet → Retirar</b>."
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Volver", callback_data="wallet")],
-        [InlineKeyboardButton(text="🏠 Menú Principal", callback_data="start_volver")]
+        [InlineKeyboardButton(text="« Back", callback_data="wallet")],
+        [InlineKeyboardButton(text="🏠 Menu", callback_data="start_volver")]
     ])
     
     await callback.message.edit_text(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
