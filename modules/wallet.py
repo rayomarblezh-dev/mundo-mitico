@@ -58,15 +58,15 @@ async def wallet_handler(event):
     balance_ton = await obtener_balance_usuario(user_id)
     
     mensaje = (
-        "<b>👛 Wallet</b>\n\n"
+        "<b>Wallet</b>\n\n"
         f"Balance: {balance_ton:.3f} TON\n\n"
-        "<b>Gestiona tus fondos en Mundo Mítico.</b>\n\n"
-        "<b>Selecciona una opción para continuar:</b>"
+        "<b>Manage your funds in Mundo Mágico.</b>\n\n"
+        "<b>Select an option to continue:</b>"
     )
     
     builder = InlineKeyboardBuilder()
-    builder.button(text="Depositar", callback_data="wallet_depositar")
-    builder.button(text="Retirar", callback_data="wallet_retirar")
+    builder.button(text="Deposit", callback_data="wallet_depositar")
+    builder.button(text="Withdraw", callback_data="wallet_retirar")
     builder.button(text="« Back to Profile" , callback_data="perfil")
     builder.adjust(2)
     keyboard = builder.as_markup()
@@ -87,14 +87,14 @@ async def wallet_handler(event):
 async def wallet_depositar_handler(callback: types.CallbackQuery):
     """Handler para mostrar opciones de depósito"""
     mensaje = (
-        "<b>Depositar</b>\n\n"
-        "<b>Paso 1 de 2</b>\n\n"
-        "<b>Redes disponibles:</b>\n"
+        "<b>Deposit</b>\n\n"
+        "<b>Step 1 of 2</b>\n\n"
+        "<b>Available networks:</b>\n"
         "  • USDT TON\n"
         "  • USDT TRC20\n"
         "  • TON\n\n"
-        "<b>Mínimo:</b> 0.5 TON (o equivalente en USD)\n\n"
-        "Selecciona la red para obtener la dirección de depósito."
+        "<b>Minimum:</b> 0.5 TON (or equivalent in USD)\n\n"
+        "Select the network to get the deposit address."
     )
     
     builder = InlineKeyboardBuilder()
@@ -148,7 +148,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     
     callback_data = callback.data
     if callback_data not in network_map:
-        await callback.answer("❌ Red no válida.", show_alert=True)
+        await callback.answer("❌ Invalid network.", show_alert=True)
         return
 
     network_name, network_key = network_map[callback_data]
@@ -159,7 +159,7 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
     
     if precio_ton is None or precio_usdt is None:
         await callback.answer(
-            "❌ No se pudieron obtener los precios actuales. Intenta de nuevo más tarde.",
+            "❌ Could not get current prices. Try again later.",
             show_alert=True
         )
         return
@@ -174,14 +174,14 @@ async def handle_deposit_network(callback: types.CallbackQuery, state: FSMContex
         minimo = f"{min_ton:.3f} TON"
 
     mensaje = (
-        f"<b>Depositar</b>\n\n"
-        f"<b>Red:</b> {network_name}\n"
-        f"<b>Dirección:</b> <code>{address}</code>\n"
-        f"<b>Mínimo:</b> {minimo}\n\n"
-        "<b>Instrucciones:</b>\n"
-        "1. Envía fondos a la dirección mostrada.\n"
-        "2. Ingresa la cantidad exacta que enviaste.\n\n"
-        "Puedes cancelar el proceso en cualquier momento."
+        f"<b>Deposit</b>\n\n"
+        f"<b>Network:</b> {network_name}\n"
+        f"<b>Address:</b> <code>{address}</code>\n"
+        f"<b>Minimum:</b> {minimo}\n\n"
+        "<b>Instructions:</b>\n"
+        "1. Send funds to the address shown.\n"
+        "2. Enter the exact amount you sent.\n\n"
+        "You can cancel the process at any time."
     )
     
     await state.update_data(network_name=network_name, network_key=network_key, address=address)
@@ -209,24 +209,24 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
 
     if balance_ton == 0:
         await callback.answer(
-            "<b>❌ Retiro no disponible</b>", show_alert=True
+            "<b>❌ Withdrawal not available</b>", show_alert=True
         )
         return
     elif balance_ton < min_retiro:
         await callback.answer(
-            "<b>❌ Retiro no disponible</b>", show_alert=True
+            "<b>❌ Withdrawal not available</b>", show_alert=True
         )
         return
 
     mensaje = (
-        "<b>Retirar</b>\n\n"
-        "<b>Paso 1 de 2</b>\n\n"
+        "<b>Withdraw</b>\n\n"
+        "<b>Step 1 of 2</b>\n\n"
         f"<b>Balance:</b> <code>{balance_ton:.3f} TON</code>\n"
-        f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
-        "<b>Instrucciones:</b>\n"
-        "1. Envía tu dirección de wallet TON.\n"
-        "2. Ingresa la cantidad a retirar.\n\n"
-        "Puedes cancelar el proceso en cualquier momento."
+        f"<b>Minimum withdrawal:</b> <code>{min_retiro:.3f} TON</code>\n\n"
+        "<b>Instructions:</b>\n"
+        "1. Send your TON wallet address.\n"
+        "2. Enter the amount to withdraw.\n\n"
+        "You can cancel the process at any time."
     )
     await state.update_data(balance=balance_ton, min_retiro=min_retiro)
     await state.set_state(WalletStates.esperando_wallet)
@@ -244,145 +244,89 @@ async def wallet_retirar_handler(callback: types.CallbackQuery, state: FSMContex
             await callback.message.answer(mensaje, parse_mode="HTML", reply_markup=volver_keyboard)
     await callback.answer()
 
-async def procesar_wallet_ton(message: types.Message, state: FSMContext):
-    """Procesa la dirección de wallet TON ingresada"""
-    user_id = message.from_user.id
-    wallet_address = message.text.strip()
+async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
+    """Procesa la cantidad de depósito ingresada"""
     current_state = await state.get_state()
-    
-    if current_state != WalletStates.esperando_wallet.state:
-        await message.answer(
-            "<b>Comando no disponible</b>\n\nPara agregar tu wallet TON, ve a <b>Wallet → Retirar</b>.",
-            parse_mode="HTML"
-        )
+    if current_state != WalletStates.esperando_cantidad_deposito.state:
         return
-
-    if not wallet_address.startswith("UQ") or len(wallet_address) < 48:
-        await message.answer(
-            "<b>❌ Dirección inválida</b>\n\nLa dirección de wallet TON debe comenzar con 'UQ' y tener al menos 48 caracteres.\nAsegúrate de copiar la dirección completa de tu wallet TON.",
-            parse_mode="HTML"
-        )
-        return
-
-    await state.update_data(wallet_address=wallet_address)
-    await state.set_state(WalletStates.esperando_cantidad)
     
-    data = await state.get_data()
-    balance = data.get('balance', 0)
-    min_retiro = data.get('min_retiro', 1.1)
-    
-    mensaje = (
-        "<b>Retirar/b>\n"
-        "<b>Paso 2 de 2</b>\n\n"
-        f"<b>Wallet TON registrada:</b> <code>{wallet_address}</code>\n"
-        f"<b>Balance:</b> <code>{balance:.3f} TON</code>\n"
-        f"<b>Mínimo de retiro:</b> <code>{min_retiro:.3f} TON</code>\n\n"
-        "Ahora ingresa la cantidad que deseas retirar (en TON).\n\n"
-        "Puedes cancelar el proceso en cualquier momento."
-    )
-    
-    cancelar_keyboard = InlineKeyboardBuilder()
-    cancelar_keyboard.button(text="« Back to Wallet", callback_data="wallet")
-    keyboard = cancelar_keyboard.as_markup()
-    
-    await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
-
-async def procesar_cantidad_retiro(message: types.Message, state: FSMContext):
-    """Procesa la cantidad de retiro ingresada"""
     user_id = message.from_user.id
     cantidad_text = message.text.strip().replace(",", ".")
-    current_state = await state.get_state()
     
-    if current_state != WalletStates.esperando_cantidad.state:
-        return
-
     try:
         cantidad = float(cantidad_text)
         if cantidad <= 0:
             raise ValueError
     except Exception:
         await message.answer(
-            "<b>❌ Cantidad inválida</b>\n\nPor favor, ingresa un número válido mayor a 0.",
+            "<b>❌ Invalid amount</b>\n\nPlease enter a valid number greater than 0.",
             parse_mode="HTML"
         )
         return
-
-    balance = await obtener_balance_usuario(user_id)
+    
     data = await state.get_data()
-    min_retiro = data.get('min_retiro', 1.1)
-    wallet_address = data.get('wallet_address', '')
-
-    if cantidad < min_retiro:
-        await message.answer(
-            f"<b>❌ Cantidad insuficiente</b>\n\nLa cantidad mínima de retiro es <code>{min_retiro:.3f} TON</code>.\nTu solicitud: <code>{cantidad:.3f} TON</code>",
-            parse_mode="HTML"
-        )
-        return
-
-    if cantidad > balance:
-        await message.answer(
-            f"<b>❌ Balance insuficiente</b>\n\nTu balance disponible es <code>{balance:.3f} TON</code>.\nTu solicitud: <code>{cantidad:.3f} TON</code>",
-            parse_mode="HTML"
-        )
-        return
-
-    await state.update_data(cantidad=cantidad)
+    network_name = data.get('network_name', '')
+    address = data.get('address', '')
     
     mensaje = (
-        "<b>Retirar</b>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f} TON</code>\n"
-        f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
-        "¿Deseas confirmar el retiro?\n\n"
-        "<b>Tiempo estimado:</b> 24-48 horas\n\n"
-        "Puedes cancelar el proceso en cualquier momento."
+        "<b>Deposit</b>\n"
+        "<b>Step 2 of 2</b>\n\n"
+        f"<b>Network:</b> {network_name}\n"
+        f"<b>Address:</b> <code>{address}</code>\n"
+        f"<b>Amount:</b> <code>{cantidad:.3f} {network_name}</code>\n\n"
+        "Do you want to confirm the deposit?\n\n"
+        "You can cancel the process at any time."
     )
     
     confirm_keyboard = InlineKeyboardBuilder()
-    confirm_keyboard.button(text="✅", callback_data="confirmar_retiro")
+    confirm_keyboard.button(text="✅", callback_data="confirmar_deposito")
     confirm_keyboard.button(text="❌", callback_data="wallet")
     keyboard = confirm_keyboard.as_markup()
     
     await message.answer(mensaje, parse_mode="HTML", reply_markup=keyboard)
 
-async def confirmar_retiro_handler(callback: types.CallbackQuery, state: FSMContext):
-    """Confirma y procesa el retiro"""
+async def confirmar_deposito_handler(callback: types.CallbackQuery, state: FSMContext):
+    """Confirma y procesa el depósito"""
     user_id = callback.from_user.id
     data = await state.get_data()
     cantidad = data.get('cantidad')
-    wallet_address = data.get('wallet_address')
+    network_name = data.get('network_name')
+    address = data.get('address')
 
-    if not cantidad or not wallet_address:
-        await callback.answer("<b>❌ Datos incompletos para el retiro.</b>", show_alert=True)
+    if not cantidad or not network_name or not address:
+        await callback.answer("<b>❌ Invalid data for deposit.</b>", show_alert=True)
         return
-
-    ok = await descontar_balance_usuario(user_id, cantidad)
+    
+    ok = await add_balance_usuario(user_id, cantidad, network_name)
     if not ok:
-        await callback.answer("<b>❌ Balance insuficiente para procesar el retiro.</b>", show_alert=True)
+        await callback.answer("<b>❌ Balance not updated.</b>", show_alert=True)
         return
 
-    retiro_data = {
+    deposit_data = {
         "user_id": user_id,
-        "tipo": "retiro",
+        "tipo": "deposito",
         "estado": "pendiente",
         "cantidad": cantidad,
-        "wallet": wallet_address,
+        "network": network_name,
+        "address": address,
         "fecha": datetime.datetime.now()
     }
     
-    result = await creditos_col.insert_one(retiro_data)
-    retiro_id = str(result.inserted_id)
+    result = await creditos_col.insert_one(deposit_data)
+    deposit_id = str(result.inserted_id)
     
-    await log_action(user_id, "retiro_solicitado", details={
+    await log_action(user_id, "deposito_solicitado", details={
         "cantidad": cantidad, 
-        "wallet": wallet_address,
-        "retiro_id": retiro_id
+        "network": network_name,
+        "address": address,
+        "deposit_id": deposit_id
     })
 
     mensaje = (
-        "<b>Retiro</b>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f} TON</code>\n"
-        f"<b>Wallet:</b> <code>{wallet_address}</code>\n\n"
-        "Tu solicitud está pendiente de revisión.\n\n"
+        "<b>Deposit</b>\n"
+        f"<b>Amount:</b> <code>{cantidad:.3f} {network_name}</code>\n"
+        f"<b>Address:</b> <code>{address}</code>\n\n"
+        "Your deposit request is pending review.\n\n"
     )
     
     volver_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -415,14 +359,14 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
             raise ValueError
     except Exception:
         await message.answer(
-            "<b>❌ Cantidad inválida</b>\n\nPor favor, ingresa un número válido mayor a 0.",
+            "<b>Invalid amount</b>\n\nPlease enter a valid number greater than 0.",
             parse_mode="HTML"
         )
         return
     
     data = await state.get_data()
     network_key = data.get('network_key', 'ton')
-    network_name = data.get('network_name', 'desconocida')
+    network_name = data.get('network_name', 'unknown')
     address = data.get('address', '')
     
     precio_ton, precio_usdt = await obtener_precios()
@@ -436,13 +380,13 @@ async def procesar_cantidad_deposito(message: types.Message, state: FSMContext):
     await state.set_state(WalletStates.esperando_hash_deposito)
     
     resumen = (
-        "<b>Depósito</b>\+3n"
-        f"<b>Red:</b> {network_name}\n"
-        f"<b>Dirección:</b>\n <blockquote><code>{address}</code></blockquote>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f} {network_name.split()[-1]}</code>\n"
-        f"<b>Equivalente:</b> <code>{equivalente_ton:.3f} TON</code>\n\n"
-        "Ahora responde a este mensaje con el hash de tu transacción.\n\n"
-        "Si deseas cancelar el proceso, pulsa el botón abajo."
+        "<b>Deposit</b>\n"
+        f"<b>Network:</b> {network_name}\n"
+        f"<b>Address:</b>\n <blockquote><code>{address}</code></blockquote>\n"
+        f"<b>Amount:</b> <code>{cantidad:.3f} {network_name.split()[-1]}</code>\n"
+        f"<b>Equivalent:</b> <code>{equivalente_ton:.3f} TON</code>\n\n"
+        "Now respond to this message with your transaction hash.\n\n"
+        "If you want to cancel the process, press the button below."
     )
     
     cancelar_keyboard = InlineKeyboardBuilder()
@@ -464,14 +408,14 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     hash_text = message.text.strip()
     data = await state.get_data()
     
-    network_name = data.get('network_name', 'desconocida')
-    network_key = data.get('network_key', 'desconocida')
+    network_name = data.get('network_name', 'unknown')
+    network_key = data.get('network_key', 'unknown')
     address = data.get('address', '')
     cantidad = data.get('cantidad', None)
     
     if cantidad is None:
         await message.answer(
-            "<b>❌ Error</b>\n\n<i>Primero debes ingresar la cantidad a depositar antes de enviar el hash.</i>",
+            "<b>Error</b>\n\n<i>You must enter the deposit amount before sending the hash.</i>",
             parse_mode="HTML"
         )
         return
@@ -498,12 +442,12 @@ async def procesar_hash_deposito(message: types.Message, state: FSMContext):
     })
     
     mensaje_confirmacion = (
-        "<b>Deposito</b>\n"
-        f"<b>Red:</b> {network_name}\n"
-        f"<b>Dirección:</b> <code>{address}</code>\n"
-        f"<b>Cantidad:</b> <code>{cantidad:.3f}</code> {network_name.split()[-1]}\n"
+        "<b>Deposit</b>\n"
+        f"<b>Network:</b> {network_name}\n"
+        f"<b>Address:</b> <code>{address}</code>\n"
+        f"<b>Amount:</b> <code>{cantidad:.3f}</code> {network_name.split()[-1]}\n"
         f"<b>Hash:</b>\n<code>{hash_text}</code>\n\n"
-        "<b>Estado:</b> <b>Pendiente</b>\n"
+        "<b>Status:</b> <b>Pending</b>\n"
     )
     
     await message.answer(mensaje_confirmacion, parse_mode="HTML")
@@ -541,4 +485,3 @@ def register_wallet_handlers(dp):
     dp.callback_query.register(wallet_back_handler, lambda c: c.data in [
         "wallet"  # Handle direct wallet callback
     ])
-    
